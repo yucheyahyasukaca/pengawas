@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
+  SheetHeader,
+  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { AdminSidebar } from "./admin-sidebar";
@@ -80,6 +82,9 @@ export function AdminHeader({ className }: AdminHeaderProps) {
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="p-0">
+            <SheetHeader className="sr-only">
+              <SheetTitle>Navigasi Panel Admin</SheetTitle>
+            </SheetHeader>
             <AdminSidebar onNavigate={() => setMobileOpen(false)} />
           </SheetContent>
         </Sheet>

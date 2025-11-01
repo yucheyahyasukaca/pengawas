@@ -93,24 +93,26 @@ export default function AdminDashboardPage() {
         {stats.map((stat) => (
           <Card
             key={stat.label}
-            className="border border-white/70 bg-gradient-to-br from-white via-sky-50/80 to-emerald-50/70 shadow-sm"
+            className="border border-slate-200/80 bg-white shadow-lg shadow-sky-100/60"
           >
             <CardHeader className="flex flex-row items-start gap-4">
-              <div className="rounded-xl bg-gradient-to-br from-sky-500 to-emerald-500 p-2 text-white shadow-lg">
+              <div className="rounded-2xl bg-gradient-to-br from-sky-500 via-sky-400 to-emerald-500 p-2.5 text-white shadow-md">
                 <stat.icon className="size-5" />
               </div>
               <div>
-                <CardTitle className="text-sm font-medium text-slate-600">
+                <CardTitle className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                   {stat.label}
                 </CardTitle>
-                <p className="mt-2 text-2xl font-semibold text-foreground">
+                <p className="mt-2 text-3xl font-bold text-slate-900">
                   {stat.value}
                 </p>
               </div>
             </CardHeader>
             <CardContent>
-              <p className="flex items-center gap-1 text-sm text-slate-600">
-                <TrendingUp className="size-4 text-emerald-500" />
+              <p className="flex items-center gap-2 text-sm font-medium text-slate-600">
+                <span className="flex size-6 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                  <TrendingUp className="size-3.5" />
+                </span>
                 {stat.change}
               </p>
             </CardContent>
@@ -119,18 +121,17 @@ export default function AdminDashboardPage() {
       </section>
 
       <section className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
-        <Card className="border border-white/70 bg-white/90 shadow-sm">
+        <Card className="border border-slate-200/80 bg-white shadow-md shadow-sky-100/60">
           <CardHeader className="flex flex-row items-start justify-between gap-4">
             <div>
-              <CardTitle className="text-base font-semibold">Agenda Terdekat</CardTitle>
+              <CardTitle className="text-lg font-semibold text-slate-900">Agenda Terdekat</CardTitle>
               <CardDescription className="text-slate-600">
                 Pantau kesiapan agenda yang akan berlangsung minggu ini.
               </CardDescription>
             </div>
             <Button
               size="sm"
-              variant="outline"
-              className="border-sky-100 bg-white/90 text-sky-600 hover:border-sky-200 hover:bg-sky-50"
+              className="bg-gradient-to-r from-sky-600 via-sky-500 to-emerald-500 px-4 font-semibold text-white shadow-sm hover:from-sky-700 hover:via-sky-600 hover:to-emerald-600"
             >
               Lihat Kalender
             </Button>
@@ -139,19 +140,21 @@ export default function AdminDashboardPage() {
             {upcomingAgenda.map((agenda) => (
               <div
                 key={agenda.title}
-                className="rounded-xl border border-sky-100 bg-sky-50/60 p-4 transition hover:border-sky-200 hover:bg-white"
+                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-[1px] hover:border-sky-300 hover:shadow-lg hover:shadow-sky-100/70"
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex flex-col gap-1">
-                    <p className="text-sm font-semibold text-foreground">
+                    <p className="text-base font-semibold text-slate-900">
                       {agenda.title}
                     </p>
                     <p className="text-xs text-slate-600">{agenda.date}</p>
                   </div>
-                  <Badge className="bg-sky-100 text-sky-700">{agenda.type}</Badge>
+                  <Badge className="rounded-full border-0 bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-700 shadow-sm">
+                    {agenda.type}
+                  </Badge>
                 </div>
-                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-600">
-                  <span className="rounded-full bg-gradient-to-r from-sky-500/10 to-emerald-500/10 px-3 py-1 font-medium text-sky-600">
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-slate-600">
+                  <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-sky-700">
                     {agenda.status}
                   </span>
                   <span>•</span>
@@ -162,18 +165,17 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border border-white/70 bg-white/90 shadow-sm">
+        <Card className="border border-slate-200/80 bg-white shadow-md shadow-sky-100/60">
           <CardHeader className="flex flex-row items-start justify-between gap-4">
             <div>
-              <CardTitle className="text-base font-semibold">Berita Terbaru</CardTitle>
+              <CardTitle className="text-lg font-semibold text-slate-900">Berita Terbaru</CardTitle>
               <CardDescription className="text-slate-600">
                 Kelola publikasi dan pastikan informasi strategis tersampaikan.
               </CardDescription>
             </div>
             <Button
               size="sm"
-              variant="outline"
-              className="border-sky-100 bg-white/90 text-sky-600 hover:border-sky-200 hover:bg-sky-50"
+              className="bg-gradient-to-r from-emerald-500 via-sky-500 to-sky-600 px-4 font-semibold text-white shadow-sm hover:from-emerald-600 hover:via-sky-600 hover:to-sky-700"
             >
               Kelola Berita
             </Button>
@@ -182,15 +184,18 @@ export default function AdminDashboardPage() {
             {recentNews.map((news) => (
               <div
                 key={news.title}
-                className="flex flex-col gap-1 rounded-lg border border-sky-100 bg-sky-50/60 p-4 hover:border-sky-200 hover:bg-white"
+                className="flex flex-col gap-1 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-[1px] hover:border-sky-300 hover:shadow-lg hover:shadow-sky-100/70"
               >
-                <p className="text-sm font-semibold text-foreground">
+                <p className="text-base font-semibold text-slate-900">
                   {news.title}
                 </p>
                 <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
                   <span>{news.date}</span>
                   <span>•</span>
-                  <Badge variant={news.status === "Tayang" ? "outline" : "secondary"}>
+                  <Badge
+                    variant="outline"
+                    className="rounded-full border-0 bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-700"
+                  >
                     {news.status}
                   </Badge>
                 </div>
@@ -201,10 +206,12 @@ export default function AdminDashboardPage() {
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1fr_1.2fr]">
-        <Card className="border border-white/70 bg-white/90 shadow-sm">
+        <Card className="border border-slate-200/80 bg-white shadow-md shadow-sky-100/60">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base font-semibold">
-              <Sparkles className="size-5 text-sky-500" />
+            <CardTitle className="flex items-center gap-3 text-lg font-semibold text-slate-900">
+              <span className="flex size-9 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 via-sky-400 to-emerald-500 text-white shadow-md">
+                <Sparkles className="size-4" />
+              </span>
               Rekomendasi Aksi
             </CardTitle>
             <CardDescription className="text-slate-600">
@@ -212,53 +219,52 @@ export default function AdminDashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="rounded-xl border border-dashed border-sky-200 bg-sky-50/80 p-4">
-              <p className="text-sm font-semibold text-sky-700">
+            <div className="rounded-2xl border border-dashed border-sky-300 bg-gradient-to-r from-sky-50 via-white to-emerald-50 p-5 shadow-inner">
+              <p className="text-base font-semibold text-slate-900">
                 Perbarui berita terkait Rakor MKPS Kabupaten Kudus
               </p>
-              <p className="mt-2 text-xs text-slate-600">
+              <p className="mt-2 text-sm text-slate-600">
                 Meningkatkan eksposur publikasi dan memastikan tindak lanjut kolaborasi dengan dinas.
               </p>
               <Button
                 size="sm"
-                variant="outline"
-                className="mt-3 border-sky-100 bg-white/90 text-sky-600 hover:border-sky-200 hover:bg-sky-50"
+                className="mt-3 bg-gradient-to-r from-sky-600 via-sky-500 to-emerald-500 px-4 font-semibold text-white shadow-sm hover:from-sky-700 hover:via-sky-600 hover:to-emerald-600"
               >
                 Tulis Berita Baru
               </Button>
             </div>
-            <div className="grid gap-3 text-xs text-slate-600">
-              <div className="rounded-lg border border-sky-100 bg-white/90 p-3 text-slate-700">
+            <div className="grid gap-3 text-sm text-slate-600">
+              <div className="rounded-xl border border-slate-200 bg-white p-3 text-slate-700 shadow-sm">
                 Pastikan dokumen pendukung supervisi SMA Negeri 1 Semarang telah diunggah.
               </div>
-              <div className="rounded-lg border border-sky-100 bg-white/90 p-3 text-slate-700">
+              <div className="rounded-xl border border-slate-200 bg-white p-3 text-slate-700 shadow-sm">
                 Jadwalkan briefing singkat dengan tim pendampingan Kurikulum Merdeka.
               </div>
-              <div className="rounded-lg border border-sky-100 bg-white/90 p-3 text-slate-700">
+              <div className="rounded-xl border border-slate-200 bg-white p-3 text-slate-700 shadow-sm">
                 Tinjau ulang peran pengguna yang belum aktif dalam 30 hari terakhir.
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border border-white/70 bg-white/90 shadow-sm">
+        <Card className="border border-slate-200/80 bg-white shadow-md shadow-sky-100/60">
           <CardHeader>
-            <CardTitle className="text-base font-semibold">Aktivitas Terbaru</CardTitle>
+            <CardTitle className="text-lg font-semibold text-slate-900">Aktivitas Terbaru</CardTitle>
             <CardDescription className="text-slate-600">
               Catatan singkat kolaborasi dan perubahan terakhir dalam sistem.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 text-sm text-slate-700">
-            <div className="flex flex-col gap-1 rounded-lg border border-sky-100 bg-sky-50/70 p-3">
-              <p className="font-medium text-foreground">Eka Suryani memperbarui agenda supervisi.</p>
+            <div className="flex flex-col gap-1 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+              <p className="font-semibold text-slate-900">Eka Suryani memperbarui agenda supervisi.</p>
               <p className="text-xs text-slate-600">2 jam lalu • Agenda • SMA Negeri 1 Semarang</p>
             </div>
-            <div className="flex flex-col gap-1 rounded-lg border border-sky-100 bg-sky-50/70 p-3">
-              <p className="font-medium text-foreground">Admin MKPS menerbitkan berita baru.</p>
+            <div className="flex flex-col gap-1 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+              <p className="font-semibold text-slate-900">Admin MKPS menerbitkan berita baru.</p>
               <p className="text-xs text-slate-600">6 jam lalu • Berita • Portal Publik</p>
             </div>
-            <div className="flex flex-col gap-1 rounded-lg border border-sky-100 bg-sky-50/70 p-3">
-              <p className="font-medium text-foreground">Rudi Hartono menambahkan catatan evaluasi.</p>
+            <div className="flex flex-col gap-1 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+              <p className="font-semibold text-slate-900">Rudi Hartono menambahkan catatan evaluasi.</p>
               <p className="text-xs text-slate-600">Kemarin • Pelaporan • SLB Negeri Ungaran</p>
             </div>
           </CardContent>
