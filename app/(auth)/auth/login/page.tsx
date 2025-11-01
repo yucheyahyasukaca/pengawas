@@ -141,6 +141,12 @@ export default function LoginPage() {
             </form>
           </CardContent>
           <CardFooter className="mt-2 flex flex-col gap-4">
+            <Link
+              href="/"
+              className="flex items-center justify-center rounded-xl border border-white/20 bg-transparent px-4 py-3 text-sm font-medium text-white transition hover:border-white/40 hover:bg-white/10"
+            >
+              ← Kembali ke Beranda
+            </Link>
             <div className="flex items-center gap-3">
               <span className="h-px flex-1 bg-white/10" />
               <span className="text-xs uppercase tracking-[0.35em] text-white/50">
