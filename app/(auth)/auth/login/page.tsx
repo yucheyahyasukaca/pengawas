@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
@@ -78,6 +79,16 @@ export default function LoginPage() {
 
         <Card className="border-white/10 bg-black/60 text-white shadow-lg shadow-black/40 backdrop-blur-xl">
           <CardHeader>
+            <CardAction>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="rounded-full border border-white/10 bg-white/10 px-3 text-white hover:border-white/30 hover:bg-white/20"
+                asChild
+              >
+                <Link href="/">← Kembali</Link>
+              </Button>
+            </CardAction>
             <CardTitle className="text-2xl font-semibold">Masuk ke Akun Anda</CardTitle>
             <CardDescription className="text-sm text-white/70">
               Gunakan kredensial yang terdaftar atau hubungi admin MKPS untuk aktivasi akun baru.
@@ -141,12 +152,6 @@ export default function LoginPage() {
             </form>
           </CardContent>
           <CardFooter className="mt-2 flex flex-col gap-4">
-            <Link
-              href="/"
-              className="flex items-center justify-center rounded-xl border border-white/20 bg-transparent px-4 py-3 text-sm font-medium text-white transition hover:border-white/40 hover:bg-white/10"
-            >
-              ← Kembali ke Beranda
-            </Link>
             <div className="flex items-center gap-3">
               <span className="h-px flex-1 bg-white/10" />
               <span className="text-xs uppercase tracking-[0.35em] text-white/50">
