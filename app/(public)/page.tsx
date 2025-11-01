@@ -113,28 +113,28 @@ export default function HomePage() {
         className="relative overflow-hidden bg-gradient-to-br from-[#371314] via-[#4A1B1C] to-[#2A0A0B] text-white"
       >
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10 mix-blend-overlay" />
-        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8 lg:py-32">
+        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8 lg:py-32">
           <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
             {/* Left Column - Content */}
-            <div className="space-y-8">
-              <Badge className="w-fit rounded-full border-white/30 bg-white/10 px-4 py-1.5 text-sm font-medium text-white">
+            <div className="space-y-6 text-center sm:space-y-8 sm:text-left">
+              <Badge className="mx-auto max-w-[280px] whitespace-normal break-words text-balance rounded-full border-white/30 bg-white/10 px-4 py-2 text-center text-xs font-medium leading-snug text-white sm:mx-0 sm:max-w-none sm:text-sm">
                 {siteConfig.tagline}
               </Badge>
-              <div className="space-y-4">
-                <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
+              <div className="mx-auto space-y-5 text-pretty sm:mx-0 sm:max-w-xl">
+                <h1 className="text-balance text-3xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl">
                   SIP-Kepengawasan
                   <span className="mt-2 block text-[#F1B0B7]">
                     Jawa Tengah
                   </span>
                 </h1>
-                <p className="text-lg leading-relaxed text-white/80 sm:text-xl">
+                <p className="text-base leading-relaxed text-white/85 sm:text-lg">
                   Platform terpadu untuk merencanakan, melaksanakan, dan melaporkan pengawasan pendidikan berbasis data dan kolaboratif.
                 </p>
               </div>
-              <div className="flex flex-col gap-4 sm:flex-row">
+              <div className="mx-auto flex w-full max-w-xs flex-col gap-3 sm:mx-0 sm:w-auto sm:max-w-none sm:flex-row sm:items-center sm:justify-start">
                 <Button
                   size="lg"
-                  className="bg-white text-[#371314] shadow-lg shadow-black/30 hover:bg-white/90"
+                  className="w-full whitespace-normal rounded-full bg-white px-6 py-6 text-base text-[#371314] shadow-lg shadow-black/30 hover:bg-white/90 sm:w-auto"
                   asChild
                 >
                   <Link href="/auth/login">Masuk ke Portal Pengawas</Link>
@@ -142,7 +142,7 @@ export default function HomePage() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="border-white/60 text-white hover:bg-white/10"
+                  className="w-full whitespace-normal rounded-full border-white/60 px-6 py-6 text-base text-white hover:bg-white/10 sm:w-auto"
                   asChild
                 >
                   <Link href="#profil">Jelajahi Lebih Lanjut</Link>
@@ -151,7 +151,7 @@ export default function HomePage() {
             </div>
 
             {/* Right Column - Stats Cards */}
-            <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
+            <div className="mx-auto grid max-w-md gap-4 sm:mx-0 sm:max-w-none sm:grid-cols-2 md:grid-cols-3 lg:max-w-sm lg:grid-cols-1 lg:justify-items-start">
               {stats.map((item) => (
                 <Card
                   key={item.label}
@@ -390,8 +390,8 @@ export default function HomePage() {
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
-            <div className="space-y-6">
-              <Badge className="rounded-full border-white/30 bg-white/10 text-white">
+            <div className="space-y-6 text-center lg:text-left">
+              <Badge className="mx-auto rounded-full border-white/30 bg-white/10 text-white lg:mx-0">
                 Forum & Kolaborasi
               </Badge>
               <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
@@ -400,14 +400,14 @@ export default function HomePage() {
               <p className="text-lg leading-relaxed text-white/75">
                 Pengawas dapat membuka topik, berbagi dokumen pendukung, menandai wilayah terdampak, serta menyusun rekomendasi tindak lanjut bersama. Admin MKPS memoderasi diskusi agar tetap fokus pada peningkatan mutu.
               </p>
-              <div className="flex flex-wrap gap-3">
-                <Badge className="rounded-full border-white/30 bg-white/10 text-white">
+              <div className="flex flex-wrap justify-center gap-3 lg:justify-start">
+                <Badge className="rounded-full border-white/30 bg-white/10 px-3 py-1 text-white">
                   Moderasi Admin
                 </Badge>
-                <Badge className="rounded-full border-white/30 bg-white/10 text-white">
+                <Badge className="rounded-full border-white/30 bg-white/10 px-3 py-1 text-white">
                   Role-Based Access
                 </Badge>
-                <Badge className="rounded-full border-white/30 bg-white/10 text-white">
+                <Badge className="rounded-full border-white/30 bg-white/10 px-3 py-1 text-white">
                   Dokumen Pendukung
                 </Badge>
               </div>
@@ -486,7 +486,7 @@ export default function HomePage() {
           <div className="mt-12 flex flex-col gap-4 sm:flex-row sm:justify-center">
             <Button
               size="lg"
-              className="bg-white text-[#371314] shadow-lg shadow-black/30 hover:bg-white/90"
+              className="w-full bg-white text-[#371314] shadow-lg shadow-black/30 hover:bg-white/90 sm:w-auto"
               asChild
             >
               <Link href="/auth/register">Daftar Pengawas Baru</Link>
@@ -494,7 +494,7 @@ export default function HomePage() {
             <Button
               size="lg"
               variant="outline"
-              className="border-white/40 text-white hover:bg-white/10"
+              className="w-full border-white/40 text-white hover:bg-white/10 sm:w-auto"
               asChild
             >
               <Link href="/auth/login">Masuk sebagai Admin MKPS</Link>
