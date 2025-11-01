@@ -62,11 +62,17 @@ const agendaFilters = ["Semua", "Supervisi", "Pendampingan", "Monitoring", "Rako
 export default function AgendaManagementPage() {
   return (
     <div className="flex flex-col gap-6">
-      <Card className="border border-white/70 bg-white shadow-sm">
-        <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <CardTitle className="text-xl font-semibold text-slate-800">Manajemen Agenda</CardTitle>
-            <CardDescription className="text-slate-600">
+      <Card className="relative overflow-hidden border border-rose-100 bg-white/95 shadow-lg shadow-rose-100/70">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-r from-rose-100/60 via-white to-amber-100/60" />
+        <div className="pointer-events-none absolute -right-12 bottom-0 h-40 w-40 rounded-full bg-rose-100/60 blur-3xl" />
+        <CardHeader className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex flex-col gap-2">
+            <span className="inline-flex w-fit items-center gap-2 rounded-full border border-rose-200 bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.25em] text-rose-500 shadow-sm">
+              <span className="size-2 rounded-full bg-rose-400" />
+              Agenda
+            </span>
+            <CardTitle className="text-2xl font-bold text-slate-900">Manajemen Agenda</CardTitle>
+            <CardDescription className="max-w-xl text-slate-600">
               Atur jadwal supervisi, pendampingan, dan kegiatan MKPS secara terstruktur.
             </CardDescription>
           </div>
@@ -74,7 +80,7 @@ export default function AgendaManagementPage() {
             <Button
               variant="outline"
               size="sm"
-              className="gap-2 border-sky-200 bg-white text-sky-700 font-semibold hover:border-sky-300 hover:bg-sky-50"
+              className="gap-2 rounded-full border-rose-200 bg-white text-rose-600 font-semibold shadow-sm hover:border-rose-300 hover:bg-rose-50"
               asChild
             >
               <Link href="/admin/agenda/template">
@@ -84,7 +90,7 @@ export default function AgendaManagementPage() {
             </Button>
             <Button
               size="sm"
-              className="gap-2 bg-gradient-to-r from-sky-600 to-emerald-500 text-white font-semibold shadow-md hover:from-sky-700 hover:to-emerald-600"
+              className="gap-2 rounded-full bg-gradient-to-r from-rose-600 via-rose-500 to-amber-400 text-white font-semibold shadow-lg hover:from-rose-700 hover:via-rose-600 hover:to-amber-500"
               asChild
             >
               <Link href="/admin/agenda/buat">
@@ -96,7 +102,7 @@ export default function AgendaManagementPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
-            <span className="font-semibold text-slate-800">Filter:</span>
+            <span className="font-semibold text-slate-900">Filter:</span>
             {agendaFilters.map((filter, index) => (
               <Button
                 key={filter}
@@ -105,8 +111,8 @@ export default function AgendaManagementPage() {
                 className={cn(
                   "rounded-full px-4",
                   index === 0
-                    ? "!border-0 bg-gradient-to-r from-sky-600 to-emerald-500 text-white font-semibold shadow-md hover:from-sky-700 hover:to-emerald-600"
-                    : "border-sky-200 bg-white text-sky-700 font-semibold hover:border-sky-300 hover:bg-sky-50",
+                    ? "!border-0 bg-gradient-to-r from-rose-600 via-rose-500 to-amber-400 text-white font-semibold shadow-md hover:from-rose-700 hover:via-rose-600 hover:to-amber-500"
+                    : "border-rose-200 bg-white text-rose-600 font-semibold hover:border-rose-300 hover:bg-rose-50",
                 )}
               >
                 {filter}
@@ -115,16 +121,16 @@ export default function AgendaManagementPage() {
             <Button
               variant="ghost"
               size="sm"
-              className="ml-auto gap-2 font-semibold text-sky-700 hover:bg-sky-50"
+              className="ml-auto gap-2 font-semibold text-rose-600 hover:bg-rose-50"
             >
               <Filter className="size-4" />
               Filter Lanjut
             </Button>
           </div>
 
-          <div className="overflow-hidden rounded-xl border border-white/70 bg-white/95 shadow-sm">
+          <div className="overflow-hidden rounded-2xl border border-rose-100 bg-white/95 shadow-lg">
             <table className="w-full border-collapse text-left text-sm text-slate-700">
-              <thead className="bg-gradient-to-r from-sky-50 to-emerald-50 text-xs font-semibold uppercase tracking-wide text-slate-600">
+              <thead className="bg-gradient-to-r from-rose-50 via-white to-amber-50 text-xs font-semibold uppercase tracking-wide text-rose-500">
                 <tr>
                   <th className="px-5 py-3 font-semibold">Agenda</th>
                   <th className="px-5 py-3 font-semibold">Tanggal</th>
@@ -134,18 +140,18 @@ export default function AgendaManagementPage() {
                   <th className="px-5 py-3 font-semibold text-right">Aksi</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-sky-100">
+              <tbody className="divide-y divide-rose-100">
                 {agendaData.map((agenda) => (
-                  <tr key={agenda.id} className="hover:bg-sky-50/70">
+                  <tr key={agenda.id} className="hover:bg-rose-50/70">
                     <td className="px-5 py-4 align-top">
                       <div className="flex flex-col gap-1">
-                        <span className="text-sm font-semibold text-slate-800">
+                        <span className="text-sm font-semibold text-slate-900">
                           {agenda.title}
                         </span>
-                        <div className="flex items-center gap-2 text-xs text-slate-600">
+                        <div className="flex items-center gap-2 text-xs text-slate-500">
                           <Badge
                             variant="outline"
-                            className="rounded-full border-sky-200 bg-sky-50 px-2 text-sky-700"
+                            className="rounded-full border-rose-200 bg-rose-50 px-2 text-rose-600"
                           >
                             {agenda.type}
                           </Badge>
@@ -157,13 +163,13 @@ export default function AgendaManagementPage() {
                     <td className="px-5 py-4 text-sm text-slate-600">{agenda.date}</td>
                     <td className="px-5 py-4 text-sm text-slate-600">
                       <span className="flex items-center gap-1">
-                        <MapPin className="size-4 text-sky-500" />
+                        <MapPin className="size-4 text-rose-500" />
                         {agenda.location}
                       </span>
                     </td>
                     <td className="px-5 py-4 text-sm text-slate-600">
                       <span className="flex items-center gap-2">
-                        <Users className="size-4 text-sky-500" />
+                        <Users className="size-4 text-rose-500" />
                         {agenda.coordinator}
                       </span>
                     </td>
@@ -174,7 +180,7 @@ export default function AgendaManagementPage() {
                           "rounded-full px-3",
                           agenda.status === "Siap Jalan"
                             ? "bg-emerald-200 text-emerald-800"
-                            : "border-sky-300 text-sky-700",
+                            : "border-rose-300 text-rose-600",
                         )}
                       >
                         {agenda.status}
@@ -185,7 +191,7 @@ export default function AgendaManagementPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="font-semibold text-sky-700 hover:bg-sky-50"
+                          className="font-semibold text-rose-600 hover:bg-rose-50"
                           asChild
                         >
                           <Link href={`/admin/agenda/${agenda.id.toLowerCase()}`}>
@@ -195,7 +201,7 @@ export default function AgendaManagementPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="border-sky-200 text-slate-700 font-semibold hover:border-sky-300 hover:bg-sky-50"
+                          className="border-rose-200 text-slate-700 font-semibold hover:border-rose-300 hover:bg-rose-50"
                           asChild
                         >
                           <Link href={`/admin/agenda/${agenda.id.toLowerCase()}/edit`}>
@@ -216,14 +222,14 @@ export default function AgendaManagementPage() {
             <Button
               variant="outline"
               size="sm"
-              className="border-sky-200 text-slate-700 font-semibold hover:border-sky-300 hover:bg-sky-50"
+              className="border-rose-200 text-slate-700 font-semibold hover:border-rose-300 hover:bg-rose-50"
             >
               Sebelumnya
             </Button>
             <Button
               variant="default"
               size="sm"
-              className="bg-gradient-to-r from-sky-600 to-emerald-500 text-white font-semibold shadow-md hover:from-sky-700 hover:to-emerald-600"
+              className="bg-gradient-to-r from-rose-600 via-rose-500 to-amber-400 text-white font-semibold shadow-lg hover:from-rose-700 hover:via-rose-600 hover:to-amber-500"
             >
               Berikutnya
             </Button>
@@ -232,16 +238,16 @@ export default function AgendaManagementPage() {
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="border border-dashed border-sky-200 bg-sky-50/80">
+        <Card className="border border-dashed border-rose-200 bg-gradient-to-br from-rose-50 via-white to-rose-50">
           <CardHeader>
-            <CardTitle className="text-base font-semibold text-sky-700">
+            <CardTitle className="text-base font-semibold text-rose-600">
               Blueprint Agenda Kolaboratif
             </CardTitle>
-            <CardDescription className="text-sky-600">
+            <CardDescription className="text-rose-500">
               Gunakan template kolaborasi untuk mengundang pengawas lintas wilayah.
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col gap-3 text-xs text-sky-600/80">
+          <CardContent className="flex flex-col gap-3 text-xs text-rose-500">
             <p>
               • Sinkronkan jadwal dengan Google Calendar dan Supabase secara otomatis.
             </p>
@@ -251,30 +257,30 @@ export default function AgendaManagementPage() {
           <CardFooter>
             <Button
               variant="outline"
-              className="border-sky-300 text-sky-700 font-semibold hover:border-sky-400 hover:bg-sky-50"
+              className="rounded-full border-rose-200 text-rose-600 font-semibold hover:border-rose-300 hover:bg-rose-50"
             >
               Pelajari Lebih Lanjut
             </Button>
           </CardFooter>
         </Card>
 
-        <Card className="border border-white/70 bg-white/90 shadow-sm">
+        <Card className="border border-rose-100 bg-white/95 shadow-lg shadow-rose-100/70">
           <CardHeader>
-            <CardTitle className="text-base font-semibold text-slate-800">Agenda Perlu Tindak Lanjut</CardTitle>
+            <CardTitle className="text-base font-semibold text-slate-900">Agenda Perlu Tindak Lanjut</CardTitle>
             <CardDescription className="text-slate-600">
               Pastikan dokumen, notulen, dan catatan evaluasi terselesaikan tepat waktu.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-slate-600">
-            <div className="rounded-lg border border-sky-100 bg-sky-50/60 p-3">
+            <div className="rounded-xl border border-rose-100 bg-rose-50/80 p-3">
               <p className="font-semibold text-slate-800">Monitoring Simulasi Asesmen</p>
               <p className="text-xs text-slate-600">Unggah hasil analisis asesmen sebelum 6 November 2025.</p>
             </div>
-            <div className="rounded-lg border border-sky-100 bg-sky-50/60 p-3">
+            <div className="rounded-xl border border-rose-100 bg-rose-50/80 p-3">
               <p className="font-semibold text-slate-800">Rapat Koordinasi MKPS Kabupaten</p>
               <p className="text-xs text-slate-600">Konfirmasi kehadiran dan materi presentasi narasumber.</p>
             </div>
-            <div className="rounded-lg border border-sky-100 bg-sky-50/60 p-3">
+            <div className="rounded-xl border border-rose-100 bg-rose-50/80 p-3">
               <p className="font-semibold text-slate-800">Pendampingan Literasi Numerasi</p>
               <p className="text-xs text-slate-600">Lengkapi daftar hadir dan dokumentasi kegiatan.</p>
             </div>
