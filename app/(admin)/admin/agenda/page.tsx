@@ -74,7 +74,7 @@ export default function AgendaManagementPage() {
             <Button
               variant="outline"
               size="sm"
-              className="gap-2 border-sky-100 bg-white/90 text-sky-600 hover:border-sky-200 hover:bg-sky-50"
+              className="gap-2 border-sky-200 bg-white text-sky-700 font-semibold hover:border-sky-300 hover:bg-sky-50"
               asChild
             >
               <Link href="/admin/agenda/template">
@@ -105,8 +105,8 @@ export default function AgendaManagementPage() {
                 className={cn(
                   "rounded-full px-4",
                   index === 0
-                    ? "bg-gradient-to-r from-sky-500 to-emerald-500 text-white shadow-md hover:from-sky-600 hover:to-emerald-600"
-                    : "border-sky-100 bg-white/80 text-sky-600 hover:border-sky-200 hover:bg-sky-50",
+                    ? "!border-0 bg-gradient-to-r from-sky-600 to-emerald-500 text-white font-semibold shadow-md hover:from-sky-700 hover:to-emerald-600"
+                    : "border-sky-200 bg-white text-sky-700 font-semibold hover:border-sky-300 hover:bg-sky-50",
                 )}
               >
                 {filter}
@@ -115,7 +115,7 @@ export default function AgendaManagementPage() {
             <Button
               variant="ghost"
               size="sm"
-              className="ml-auto gap-2 text-sky-600 hover:bg-sky-50"
+              className="ml-auto gap-2 font-semibold text-sky-700 hover:bg-sky-50"
             >
               <Filter className="size-4" />
               Filter Lanjut

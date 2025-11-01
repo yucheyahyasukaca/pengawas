@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlignLeft, ClipboardCheck, Edit3, Globe, Plus, Upload } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const newsData = [
   {
@@ -86,42 +87,42 @@ export default function NewsManagementPage() {
             <Button
               variant="outline"
               size="sm"
-              className="rounded-full border-sky-200 bg-white px-4 text-sky-700 font-semibold hover:border-sky-300 hover:bg-sky-50"
+              className="rounded-full border-sky-300 bg-white px-4 text-sky-700 font-semibold hover:border-sky-400 hover:bg-sky-50"
             >
               Semua Status
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="rounded-full px-4 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
+              className="rounded-full px-4 font-semibold text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
             >
               Tayang
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="rounded-full px-4 text-amber-600 hover:bg-amber-50 hover:text-amber-700"
+              className="rounded-full px-4 font-semibold text-amber-600 hover:bg-amber-50 hover:text-amber-700"
             >
               Draft
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="rounded-full px-4 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+              className="rounded-full px-4 font-semibold text-blue-600 hover:bg-blue-50 hover:text-blue-700"
             >
               Terjadwal
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="rounded-full px-4 text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+              className="rounded-full px-4 font-semibold text-rose-600 hover:bg-rose-50 hover:text-rose-700"
             >
               Butuh Review
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="ml-auto gap-2 text-sky-700 hover:bg-sky-50"
+              className="ml-auto gap-2 font-semibold text-sky-700 hover:bg-sky-50"
             >
               <Upload className="size-4" />
               Impor dari Dokumen
@@ -154,14 +155,17 @@ export default function NewsManagementPage() {
                     <td className="px-5 py-4 text-sm text-slate-600">{news.author}</td>
                     <td className="px-5 py-4">
                       <Badge
-                        variant={
+                        variant="outline"
+                        className={cn(
+                          "rounded-full px-3 font-semibold",
                           news.status === "Tayang"
-                            ? "secondary"
+                            ? "border-0 bg-emerald-100 text-emerald-700"
                             : news.status === "Draft"
-                              ? "outline"
-                              : "default"
-                        }
-                        className="rounded-full px-3"
+                              ? "border-amber-300 text-amber-700"
+                              : news.status === "Terjadwal"
+                                ? "border-0 bg-sky-100 text-sky-700"
+                                : "border-rose-300 text-rose-600",
+                        )}
                       >
                         {news.status}
                       </Badge>

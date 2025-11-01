@@ -70,7 +70,11 @@ export function AdminHeader({ className }: AdminHeaderProps) {
       <div className="flex items-center gap-3">
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger asChild>
-            <Button variant="outline" size="icon" className="lg:hidden border-sky-100 bg-white/80 text-sky-600 hover:bg-sky-50">
+            <Button
+              variant="outline"
+              size="icon"
+              className="lg:hidden border-slate-200 bg-white text-sky-600 hover:border-slate-300 hover:bg-sky-50"
+            >
               <Menu className="size-5" />
               <span className="sr-only">Buka navigasi</span>
             </Button>
@@ -81,12 +85,12 @@ export function AdminHeader({ className }: AdminHeaderProps) {
         </Sheet>
 
         <div className="flex flex-1 flex-col gap-1">
-          <nav className="text-xs text-slate-600">
+          <nav className="text-xs font-semibold text-slate-500">
             <ol className="flex flex-wrap items-center gap-1">
               {breadcrumbs.map((crumb, index) => {
                 const isLast = index === breadcrumbs.length - 1;
                 return (
-                  <li key={crumb.href} className="flex items-center gap-1 text-slate-600">
+                  <li key={crumb.href} className="flex items-center gap-1 text-slate-500">
                     {index > 0 ? <span className="text-slate-400">/</span> : null}
                     {isLast ? (
                       <span className="font-semibold text-slate-700">{crumb.label}</span>
@@ -104,7 +108,7 @@ export function AdminHeader({ className }: AdminHeaderProps) {
             </ol>
           </nav>
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-lg font-semibold leading-tight tracking-tight text-foreground">
+            <h1 className="text-xl font-bold leading-tight tracking-tight text-slate-900">
               {activeItem?.title ?? "Panel Admin"}
             </h1>
             <span className="hidden items-center gap-1 rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-semibold text-sky-700 sm:flex">
@@ -180,9 +184,9 @@ export function AdminHeader({ className }: AdminHeaderProps) {
           {adminQuickActions.map((action) => (
             <Button
               key={action.href}
-              variant="outline"
+              variant="default"
               size="sm"
-              className="border-sky-200 bg-white text-sky-700 font-semibold shadow-sm transition hover:border-sky-300 hover:bg-sky-50"
+              className="!border-0 bg-gradient-to-r from-sky-600 via-sky-500 to-emerald-500 font-semibold text-white shadow-lg hover:from-sky-700 hover:via-sky-600 hover:to-emerald-600 focus-visible:ring-sky-300"
               asChild
             >
               <Link href={action.href}>{action.title}</Link>
