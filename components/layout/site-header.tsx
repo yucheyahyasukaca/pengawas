@@ -1,55 +1,62 @@
- use client;
+"use client";
 
-import Link from next/link;
-import { Menu } from lucide-react;
-import { useState } from react;
+import Link from "next/link";
+import { Menu } from "lucide-react";
+import { useState } from "react";
 
-import { siteConfig } from @/config/site;
-import { cn } from @/lib/utils;
-import { Button } from @/components/ui/button;
+import { siteConfig } from "@/config/site";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
-} from @/components/ui/navigation-menu;
+} from "@/components/ui/navigation-menu";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from @/components/ui/sheet;
-import { Separator } from @/components/ui/separator;
+} from "@/components/ui/sheet";
+import { Separator } from "@/components/ui/separator";
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
+  const headerBackgroundClass =
+    "bg-[#371314] text-white";
 
   return (
-    <header className=sticky top-0 z-50 w-full border-b border-transparent bg-gradient-to-r from-primary/90 via-primary/95 to-primary/90 text-primary-foreground shadow-md backdrop-blur supports-[backdrop-filter]:bg-primary/85>
-      <div className=mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8>
-        <Link href=#beranda className=flex items-center gap-2>
-          <div className=flex h-9 w-9 items-center justify-center rounded-full bg-primary-foreground/20 text-primary-foreground shadow-lg ring-1 ring-primary/40>
-            <span className=text-lg font-semibold>S</span>
+    <header
+      className={cn(
+        "sticky top-0 z-50 w-full border-b border-transparent shadow-md backdrop-blur supports-[backdrop-filter]:bg-[#371314]/90",
+        headerBackgroundClass,
+      )}
+    >
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <Link href="#beranda" className="flex items-center gap-2">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white shadow-lg ring-1 ring-white/30">
+            <span className="text-lg font-semibold">S</span>
           </div>
-          <div className=flex flex-col leading-tight text-primary-foreground>
-            <span className=text-xs font-semibold uppercase tracking-wide text-primary-foreground/70>
-              MKPS SMA & SLB
+          <div className="flex flex-col leading-tight text-white">
+            <span className="text-xs font-semibold uppercase tracking-wide text-white/80">
+              MKPS SMA &amp; SLB
             </span>
-            <span className=text-base font-bold sm:text-lg>
+            <span className="text-base font-bold sm:text-lg">
               {siteConfig.shortName}
             </span>
           </div>
         </Link>
 
-        <div className=hidden items-center gap-8 lg:flex>
+        <div className="hidden items-center gap-8 lg:flex">
           <NavigationMenu>
             <NavigationMenuList>
               {siteConfig.navigation.map((item) => (
                 <NavigationMenuItem key={item.href}>
                   <NavigationMenuLink
                     href={item.href}
-                    className=text-sm font-medium text-primary-foreground/80 transition-colors hover:text-primary-foreground
+                    className="text-sm font-medium text-white/80 transition-colors hover:text-white"
                   >
                     {item.label}
                   </NavigationMenuLink>
@@ -57,19 +64,19 @@ export function SiteHeader() {
               ))}
             </NavigationMenuList>
           </NavigationMenu>
-          <div className=flex items-center gap-3>
+          <div className="flex items-center gap-3">
             <Button
-              variant=ghost
-              className=text-primary-foreground hover:bg-primary/70 hover:text-primary-foreground
+              variant="ghost"
+              className="text-white hover:bg-white/10 hover:text-white"
               asChild
             >
-              <Link href=#forum>Forum</Link>
+              <Link href="#forum">Forum</Link>
             </Button>
             <Button
-              className=bg-primary-foreground text-primary shadow-lg shadow-black/20 hover:bg-primary-foreground/90
+              className="bg-white text-[#3F0607] shadow-lg shadow-black/20 hover:bg-white/90"
               asChild
             >
-              <Link href=/auth/login>Masuk</Link>
+              <Link href="/auth/login">Masuk</Link>
             </Button>
           </div>
         </div>
@@ -77,50 +84,57 @@ export function SiteHeader() {
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
             <Button
-              variant=ghost
-              size=icon
-              className=lg:hidden text-primary-foreground hover:bg-primary/70 hover:text-primary-foreground
+              variant="ghost"
+              size="icon"
+              className="lg:hidden text-white hover:bg-white/10 hover:text-white"
             >
-              <Menu className=h-5 w-5 />
-              <span className=sr-only>Toggle menu</span>
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">Toggle menu</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side=top className=pt-6>
+          <SheetContent
+            side="top"
+            className={cn(
+              "pt-6",
+              headerBackgroundClass,
+              "shadow-none border-b border-transparent bg-[#371314]",
+            )}
+          >
             <SheetHeader>
-              <SheetTitle className=text-left text-base font-semibold text-primary>
+              <SheetTitle className="text-left text-base font-semibold text-white">
                 Navigasi SIP-Kepengawasan Jateng
               </SheetTitle>
             </SheetHeader>
-            <nav className=mt-4 space-y-4>
+            <nav className="mt-4 space-y-4">
               {siteConfig.navigation.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
                   onClick={() => setOpen(false)}
                   className={cn(
-                    block rounded-md px-3 py-2 text-base font-medium text-foreground transition-colors hover:bg-muted,
+                    "block rounded-md px-3 py-2 text-base font-medium text-white/90 transition-colors hover:bg-white/10",
                   )}
                 >
                   {item.label}
                 </Link>
               ))}
             </nav>
-            <Separator className=my-4 />
-            <div className=flex flex-col gap-2>
+            <Separator className="my-4 bg-white/20" />
+            <div className="flex flex-col gap-2">
               <Button
-                variant=ghost
-                className=justify-start text-primary hover:bg-primary/10 hover:text-primary
+                variant="ghost"
+                className="justify-start text-white hover:bg-white/10 hover:text-white"
                 asChild
               >
-                <Link href=#forum onClick={() => setOpen(false)}>
+                <Link href="#forum" onClick={() => setOpen(false)}>
                   Forum Diskusi
                 </Link>
               </Button>
               <Button
-                className=justify-start bg-primary text-primary-foreground hover:bg-primary/90
+                className="justify-start bg-white text-[#3F0607] hover:bg-white/90"
                 asChild
               >
-                <Link href=/auth/login onClick={() => setOpen(false)}>
+                <Link href="/auth/login" onClick={() => setOpen(false)}>
                   Masuk ke Portal
                 </Link>
               </Button>

@@ -110,32 +110,41 @@ export default function HomePage() {
       {/* Hero Section - Modern & Clean */}
       <section
         id="beranda"
-        className="relative overflow-hidden bg-gradient-to-br from-white via-secondary/30 to-accent/20"
+        className="relative overflow-hidden bg-gradient-to-br from-[#371314] via-[#4A1B1C] to-[#2A0A0B] text-white"
       >
-        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5" />
+        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10 mix-blend-overlay" />
         <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-24 lg:px-8 lg:py-32">
           <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
             {/* Left Column - Content */}
             <div className="space-y-8">
-              <Badge className="w-fit rounded-full border-primary/30 bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary">
+              <Badge className="w-fit rounded-full border-white/30 bg-white/10 px-4 py-1.5 text-sm font-medium text-white">
                 {siteConfig.tagline}
               </Badge>
               <div className="space-y-4">
-                <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+                <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
                   SIP-Kepengawasan
-                  <span className="mt-2 block text-primary">
+                  <span className="mt-2 block text-[#F1B0B7]">
                     Jawa Tengah
                   </span>
                 </h1>
-                <p className="text-lg leading-relaxed text-foreground/80 sm:text-xl">
+                <p className="text-lg leading-relaxed text-white/80 sm:text-xl">
                   Platform terpadu untuk merencanakan, melaksanakan, dan melaporkan pengawasan pendidikan berbasis data dan kolaboratif.
                 </p>
               </div>
               <div className="flex flex-col gap-4 sm:flex-row">
-                <Button size="lg" className="bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90" asChild>
+                <Button
+                  size="lg"
+                  className="bg-white text-[#371314] shadow-lg shadow-black/30 hover:bg-white/90"
+                  asChild
+                >
                   <Link href="/auth/login">Masuk ke Portal Pengawas</Link>
                 </Button>
-                <Button size="lg" variant="outline" className="border-primary/40 text-foreground hover:bg-primary/5" asChild>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-white/60 text-white hover:bg-white/10"
+                  asChild
+                >
                   <Link href="#profil">Jelajahi Lebih Lanjut</Link>
                 </Button>
               </div>
@@ -146,14 +155,14 @@ export default function HomePage() {
               {stats.map((item) => (
                 <Card
                   key={item.label}
-                  className="group border border-border/50 bg-white/80 shadow-sm backdrop-blur transition-all hover:shadow-md hover:shadow-primary/10"
+                  className="group border border-white/20 bg-white/5 shadow-md shadow-black/20 backdrop-blur transition-all hover:border-white/30 hover:shadow-black/30"
                 >
                   <CardContent className="p-6">
-                    <p className="text-4xl font-bold text-primary">{item.value}</p>
-                    <p className="mt-2 text-sm font-semibold uppercase tracking-wide text-foreground">
+                    <p className="text-4xl font-bold text-[#F7CDD0]">{item.value}</p>
+                    <p className="mt-2 text-sm font-semibold uppercase tracking-wide text-white">
                       {item.label}
                     </p>
-                    <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                    <p className="mt-2 text-xs leading-relaxed text-white/70">
                       {item.description}
                     </p>
                   </CardContent>
@@ -165,34 +174,34 @@ export default function HomePage() {
       </section>
 
       {/* Agenda & News Section */}
-      <section className="bg-muted/30 py-16 sm:py-20">
+      <section className="bg-gradient-to-br from-[#1C0B0C] via-[#311112] to-[#1A0707] py-16 text-white sm:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-10 text-center">
-            <Badge variant="outline" className="mb-4 rounded-full">
+            <Badge className="mb-4 rounded-full border-white/30 bg-white/10 text-white">
               Informasi Terkini
             </Badge>
-            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
               Agenda & Berita Terbaru
             </h2>
           </div>
           <div className="grid gap-8 lg:grid-cols-2">
             {/* Agenda Card */}
-            <Card className="border border-border/50 bg-white shadow-md">
+            <Card className="border border-white/15 bg-white/5 text-white shadow-lg shadow-black/30 backdrop-blur">
               <CardHeader>
-                <CardTitle className="text-xl font-semibold text-foreground">
+                <CardTitle className="text-xl font-semibold text-white">
                   Agenda Terdekat
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-white/70">
                   Pastikan perencanaan supervisi dan pelaporan berjalan tepat waktu.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="rounded-xl border border-primary/20 bg-primary/5 p-5">
-                  <p className="text-sm font-bold text-primary">12 November 2025</p>
-                  <p className="mt-2 font-semibold text-foreground">
+                <div className="rounded-xl border border-white/20 bg-white/10 p-5">
+                  <p className="text-sm font-bold text-[#F7CDD0]">12 November 2025</p>
+                  <p className="mt-2 font-semibold text-white">
                     Workshop Penyelarasan RPK & RKS Berbasis Data
                   </p>
-                  <p className="mt-2 text-sm text-muted-foreground">
+                  <p className="mt-2 text-sm text-white/70">
                     Cabdin Wilayah Surakarta · Wajib hadir untuk pengawas SMA.
                   </p>
                 </div>
@@ -200,12 +209,12 @@ export default function HomePage() {
             </Card>
 
             {/* News Highlights */}
-            <Card className="border border-border/50 bg-white shadow-md">
+            <Card className="border border-white/15 bg-white/5 text-white shadow-lg shadow-black/30 backdrop-blur">
               <CardHeader>
-                <CardTitle className="text-xl font-semibold text-foreground">
+                <CardTitle className="text-xl font-semibold text-white">
                   Berita & Highlight
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-white/70">
                   Update terbaru seputar kepengawasan dan kebijakan pendidikan.
                 </CardDescription>
               </CardHeader>
@@ -213,15 +222,15 @@ export default function HomePage() {
                 {newsHighlights.map((item) => (
                   <div
                     key={item.title}
-                    className="group rounded-lg border border-border/50 bg-background p-4 transition-all hover:border-primary/30 hover:shadow-sm"
+                    className="group rounded-lg border border-white/15 bg-white/5 p-4 transition-all hover:border-white/30 hover:bg-white/10"
                   >
-                    <p className="font-semibold text-foreground">{item.title}</p>
-                    <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
+                    <p className="font-semibold text-white">{item.title}</p>
+                    <p className="mt-1 text-sm text-white/70 line-clamp-2">
                       {item.description}
                     </p>
                     <Link
                       href={item.href}
-                      className="mt-2 inline-flex text-sm font-semibold text-primary transition-colors hover:text-primary/80"
+                      className="mt-2 inline-flex text-sm font-semibold text-[#F7CDD0] transition-colors hover:text-white"
                     >
                       Baca selengkapnya →
                     </Link>
@@ -234,16 +243,19 @@ export default function HomePage() {
       </section>
 
       {/* Profil MKPS Section */}
-      <section id="profil" className="py-16 sm:py-20">
+      <section
+        id="profil"
+        className="bg-gradient-to-br from-[#1C0B0C] via-[#311112] to-[#1A0707] py-16 text-white sm:py-20"
+      >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-12 text-center">
-            <Badge variant="outline" className="mb-4 rounded-full">
+            <Badge className="mb-4 rounded-full border-white/30 bg-white/10 text-white">
               Profil MKPS
             </Badge>
-            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
               Menguatkan Ekosistem Kepengawasan Provinsi Jawa Tengah
             </h2>
-            <p className="mx-auto mt-4 max-w-3xl text-lg text-muted-foreground">
+            <p className="mx-auto mt-4 max-w-3xl text-lg text-white/75">
               MKPS SMA & SLB Provinsi Jawa Tengah hadir sebagai penggerak utama peningkatan mutu melalui supervisi akademik, manajerial, dan pendampingan kepala sekolah yang terstruktur.
             </p>
           </div>
@@ -251,13 +263,13 @@ export default function HomePage() {
             {programPillars.map((pillar) => (
               <Card
                 key={pillar.title}
-                className="group border border-border/50 bg-white shadow-sm transition-all hover:shadow-md hover:shadow-primary/10"
+                className="group border border-white/15 bg-white/5 text-white shadow-lg shadow-black/30 transition-all hover:border-white/30 hover:bg-white/10"
               >
                 <CardHeader>
-                  <CardTitle className="text-lg font-semibold text-foreground">
+                  <CardTitle className="text-lg font-semibold text-white">
                     {pillar.title}
                   </CardTitle>
-                  <CardDescription className="leading-relaxed">
+                  <CardDescription className="leading-relaxed text-white/70">
                     {pillar.description}
                   </CardDescription>
                 </CardHeader>
@@ -268,16 +280,19 @@ export default function HomePage() {
       </section>
 
       {/* Karya Pengawas Section */}
-      <section id="karya" className="bg-gradient-to-br from-secondary/20 via-white to-accent/10 py-16 sm:py-20">
+      <section
+        id="karya"
+        className="bg-gradient-to-br from-[#1C0B0C] via-[#311112] to-[#1A0707] py-16 text-white sm:py-20"
+      >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-12 text-center">
-            <Badge variant="outline" className="mb-4 rounded-full">
+            <Badge className="mb-4 rounded-full border-white/30 bg-white/10 text-white">
               Tulisan & Karya Pengawas
             </Badge>
-            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
               Dokumentasi Praktik Baik & Inovasi Kepengawasan
             </h2>
-            <p className="mx-auto mt-4 max-w-3xl text-lg text-muted-foreground">
+            <p className="mx-auto mt-4 max-w-3xl text-lg text-white/75">
               Pengawas dapat mengunggah karya dengan proses review admin. Konten dikurasi dalam kategori strategis sehingga mudah ditemukan.
             </p>
           </div>
@@ -285,18 +300,18 @@ export default function HomePage() {
             {karyaCategories.map((category) => (
               <Card
                 key={category.title}
-                className="group h-full border border-border/50 bg-white shadow-sm transition-all hover:shadow-md hover:shadow-primary/10"
+                className="group h-full border border-white/15 bg-white/5 text-white shadow-lg shadow-black/30 transition-all hover:border-white/30 hover:bg-white/10"
               >
                 <CardHeader>
-                  <CardTitle className="text-lg font-semibold text-foreground">
+                  <CardTitle className="text-lg font-semibold text-white">
                     {category.title}
                   </CardTitle>
-                  <CardDescription className="leading-relaxed">
+                  <CardDescription className="leading-relaxed text-white/70">
                     {category.description}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button variant="link" className="px-0 text-primary" asChild>
+                  <Button variant="link" className="px-0 text-[#F7CDD0] hover:text-white" asChild>
                     <Link href="#">Jelajahi arsip →</Link>
                   </Button>
                 </CardContent>
@@ -307,29 +322,32 @@ export default function HomePage() {
       </section>
 
       {/* Regulasi Section */}
-      <section id="regulasi" className="py-16 sm:py-20">
+      <section
+        id="regulasi"
+        className="bg-gradient-to-br from-[#1C0B0C] via-[#311112] to-[#1A0707] py-16 text-white sm:py-20"
+      >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-8 lg:grid-cols-2">
             {/* Main Regulasi Card */}
-            <Card className="border border-primary/20 bg-gradient-to-br from-white via-secondary/50 to-secondary/20 text-foreground shadow-xl">
+            <Card className="border border-white/20 bg-gradient-to-br from-[#401416] via-[#592022] to-[#2B0D0E] text-white shadow-2xl shadow-black/30 backdrop-blur">
               <CardHeader>
-                <Badge variant="outline" className="w-max rounded-full border-primary/40 text-primary">
+                <Badge className="w-max rounded-full border-white/30 bg-white/10 text-white">
                   Regulasi Terbaru
                 </Badge>
-                <CardTitle className="text-2xl font-semibold text-primary">
+                <CardTitle className="text-2xl font-semibold text-[#F7CDD0]">
                   Pusat Informasi & Regulasi Pendidikan
                 </CardTitle>
-                <CardDescription className="text-muted-foreground">
+                <CardDescription className="text-white/70">
                   Update kebijakan, surat edaran, juknis terbaru, dan agenda MKPS dalam satu tempat dengan fitur pencarian cerdas.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4 text-sm text-foreground/90">
+              <CardContent className="space-y-4 text-sm text-white/80">
                 <p className="leading-relaxed">• Kumpulan regulasi terstruktur berdasarkan jenis dan tahun.</p>
                 <p className="leading-relaxed">• Unduh cepat dalam format PDF dengan metadata lengkap.</p>
                 <p className="leading-relaxed">
                   • Notifikasi otomatis saat ada regulasi baru yang relevan dengan wilayah tugas pengawas.
                 </p>
-                <Button className="bg-primary text-primary-foreground shadow-md hover:bg-primary/90" asChild>
+                <Button className="bg-white text-[#371314] shadow-lg shadow-black/30 hover:bg-white/90" asChild>
                   <Link href="#">Buka pusat regulasi</Link>
                 </Button>
               </CardContent>
@@ -340,21 +358,21 @@ export default function HomePage() {
               {featureCards.map((feature) => (
                 <Card
                   key={feature.title}
-                  className="group border border-border/50 bg-white shadow-sm transition-all hover:shadow-md hover:shadow-primary/10"
+                  className="group border border-white/15 bg-white/5 text-white shadow-lg shadow-black/30 transition-all hover:border-white/30 hover:bg-white/10"
                 >
                   <CardHeader className="flex flex-row items-start justify-between">
                     <div className="space-y-2">
-                      <Badge variant="outline" className="rounded-full">
+                      <Badge className="rounded-full border-white/30 bg-white/10 text-white">
                         {feature.badge}
                       </Badge>
-                      <CardTitle className="text-lg font-semibold text-foreground">
+                      <CardTitle className="text-lg font-semibold text-white">
                         {feature.title}
                       </CardTitle>
-                      <CardDescription className="leading-relaxed">
+                      <CardDescription className="leading-relaxed text-white/70">
                         {feature.description}
                       </CardDescription>
                     </div>
-                    <Button variant="ghost" size="sm" className="text-primary" asChild>
+                    <Button variant="ghost" size="sm" className="text-[#F7CDD0] hover:text-white" asChild>
                       <Link href={feature.href}>Buka</Link>
                     </Button>
                   </CardHeader>
@@ -366,59 +384,66 @@ export default function HomePage() {
       </section>
 
       {/* Forum Section */}
-      <section id="forum" className="bg-muted/30 py-16 sm:py-20">
+      <section
+        id="forum"
+        className="bg-gradient-to-br from-[#1C0B0C] via-[#311112] to-[#1A0707] py-16 text-white sm:py-20"
+      >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
             <div className="space-y-6">
-              <Badge variant="outline" className="rounded-full">
+              <Badge className="rounded-full border-white/30 bg-white/10 text-white">
                 Forum & Kolaborasi
               </Badge>
-              <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+              <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
                 Diskusi Terarah untuk Menjawab Tantangan Lapangan
               </h2>
-              <p className="text-lg leading-relaxed text-muted-foreground">
+              <p className="text-lg leading-relaxed text-white/75">
                 Pengawas dapat membuka topik, berbagi dokumen pendukung, menandai wilayah terdampak, serta menyusun rekomendasi tindak lanjut bersama. Admin MKPS memoderasi diskusi agar tetap fokus pada peningkatan mutu.
               </p>
               <div className="flex flex-wrap gap-3">
-                <Badge variant="outline" className="rounded-full border-primary/30 text-primary">
+                <Badge className="rounded-full border-white/30 bg-white/10 text-white">
                   Moderasi Admin
                 </Badge>
-                <Badge variant="outline" className="rounded-full border-primary/30 text-primary">
+                <Badge className="rounded-full border-white/30 bg-white/10 text-white">
                   Role-Based Access
                 </Badge>
-                <Badge variant="outline" className="rounded-full border-primary/30 text-primary">
+                <Badge className="rounded-full border-white/30 bg-white/10 text-white">
                   Dokumen Pendukung
                 </Badge>
               </div>
             </div>
 
-            <Card className="border border-border/50 bg-white shadow-md">
+            <Card className="border border-white/15 bg-white/5 text-white shadow-lg shadow-black/30 backdrop-blur">
               <CardHeader className="space-y-2">
-                <CardTitle className="text-xl font-semibold text-foreground">
+                <CardTitle className="text-xl font-semibold text-white">
                   Aktivitas Forum Terbaru
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-white/70">
                   Lihat isu yang sedang dibahas dan kontribusi lintas kabupaten/kota.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="rounded-lg border border-primary/20 bg-secondary/30 p-4">
-                  <p className="font-semibold text-foreground">
+                <div className="rounded-lg border border-white/20 bg-white/10 p-4">
+                  <p className="font-semibold text-white">
                     Strategi menindaklanjuti hasil AKM kelas XII 2024
                   </p>
-                  <p className="mt-2 text-sm text-muted-foreground">
+                  <p className="mt-2 text-sm text-white/70">
                     · Pengawas: Wilayah Cabdin Pekalongan · 18 tanggapan
                   </p>
                 </div>
-                <div className="rounded-lg border border-primary/20 bg-secondary/30 p-4">
-                  <p className="font-semibold text-foreground">
+                <div className="rounded-lg border border-white/20 bg-white/10 p-4">
+                  <p className="font-semibold text-white">
                     Template asesmen supervisi manajerial berbasis data keuangan
                   </p>
-                  <p className="mt-2 text-sm text-muted-foreground">
+                  <p className="mt-2 text-sm text-white/70">
                     · Pengawas: Wilayah Cabdin Pati · 12 tanggapan
                   </p>
                 </div>
-                <Button className="w-full" variant="outline" asChild>
+                <Button
+                  className="w-full border-white/30 text-white hover:bg-white/10"
+                  variant="outline"
+                  asChild
+                >
                   <Link href="/auth/login">Gabung Forum Pengawas</Link>
                 </Button>
               </CardContent>
@@ -428,15 +453,17 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="bg-gradient-to-br from-primary/10 via-white to-secondary/20 py-16 sm:py-24">
+      <section
+        className="bg-gradient-to-br from-[#1C0B0C] via-[#311112] to-[#1A0707] py-16 text-white sm:py-24"
+      >
         <div className="mx-auto max-w-5xl px-4 text-center sm:px-6">
-          <Badge variant="outline" className="mb-6 rounded-full">
+          <Badge className="mb-6 rounded-full border-white/30 bg-white/10 text-white">
             Manfaat Strategis
           </Badge>
-          <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+          <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
             Satu Sistem, Seluruh Siklus Kepengawasan dalam Genggaman
           </h2>
-          <p className="mx-auto mt-6 max-w-3xl text-lg text-muted-foreground">
+          <p className="mx-auto mt-6 max-w-3xl text-lg text-white/75">
             SIP-Kepengawasan Jateng mempermudah koordinasi lintas wilayah, menyediakan data real-time, dan mempercepat penyusunan laporan berkala maupun tahunan.
           </p>
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -450,17 +477,26 @@ export default function HomePage() {
             ].map((item) => (
               <div
                 key={item}
-                className="rounded-xl border border-primary/20 bg-white/80 p-6 text-center font-semibold text-foreground shadow-sm transition-all hover:shadow-md hover:shadow-primary/10"
+                className="rounded-xl border border-white/20 bg-white/10 p-6 text-center font-semibold text-white shadow-md shadow-black/30 transition-all hover:border-white/30 hover:bg-white/15"
               >
                 {item}
               </div>
             ))}
           </div>
           <div className="mt-12 flex flex-col gap-4 sm:flex-row sm:justify-center">
-            <Button size="lg" className="shadow-lg shadow-primary/20" asChild>
+            <Button
+              size="lg"
+              className="bg-white text-[#371314] shadow-lg shadow-black/30 hover:bg-white/90"
+              asChild
+            >
               <Link href="/auth/register">Daftar Pengawas Baru</Link>
             </Button>
-            <Button size="lg" variant="outline" className="border-primary/30" asChild>
+            <Button
+              size="lg"
+              variant="outline"
+              className="border-white/40 text-white hover:bg-white/10"
+              asChild
+            >
               <Link href="/auth/login">Masuk sebagai Admin MKPS</Link>
             </Button>
           </div>
