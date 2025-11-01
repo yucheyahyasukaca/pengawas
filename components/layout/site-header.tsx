@@ -1,9 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { Menu } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
+import jatengLogo from "@/public/jateng.png";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -24,6 +26,11 @@ import { Separator } from "@/components/ui/separator";
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
   const headerBackgroundClass =
     "bg-[#371314] text-white";
 
@@ -35,9 +42,16 @@ export function SiteHeader() {
       )}
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="#beranda" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white shadow-lg ring-1 ring-white/30">
-            <span className="text-lg font-semibold">S</span>
+        <Link href="#beranda" className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/30 bg-white/5 p-1 shadow-lg">
+            <Image
+              src={jatengLogo}
+              alt="Logo MKPS Jawa Tengah"
+              width={36}
+              height={36}
+              className="h-full w-full object-contain"
+              priority
+            />
           </div>
           <div className="flex flex-col leading-tight text-white">
             <span className="text-xs font-semibold uppercase tracking-wide text-white/80">
@@ -81,66 +95,78 @@ export function SiteHeader() {
           </div>
         </div>
 
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden text-white hover:bg-white/10 hover:text-white"
-            >
-              <Menu className="h-5 w-5" />
-              <span className="sr-only">Toggle menu</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent
-            side="top"
-            className={cn(
-              "pt-6",
-              headerBackgroundClass,
-              "shadow-none border-b border-transparent bg-[#371314]",
-            )}
-          >
-            <SheetHeader>
-              <SheetTitle className="text-left text-base font-semibold text-white">
-                Navigasi SIP-Kepengawasan Jateng
-              </SheetTitle>
-            </SheetHeader>
-            <nav className="mt-4 space-y-4">
-              {siteConfig.navigation.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setOpen(false)}
-                  className={cn(
-                    "block rounded-md px-3 py-2 text-base font-medium text-white/90 transition-colors hover:bg-white/10",
-                  )}
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-            <Separator className="my-4 bg-white/20" />
-            <div className="flex flex-col gap-2">
+        {isMounted ? (
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
               <Button
                 variant="ghost"
-                className="justify-start text-white hover:bg-white/10 hover:text-white"
-                asChild
+                size="icon"
+                className="lg:hidden text-white hover:bg-white/10 hover:text-white"
               >
-                <Link href="#forum" onClick={() => setOpen(false)}>
-                  Forum Diskusi
-                </Link>
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Toggle menu</span>
               </Button>
-              <Button
-                className="justify-start bg-white text-[#3F0607] hover:bg-white/90"
-                asChild
-              >
-                <Link href="/auth/login" onClick={() => setOpen(false)}>
-                  Masuk ke Portal
-                </Link>
-              </Button>
-            </div>
-          </SheetContent>
-        </Sheet>
+            </SheetTrigger>
+            <SheetContent
+              side="top"
+              className={cn(
+                "pt-6",
+                headerBackgroundClass,
+                "shadow-none border-b border-transparent bg-[#371314]",
+              )}
+            >
+              <SheetHeader>
+                <SheetTitle className="text-left text-base font-semibold text-white">
+                  Navigasi SIP-Kepengawasan Jateng
+                </SheetTitle>
+              </SheetHeader>
+              <nav className="mt-4 space-y-4">
+                {siteConfig.navigation.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setOpen(false)}
+                    className={cn(
+                      "block rounded-md px-3 py-2 text-base font-medium text-white/90 transition-colors hover:bg-white/10",
+                    )}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
+              <Separator className="my-4 bg-white/20" />
+              <div className="flex flex-col gap-2">
+                <Button
+                  variant="ghost"
+                  className="justify-start text-white hover:bg-white/10 hover:text-white"
+                  asChild
+                >
+                  <Link href="#forum" onClick={() => setOpen(false)}>
+                    Forum Diskusi
+                  </Link>
+                </Button>
+                <Button
+                  className="justify-start bg-white text-[#3F0607] hover:bg-white/90"
+                  asChild
+                >
+                  <Link href="/auth/login" onClick={() => setOpen(false)}>
+                    Masuk ke Portal
+                  </Link>
+                </Button>
+              </div>
+            </SheetContent>
+          </Sheet>
+        ) : (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden text-white"
+            disabled
+          >
+            <Menu className="h-5 w-5" />
+            <span className="sr-only">Toggle menu</span>
+          </Button>
+        )}
       </div>
     </header>
   );

@@ -1,5 +1,7 @@
+import Image from "next/image";
 import Link from "next/link";
 
+import jatengLogo from "@/public/jateng.png";
 import { siteConfig } from "@/config/site";
 import { Separator } from "@/components/ui/separator";
 
@@ -8,9 +10,15 @@ export function SiteFooter() {
     <footer className="border-t border-white/10 bg-gradient-to-br from-[#1C0B0C] via-[#311112] to-[#1A0707] text-white">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-5 lg:px-8">
         <div className="lg:col-span-2">
-          <div className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-[#371314] shadow-lg shadow-black/30">
-              <span className="text-lg font-semibold">SIP</span>
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/30 bg-white/5 p-1.5 shadow-lg shadow-black/30">
+              <Image
+                src={jatengLogo}
+                alt="Logo MKPS Jawa Tengah"
+                width={40}
+                height={40}
+                className="h-full w-full object-contain"
+              />
             </div>
             <div>
               <p className="text-sm font-semibold uppercase tracking-wide text-white/70">
