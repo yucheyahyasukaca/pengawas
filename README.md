@@ -49,6 +49,32 @@ Server dev tersedia di [http://localhost:3000](http://localhost:3000).
 - `config/site.ts` – metadata dan konfigurasi situs
 - `lib/supabase` – utilitas Supabase (browser, server, admin)
 
+### Setup Akun Admin
+
+Untuk login sebagai admin, akun admin perlu dibuat terlebih dahulu di Supabase:
+
+**Cara 1: Via Supabase Dashboard (Disarankan)**
+1. Buka Supabase Dashboard → Authentication → Users
+2. Klik "Add User" → "Create new user"
+3. Isi email: `mkps@garuda-21.com`, password: `mkps123`
+4. Centang "Auto Confirm User"
+5. Klik "Create User"
+
+**Cara 2: Via API Route**
+Setelah server berjalan, gunakan Postman atau curl untuk POST ke `/api/auth/create-admin`:
+```json
+{
+  "email": "mkps@garuda-21.com",
+  "password": "mkps123"
+}
+```
+
+**Email Admin yang Dikenali:**
+- `mkps@garuda-21.com`
+- `admin@sip-mkps.id`
+
+Untuk menambah email admin lain, edit array `ADMIN_EMAILS` di `app/api/auth/login/route.ts`.
+
 ### Langkah Lanjutan
 
 1. Selesaikan desain halaman publik (konten aktual, ilustrasi, aset brand).

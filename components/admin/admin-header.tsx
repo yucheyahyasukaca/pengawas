@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   adminNavigation,
   adminQuickActions,
@@ -18,7 +18,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { AdminSidebar } from "./admin-sidebar";
-import { Menu, Bell, Search, ChevronDown } from "lucide-react";
+import { Menu, Bell, Search, ChevronDown, LogOut } from "lucide-react";
 
 type AdminHeaderProps = {
   className?: string;
@@ -58,9 +58,47 @@ function formatBreadcrumb(pathname: string) {
 
 export function AdminHeader({ className }: AdminHeaderProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const activeItem = useActiveNavItem(pathname);
   const breadcrumbs = formatBreadcrumb(pathname);
+
+  // Close user menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    }
+
+    if (userMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [userMenuOpen]);
+
+  const handleSignOut = async () => {
+    setIsSigningOut(true);
+    try {
+      const response = await fetch("/api/auth/signout", {
+        method: "POST",
+      });
+
+      if (response.ok) {
+        router.push("/auth/login");
+      } else {
+        const data = await response.json();
+        console.error("Sign out error:", data.error);
+        setIsSigningOut(false);
+      }
+    } catch (err) {
+      console.error("Sign out exception:", err);
+      setIsSigningOut(false);
+    }
+  };
 
   return (
     <header
@@ -160,21 +198,52 @@ export function AdminHeader({ className }: AdminHeaderProps) {
             <Bell className="size-5" />
             <span className="sr-only">Notifikasi</span>
           </Button>
-          <Button
-            variant="outline"
-            className="hidden items-center gap-2 rounded-full border-0 bg-white pl-2 pr-3 text-slate-700 shadow-md transition hover:bg-rose-50 sm:flex"
-          >
-            <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 via-rose-400 to-amber-400 text-sm font-semibold text-white shadow-lg">
-              MK
-            </div>
-            <div className="hidden flex-col items-start lg:flex">
-              <span className="text-xs font-semibold leading-none text-slate-800">
-                Admin MKPS
-              </span>
-              <span className="text-[11px] text-slate-700">admin@sip-mkps.id</span>
-            </div>
-            <ChevronDown className="size-4" />
-          </Button>
+          <div className="relative hidden sm:block" ref={userMenuRef}>
+            <Button
+              variant="outline"
+              onClick={() => setUserMenuOpen(!userMenuOpen)}
+              className="items-center gap-2 rounded-full border-0 bg-white pl-2 pr-3 text-slate-700 shadow-md transition hover:bg-rose-50"
+            >
+              <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 via-rose-400 to-amber-400 text-sm font-semibold text-white shadow-lg">
+                MK
+              </div>
+              <div className="hidden flex-col items-start lg:flex">
+                <span className="text-xs font-semibold leading-none text-slate-800">
+                  Admin MKPS
+                </span>
+                <span className="text-[11px] text-slate-700">admin@sip-mkps.id</span>
+              </div>
+              <ChevronDown className={cn("size-4 transition-transform", userMenuOpen && "rotate-180")} />
+            </Button>
+
+            {userMenuOpen && (
+              <div className="absolute right-0 top-full z-50 mt-2 w-56 origin-top-right rounded-xl border border-rose-100 bg-white shadow-lg shadow-black/5">
+                <div className="p-1">
+                  <div className="px-3 py-2 border-b border-rose-50">
+                    <div className="flex items-center gap-2">
+                      <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 via-rose-400 to-amber-400 text-sm font-semibold text-white shadow-lg">
+                        MK
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-xs font-semibold text-slate-800">
+                          Admin MKPS
+                        </span>
+                        <span className="text-[11px] text-slate-600">admin@sip-mkps.id</span>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleSignOut}
+                    disabled={isSigningOut}
+                    className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <LogOut className="size-4" />
+                    <span>{isSigningOut ? "Keluar..." : "Keluar"}</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

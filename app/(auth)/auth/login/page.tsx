@@ -1,6 +1,9 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
-import type { Metadata } from "next";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -12,14 +15,94 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { siteConfig } from "@/config/site";
-
-export const metadata: Metadata = {
-  title: "Masuk",
-  description:
-    "Masuk ke portal SIP-Kepengawasan Jawa Tengah dan kelola aktivitas kepengawasan Anda secara terpadu.",
-};
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [remember, setRemember] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(null);
+    setIsLoading(true);
+
+    // Validasi client-side
+    if (!email || !password) {
+      setError("Email dan password harus diisi");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ 
+          email: email.trim(), // Jangan lowercase, Supabase Auth case-sensitive
+          password: password 
+        }),
+      });
+
+      // Parse response
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error("Parse response error:", parseError);
+        setError("Terjadi kesalahan saat memproses respons dari server");
+        setIsLoading(false);
+        return;
+      }
+
+      if (!response.ok) {
+        // Pesan error yang lebih user-friendly
+        let errorMessage = data.error || "Gagal masuk";
+        
+        if (errorMessage.includes("Invalid login credentials") || errorMessage.includes("Email atau kata sandi salah")) {
+          errorMessage = "Email atau kata sandi salah. Pastikan akun sudah terdaftar di sistem. Jika belum memiliki akun, hubungi admin MKPS.";
+        }
+        
+        setError(errorMessage);
+        setIsLoading(false);
+        return;
+      }
+
+      // Set session di client-side menggunakan Supabase browser client
+      if (data.session) {
+        const supabase = createSupabaseBrowserClient();
+        
+        // Set session di browser client
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        });
+
+        if (sessionError) {
+          console.error("Set session error:", sessionError);
+          setError("Gagal membuat session. Silakan coba lagi.");
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // Redirect berdasarkan role
+      if (data.role === "admin") {
+        router.push("/admin");
+      } else {
+        router.push(data.redirectTo || "/dashboard");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Terjadi kesalahan saat login");
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="relative flex flex-1 items-center justify-center px-4 py-16 sm:px-6 lg:px-8">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(241,176,183,0.15),transparent_40%),radial-gradient(circle_at_80%_10%,rgba(181,55,64,0.2),transparent_45%),radial-gradient(circle_at_50%_80%,rgba(58,12,14,0.6),transparent_50%)]" />
@@ -84,10 +167,16 @@ export default function LoginPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form className="space-y-5" action="#" method="post">
+            <form className="space-y-5" onSubmit={handleSubmit}>
+              {error && (
+                <div className="rounded-xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                  {error}
+                </div>
+              )}
+              
               <div className="space-y-2">
                 <label className="text-sm font-medium text-white/80" htmlFor="email">
-                  Email Pengawas
+                  Email
                 </label>
                 <input
                   id="email"
@@ -95,8 +184,11 @@ export default function LoginPage() {
                   type="email"
                   required
                   autoComplete="email"
-                  className="block w-full rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-base text-white outline-none transition focus:border-white/50 focus:bg-white/15 focus:ring-2 focus:ring-white/30"
-                  placeholder="nama.pengawas@jatengprov.go.id"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoading}
+                  className="block w-full rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-base text-white outline-none transition focus:border-white/50 focus:bg-white/15 focus:ring-2 focus:ring-white/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                  placeholder="email@example.com"
                 />
               </div>
 
@@ -118,7 +210,10 @@ export default function LoginPage() {
                   type="password"
                   required
                   autoComplete="current-password"
-                  className="block w-full rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-base text-white outline-none transition focus:border-white/50 focus:bg-white/15 focus:ring-2 focus:ring-white/30"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
+                  className="block w-full rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-base text-white outline-none transition focus:border-white/50 focus:bg-white/15 focus:ring-2 focus:ring-white/30 disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="Masukkan kata sandi"
                 />
               </div>
@@ -128,15 +223,22 @@ export default function LoginPage() {
                   id="remember"
                   name="remember"
                   type="checkbox"
-                  className="h-4 w-4 rounded border-white/30 bg-white/10 text-[#F7CDD0] focus:ring-1 focus:ring-white/40"
+                  checked={remember}
+                  onChange={(e) => setRemember(e.target.checked)}
+                  disabled={isLoading}
+                  className="h-4 w-4 rounded border-white/30 bg-white/10 text-[#F7CDD0] focus:ring-1 focus:ring-white/40 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 <label htmlFor="remember" className="text-sm text-white/75">
                   Ingat saya pada perangkat ini
                 </label>
               </div>
 
-              <Button type="submit" className="w-full rounded-xl bg-[#F7CDD0] py-6 text-base font-semibold text-[#4A1B1C] shadow-lg shadow-black/30 transition hover:bg-[#f4bbc4]">
-                Masuk Sekarang
+              <Button 
+                type="submit" 
+                disabled={isLoading}
+                className="w-full rounded-xl bg-[#F7CDD0] py-6 text-base font-semibold text-[#4A1B1C] shadow-lg shadow-black/30 transition hover:bg-[#f4bbc4] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading ? "Memproses..." : "Masuk Sekarang"}
               </Button>
             </form>
           </CardContent>
@@ -154,12 +256,6 @@ export default function LoginPage() {
                 className="flex items-center justify-center rounded-xl border border-white/20 bg-transparent px-4 py-3 font-medium transition hover:border-white/40 hover:bg-white/10"
               >
                 Daftar sebagai Pengawas Baru
-              </Link>
-              <Link
-                href="/auth/admin"
-                className="flex items-center justify-center rounded-xl border border-white/20 bg-transparent px-4 py-3 font-medium transition hover:border-white/40 hover:bg-white/10"
-              >
-                Masuk sebagai Admin MKPS
               </Link>
             </div>
             <p className="text-center text-xs text-white/60">
