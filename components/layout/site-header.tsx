@@ -87,7 +87,7 @@ export function SiteHeader() {
               <Link href="#forum">Forum</Link>
             </Button>
             <Button
-              className="bg-white text-[#3F0607] shadow-lg shadow-black/20 hover:bg-white/90"
+              className="border-0 focus-visible:border-0 bg-white text-[#3F0607] shadow-lg shadow-black/20 hover:bg-white/90"
               asChild
             >
               <Link href="/auth/login">Masuk</Link>
@@ -146,7 +146,7 @@ export function SiteHeader() {
                   </Link>
                 </Button>
                 <Button
-                  className="justify-start bg-white text-[#3F0607] hover:bg-white/90"
+                  className="border-0 focus-visible:border-0 justify-start bg-white text-[#3F0607] hover:bg-white/90"
                   asChild
                 >
                   <Link href="/auth/login" onClick={() => setOpen(false)}>

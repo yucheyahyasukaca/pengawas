@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export function AdminFooter() {
   return (
     <footer className="relative border-t border-rose-100 bg-gradient-to-r from-rose-50 via-white to-amber-50 px-6 py-4 text-xs text-slate-600 backdrop-blur">
@@ -12,7 +14,16 @@ export function AdminFooter() {
           </span>
           <span className="hidden sm:inline text-rose-200">•</span>
           <span className="text-slate-600">
-            Dashboard ringan & scalable untuk pengelolaan kepengawasan.
+            Hosted at{" "}
+            <Link
+              href="https://garuda-21.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-rose-600 hover:text-rose-700 underline-offset-2 hover:underline transition-colors"
+            >
+              GARUDA-21.com
+            </Link>{" "}
+            Cloud Server
           </span>
         </div>
       </div>

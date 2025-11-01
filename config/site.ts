@@ -15,7 +15,7 @@ export const siteConfig = {
   ],
   navigation: [
     { href: "#beranda", label: "Beranda" },
-    { href: "#profil", label: "Profil MKPS" },
+    { href: "/profil-mkps", label: "Profil MKPS" },
     { href: "#karya", label: "Karya Pengawas" },
     { href: "#regulasi", label: "Regulasi" },
     { href: "#forum", label: "Forum" },

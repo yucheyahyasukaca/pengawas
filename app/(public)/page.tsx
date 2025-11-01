@@ -145,7 +145,7 @@ export default function HomePage() {
                   className="w-full whitespace-normal rounded-full border-white/60 px-6 py-6 text-base text-white hover:bg-white/10 sm:w-auto"
                   asChild
                 >
-                  <Link href="#profil">Jelajahi Lebih Lanjut</Link>
+                  <Link href="/profil-mkps">Jelajahi Lebih Lanjut</Link>
                 </Button>
               </div>
             </div>

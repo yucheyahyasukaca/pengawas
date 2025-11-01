@@ -122,8 +122,8 @@ export default function AdminDashboardPage() {
 
       <section className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
         <Card className="border border-rose-200 bg-white shadow-md shadow-rose-100/70">
-          <CardHeader className="flex flex-row items-start justify-between gap-4">
-            <div>
+          <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex-1">
               <CardTitle className="text-lg font-semibold text-slate-900">Agenda Terdekat</CardTitle>
               <CardDescription className="text-slate-600">
                 Pantau kesiapan agenda yang akan berlangsung minggu ini.
@@ -131,7 +131,8 @@ export default function AdminDashboardPage() {
             </div>
             <Button
               size="sm"
-              className="bg-gradient-to-r from-rose-600 via-rose-500 to-amber-400 px-4 font-semibold text-white shadow-sm hover:from-rose-700 hover:via-rose-600 hover:to-amber-500"
+              variant="default"
+              className="w-full rounded-full border-0 bg-rose-600 px-4 font-semibold text-white shadow-md transition hover:bg-rose-700 hover:text-white sm:w-auto"
             >
               Lihat Kalender
             </Button>
@@ -142,14 +143,14 @@ export default function AdminDashboardPage() {
                 key={agenda.title}
                 className="rounded-2xl border border-rose-100 bg-white p-4 shadow-sm transition hover:-translate-y-[1px] hover:border-rose-200 hover:shadow-lg hover:shadow-rose-100"
               >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-col gap-1 flex-1">
                     <p className="text-base font-semibold text-slate-900">
                       {agenda.title}
                     </p>
                     <p className="text-xs text-slate-500">{agenda.date}</p>
                   </div>
-                  <Badge className="rounded-full border-0 bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-600 shadow-sm">
+                  <Badge className="w-fit rounded-full border-0 bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-600 shadow-sm">
                     {agenda.type}
                   </Badge>
                 </div>
@@ -166,8 +167,8 @@ export default function AdminDashboardPage() {
         </Card>
 
         <Card className="border border-rose-200 bg-white shadow-md shadow-rose-100/70">
-          <CardHeader className="flex flex-row items-start justify-between gap-4">
-            <div>
+          <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex-1">
               <CardTitle className="text-lg font-semibold text-slate-900">Berita Terbaru</CardTitle>
               <CardDescription className="text-slate-600">
                 Kelola publikasi dan pastikan informasi strategis tersampaikan.
@@ -175,7 +176,8 @@ export default function AdminDashboardPage() {
             </div>
             <Button
               size="sm"
-              className="bg-gradient-to-r from-amber-500 via-rose-500 to-rose-600 px-4 font-semibold text-white shadow-sm hover:from-amber-600 hover:via-rose-600 hover:to-rose-700"
+              variant="default"
+              className="w-full rounded-full border-0 bg-rose-600 px-4 font-semibold text-white shadow-md transition hover:bg-rose-700 hover:text-white sm:w-auto"
             >
               Kelola Berita
             </Button>
@@ -228,7 +230,8 @@ export default function AdminDashboardPage() {
               </p>
               <Button
                 size="sm"
-                className="mt-3 bg-gradient-to-r from-rose-600 via-rose-500 to-amber-400 px-4 font-semibold text-white shadow-sm hover:from-rose-700 hover:via-rose-600 hover:to-amber-500"
+                variant="default"
+                className="mt-3 rounded-full border-0 bg-rose-600 px-4 font-semibold text-white shadow-md transition hover:bg-rose-700 hover:text-white"
               >
                 Tulis Berita Baru
               </Button>

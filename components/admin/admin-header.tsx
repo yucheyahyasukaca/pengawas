@@ -72,27 +72,29 @@ export function AdminHeader({ className }: AdminHeaderProps) {
       <div className="pointer-events-none absolute inset-x-4 top-0 h-24 rounded-full bg-gradient-to-r from-rose-200/40 via-transparent to-amber-200/40 blur-2xl" />
       <div className="pointer-events-none absolute right-10 top-4 h-24 w-24 rounded-full bg-rose-100/40 blur-3xl" />
 
-      <div className="relative flex items-center gap-3">
+      <div className="relative flex items-center gap-2 sm:gap-3">
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger asChild>
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
-              className="lg:hidden border-rose-200 bg-white text-rose-600 hover:border-rose-300 hover:bg-rose-50"
+              className="lg:hidden border-0 bg-slate-100 text-rose-600 shadow-sm transition hover:bg-slate-200 hover:text-rose-700"
             >
               <Menu className="size-5" />
               <span className="sr-only">Buka navigasi</span>
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="p-0">
+          <SheetContent side="left" className="flex flex-col gap-0 p-0 border-r border-slate-200 bg-white">
             <SheetHeader className="sr-only">
               <SheetTitle>Navigasi Panel Admin</SheetTitle>
             </SheetHeader>
-            <AdminSidebar onNavigate={() => setMobileOpen(false)} />
+            <div className="flex h-full flex-col overflow-hidden">
+              <AdminSidebar onNavigate={() => setMobileOpen(false)} />
+            </div>
           </SheetContent>
         </Sheet>
 
-        <div className="flex flex-1 flex-col gap-1">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
           <nav className="text-xs font-semibold text-rose-500">
             <ol className="flex flex-wrap items-center gap-1">
               {breadcrumbs.map((crumb, index) => {
@@ -115,16 +117,16 @@ export function AdminHeader({ className }: AdminHeaderProps) {
               })}
             </ol>
           </nav>
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-xl font-bold leading-tight tracking-tight text-rose-900">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <h1 className="truncate text-lg font-bold leading-tight tracking-tight text-rose-900 sm:text-xl">
               {activeItem?.title ?? "Panel Admin"}
             </h1>
-            <span className="hidden items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-semibold text-rose-600 sm:flex">
+            <span className="hidden shrink-0 items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-semibold text-rose-600 sm:flex">
               Admin MKPS
             </span>
           </div>
           {activeItem?.description ? (
-            <p className="text-sm text-slate-600">
+            <p className="line-clamp-2 text-xs text-slate-600 sm:text-sm">
               {activeItem.description}
             </p>
           ) : null}
@@ -141,11 +143,11 @@ export function AdminHeader({ className }: AdminHeaderProps) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <Button
-            variant="outline"
+            variant="ghost"
             size="icon"
-            className="md:hidden border-rose-200 bg-white/85 text-rose-600 hover:bg-rose-50"
+            className="md:hidden border-0 bg-slate-100 text-rose-600 shadow-sm transition hover:bg-slate-200 hover:text-rose-700"
           >
             <Search className="size-5" />
             <span className="sr-only">Cari</span>
@@ -153,23 +155,23 @@ export function AdminHeader({ className }: AdminHeaderProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="text-rose-500 hover:bg-rose-50 hover:text-rose-600"
+            className="border-0 bg-slate-100 text-rose-600 shadow-sm transition hover:bg-slate-200 hover:text-rose-700"
           >
             <Bell className="size-5" />
             <span className="sr-only">Notifikasi</span>
           </Button>
           <Button
             variant="outline"
-            className="hidden items-center gap-2 rounded-full border-rose-200 bg-white/90 pl-2 pr-3 text-slate-600 shadow-sm hover:bg-rose-50 sm:flex"
+            className="hidden items-center gap-2 rounded-full border-0 bg-white pl-2 pr-3 text-slate-700 shadow-md transition hover:bg-rose-50 sm:flex"
           >
             <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 via-rose-400 to-amber-400 text-sm font-semibold text-white shadow-lg">
               MK
             </div>
-            <div className="flex flex-col items-start">
-              <span className="text-xs font-semibold leading-none text-slate-700">
+            <div className="hidden flex-col items-start lg:flex">
+              <span className="text-xs font-semibold leading-none text-slate-800">
                 Admin MKPS
               </span>
-              <span className="text-[11px] text-slate-600">admin@sip-mkps.id</span>
+              <span className="text-[11px] text-slate-700">admin@sip-mkps.id</span>
             </div>
             <ChevronDown className="size-4" />
           </Button>
@@ -194,7 +196,7 @@ export function AdminHeader({ className }: AdminHeaderProps) {
               key={action.href}
               variant="default"
               size="sm"
-              className="!border-0 bg-gradient-to-r from-rose-600 via-rose-500 to-amber-400 font-semibold text-white shadow-lg hover:from-rose-700 hover:via-rose-600 hover:to-amber-500 focus-visible:ring-rose-300"
+              className="rounded-full border-0 bg-rose-600 px-4 font-semibold text-white shadow-md transition hover:bg-rose-700 hover:text-white"
               asChild
             >
               <Link href={action.href}>{action.title}</Link>

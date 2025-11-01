@@ -6,6 +6,7 @@ import {
   Newspaper,
   Settings,
   Users,
+  Building2,
 } from "lucide-react";
 
 export type AdminNavItem = {
@@ -49,6 +50,12 @@ export const adminNavigation: AdminNavSection[] = [
         href: "/admin/berita",
         icon: Newspaper,
         description: "Manajemen publikasi berita dan informasi",
+      },
+      {
+        title: "Profil",
+        href: "/admin/profil",
+        icon: Building2,
+        description: "Kelola profil MKPS di landing page",
       },
     ],
   },
