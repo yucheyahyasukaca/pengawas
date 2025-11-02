@@ -1,7 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
-export const runtime = 'edge';
 
 // List email admin yang diizinkan untuk login sebagai admin
 const ADMIN_EMAILS = [

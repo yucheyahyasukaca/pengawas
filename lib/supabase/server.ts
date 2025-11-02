@@ -2,25 +2,39 @@ import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import type { CookieOptions } from "@supabase/ssr";
 
-export function createSupabaseServerClient() {
-  const cookieStorePromise = cookies();
-
+/**
+ * Create Supabase server client for Node.js runtime
+ * Note: In Next.js 16, cookies() returns a Promise, so we need to await it
+ */
+export async function createSupabaseServerClient() {
+  const cookieStore = await cookies();
+  
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        async get(name: string) {
-          const cookieStore = await cookieStorePromise;
-          return cookieStore.get(name)?.value;
+        get(name: string) {
+          try {
+            const cookie = cookieStore.get(name);
+            return cookie?.value;
+          } catch {
+            return undefined;
+          }
         },
-        async set(name: string, value: string, options: CookieOptions) {
-          const cookieStore = await cookieStorePromise;
-          cookieStore.set({ name, value, ...(options ?? {}) });
+        set(name: string, value: string, options: CookieOptions) {
+          try {
+            cookieStore.set({ name, value, ...options });
+          } catch {
+            // Ignore set cookie errors
+          }
         },
-        async remove(name: string, options: CookieOptions) {
-          const cookieStore = await cookieStorePromise;
-          cookieStore.delete({ name, ...(options ?? {}) });
+        remove(name: string, options: CookieOptions) {
+          try {
+            cookieStore.set({ name, value: '', ...options });
+          } catch {
+            // Ignore remove cookie errors
+          }
         },
       },
     },

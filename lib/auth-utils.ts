@@ -20,7 +20,7 @@ function isAdminEmail(email: string): boolean {
  */
 export async function getAdminUser() {
   try {
-    const supabase = createSupabaseServerClient();
+    const supabase = await createSupabaseServerClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user || !user.email) {

@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 export async function loginAdmin() {
   try {
-    const supabase = createSupabaseServerClient();
+    const supabase = await createSupabaseServerClient();
     
     // Login dengan kredensial mockup admin MKPS
     const { data, error } = await supabase.auth.signInWithPassword({

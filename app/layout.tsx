@@ -33,14 +33,6 @@ export const metadata: Metadata = {
     "Kepengawasan",
   ],
   authors: [{ name: "MKPS SMA & SLB Provinsi Jawa Tengah" }],
-  icons: {
-    icon: [
-      { url: "/favicon.ico", sizes: "any" },
-      { url: "/jateng.png", type: "image/png", sizes: "192x192" },
-    ],
-    shortcut: "/jateng.png",
-    apple: "/jateng.png",
-  },
   openGraph: {
     title: siteConfig.name,
     description: siteConfig.description,
