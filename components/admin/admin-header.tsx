@@ -181,15 +181,69 @@ export function AdminHeader({ className }: AdminHeaderProps) {
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-2">
+        {/* User menu for desktop */}
+        <div className="hidden shrink-0 sm:block relative" ref={userMenuRef}>
           <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden border-0 bg-slate-100 text-rose-600 shadow-sm transition hover:bg-slate-200 hover:text-rose-700"
+            variant="outline"
+            onClick={() => setUserMenuOpen(!userMenuOpen)}
+            className="items-center gap-2 rounded-full border-0 bg-white pl-2 pr-3 text-slate-700 shadow-md transition hover:bg-rose-50"
           >
-            <Search className="size-5" />
-            <span className="sr-only">Cari</span>
+            <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 via-rose-400 to-amber-400 text-sm font-semibold text-white shadow-lg">
+              MK
+            </div>
+            <div className="hidden flex-col items-start lg:flex">
+              <span className="text-xs font-semibold leading-none text-slate-800">
+                Admin MKPS
+              </span>
+              <span className="text-[11px] text-slate-700">mkps@garuda-21.com</span>
+            </div>
+            <ChevronDown className={cn("size-4 transition-transform", userMenuOpen && "rotate-180")} />
           </Button>
+
+          {userMenuOpen && (
+            <div className="absolute right-0 top-full z-50 mt-2 w-56 origin-top-right rounded-xl border border-rose-100 bg-white shadow-lg shadow-black/5">
+              <div className="p-1">
+                <div className="px-3 py-2 border-b border-rose-50">
+                  <div className="flex items-center gap-2">
+                    <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 via-rose-400 to-amber-400 text-sm font-semibold text-white shadow-lg">
+                      MK
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-xs font-semibold text-slate-800">
+                        Admin MKPS
+                      </span>
+                      <span className="text-[11px] text-slate-600">mkps@garuda-21.com</span>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={handleSignOut}
+                  disabled={isSigningOut}
+                  className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <LogOut className="size-4" />
+                  <span>{isSigningOut ? "Keluar..." : "Keluar"}</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="relative mt-1 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-1 items-center gap-2 md:hidden">
+          <div className="relative w-full">
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-rose-400" />
+            <input
+              type="search"
+              placeholder="Cari agenda atau berita…"
+              className="w-full rounded-full border border-rose-100 bg-white/90 pl-10 pr-4 text-sm text-slate-700 shadow-inner transition placeholder:text-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-200"
+            />
+          </div>
+        </div>
+
+        {/* Mobile toolbar: Bell + User menu */}
+        <div className="flex shrink-0 items-center gap-2 md:hidden">
           <Button
             variant="ghost"
             size="icon"
@@ -198,20 +252,16 @@ export function AdminHeader({ className }: AdminHeaderProps) {
             <Bell className="size-5" />
             <span className="sr-only">Notifikasi</span>
           </Button>
-          <div className="relative hidden sm:block" ref={userMenuRef}>
+          
+          {/* Mobile user menu */}
+          <div className="relative" ref={userMenuRef}>
             <Button
               variant="outline"
               onClick={() => setUserMenuOpen(!userMenuOpen)}
-              className="items-center gap-2 rounded-full border-0 bg-white pl-2 pr-3 text-slate-700 shadow-md transition hover:bg-rose-50"
+              className="items-center gap-1 rounded-full border-0 bg-white pl-1 pr-2 text-slate-700 shadow-md transition hover:bg-rose-50"
             >
               <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 via-rose-400 to-amber-400 text-sm font-semibold text-white shadow-lg">
                 MK
-              </div>
-              <div className="hidden flex-col items-start lg:flex">
-                <span className="text-xs font-semibold leading-none text-slate-800">
-                  Admin MKPS
-                </span>
-                <span className="text-[11px] text-slate-700">mkps@garuda-21.com</span>
               </div>
               <ChevronDown className={cn("size-4 transition-transform", userMenuOpen && "rotate-180")} />
             </Button>
@@ -245,21 +295,8 @@ export function AdminHeader({ className }: AdminHeaderProps) {
             )}
           </div>
         </div>
-      </div>
 
-      <div className="relative mt-1 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-1 items-center gap-2 md:hidden">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-rose-400" />
-            <input
-              type="search"
-              placeholder="Cari agenda atau berita…"
-              className="w-full rounded-full border border-rose-100 bg-white/90 pl-10 pr-4 text-sm text-slate-700 shadow-inner transition placeholder:text-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-200"
-            />
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 md:justify-end">
+        <div className="hidden md:flex flex-wrap items-center gap-2 md:justify-end">
           {adminQuickActions.map((action) => (
             <Button
               key={action.href}

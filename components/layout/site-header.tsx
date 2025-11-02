@@ -84,7 +84,7 @@ export function SiteHeader() {
               className="text-white hover:bg-white/10 hover:text-white"
               asChild
             >
-              <Link href="#forum">Forum</Link>
+              <Link href="/berita">Berita</Link>
             </Button>
             <Button
               className="border-0 focus-visible:border-0 bg-white text-[#3F0607] shadow-lg shadow-black/20 hover:bg-white/90"
@@ -141,8 +141,8 @@ export function SiteHeader() {
                   className="justify-start text-white hover:bg-white/10 hover:text-white"
                   asChild
                 >
-                  <Link href="#forum" onClick={() => setOpen(false)}>
-                    Forum Diskusi
+                  <Link href="/berita" onClick={() => setOpen(false)}>
+                    Berita
                   </Link>
                 </Button>
                 <Button

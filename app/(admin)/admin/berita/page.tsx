@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import {
   Card,
@@ -9,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AlignLeft, ClipboardCheck, Edit3, Globe, Plus, Upload } from "lucide-react";
+import { AlignLeft, ClipboardCheck, Edit3, Globe, Plus, Upload, ChevronDown, Check, Filter } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const newsData = [
@@ -47,7 +50,12 @@ const newsData = [
   },
 ];
 
+const newsFilters = ["Semua Status", "Tayang", "Draft", "Terjadwal", "Butuh Review"];
+
 export default function NewsManagementPage() {
+  const [selectedFilter, setSelectedFilter] = useState("Semua Status");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+
   return (
     <div className="flex flex-col gap-6">
       <Card className="border border-rose-200 bg-white shadow-md shadow-rose-100/70">
@@ -65,7 +73,7 @@ export default function NewsManagementPage() {
               className="gap-2 rounded-full border-0 bg-slate-100 px-4 font-semibold text-slate-800 shadow-sm transition hover:bg-slate-200 hover:text-slate-900"
               asChild
             >
-              <Link href="/admin/berita/lini-massa">
+              <Link href="/berita">
                 <Globe className="size-4" />
                 Lihat Portal
               </Link>
@@ -84,43 +92,87 @@ export default function NewsManagementPage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
+          {/* Mobile Dropdown Filter */}
+          <div className="flex flex-col gap-3 md:hidden">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm font-semibold text-slate-900">Filter:</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-2 font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                <Upload className="size-4" />
+                Impor
+              </Button>
+            </div>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                className="flex w-full items-center justify-between gap-4 rounded-full border-0 bg-slate-100 pl-4 pr-2 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-300 focus:ring-offset-2"
+              >
+                <span className="flex-1 text-left">{selectedFilter}</span>
+                <div className="flex shrink-0 items-center justify-center rounded-lg bg-white/80 px-2.5 py-1.5 mr-2 shadow-sm transition-all hover:bg-white">
+                  <ChevronDown
+                    className={cn(
+                      "size-3.5 text-rose-600 transition-all duration-200",
+                      isFilterOpen && "rotate-180 text-rose-700"
+                    )}
+                  />
+                </div>
+              </button>
+              {isFilterOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setIsFilterOpen(false)}
+                  />
+                  <div className="absolute z-20 mt-2 w-full rounded-2xl border border-slate-200 bg-white p-2 shadow-lg shadow-slate-200/50">
+                    {newsFilters.map((filter) => (
+                      <button
+                        key={filter}
+                        type="button"
+                        onClick={() => {
+                          setSelectedFilter(filter);
+                          setIsFilterOpen(false);
+                        }}
+                        className={cn(
+                          "flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition hover:bg-slate-50",
+                          selectedFilter === filter
+                            ? "bg-rose-50 text-rose-700"
+                            : "text-slate-700"
+                        )}
+                      >
+                        <span>{filter}</span>
+                        {selectedFilter === filter && (
+                          <Check className="size-4 text-rose-600" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Desktop Button Filter */}
+          <div className="hidden flex-wrap items-center gap-2 text-sm text-slate-600 md:flex">
             <span className="font-semibold text-slate-900">Filter:</span>
-            <Button
-              variant="default"
-              size="sm"
-              className="rounded-full border-0 bg-rose-600 px-4 font-semibold text-white shadow-md transition hover:bg-rose-700 hover:text-white"
-            >
-              Semua Status
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="rounded-full px-4 font-semibold text-slate-700 hover:bg-slate-50"
-            >
-              Tayang
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="rounded-full px-4 font-semibold text-slate-700 hover:bg-slate-50"
-            >
-              Draft
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="rounded-full px-4 font-semibold text-slate-700 hover:bg-slate-50"
-            >
-              Terjadwal
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="rounded-full px-4 font-semibold text-slate-700 hover:bg-slate-50"
-            >
-              Butuh Review
-            </Button>
+            {newsFilters.map((filter, index) => (
+              <Button
+                key={filter}
+                variant={index === 0 ? "default" : "outline"}
+                size="sm"
+                className={cn(
+                  "rounded-full border-0 px-4",
+                  index === 0
+                    ? "bg-rose-600 px-4 font-semibold text-white shadow-md transition hover:bg-rose-700 hover:text-white"
+                    : "bg-slate-100 px-4 font-semibold text-slate-800 shadow-sm transition hover:bg-slate-200 hover:text-slate-900",
+                )}
+              >
+                {filter}
+              </Button>
+            ))}
             <Button
               variant="ghost"
               size="sm"
