@@ -440,7 +440,7 @@ export default function KaryaPengawasPage() {
                 <CardTitle className="text-lg font-bold text-slate-900">Terpopuler</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {karyaData
+                {[...karyaData]
                   .sort((a, b) => b.views - a.views)
                   .slice(0, 5)
                   .map((karya, index) => (

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Menu } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import jatengLogo from "@/public/jateng.png";
 import { siteConfig } from "@/config/site";
@@ -26,8 +26,13 @@ import { Separator } from "@/components/ui/separator";
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const headerBackgroundClass =
     "bg-[#371314] text-white";
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <header
@@ -90,66 +95,78 @@ export function SiteHeader() {
           </div>
         </div>
 
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden text-white hover:bg-white/10 hover:text-white"
-            >
-              <Menu className="h-5 w-5" />
-              <span className="sr-only">Toggle menu</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent
-            side="top"
-            className={cn(
-              "pt-6",
-              headerBackgroundClass,
-              "shadow-none border-b border-transparent bg-[#371314]",
-            )}
-          >
-            <SheetHeader>
-              <SheetTitle className="text-left text-base font-semibold text-white">
-                Navigasi SIP-Kepengawasan Jateng
-              </SheetTitle>
-            </SheetHeader>
-            <nav className="mt-4 space-y-4">
-              {siteConfig.navigation.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setOpen(false)}
-                  className={cn(
-                    "block rounded-md px-3 py-2 text-base font-medium text-white/90 transition-colors hover:bg-white/10",
-                  )}
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-            <Separator className="my-4 bg-white/20" />
-            <div className="flex flex-col gap-2">
+        {mounted && (
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
               <Button
                 variant="ghost"
-                className="justify-start text-white hover:bg-white/10 hover:text-white"
-                asChild
+                size="icon"
+                className="lg:hidden text-white hover:bg-white/10 hover:text-white"
               >
-                <Link href="/berita" onClick={() => setOpen(false)}>
-                  Berita
-                </Link>
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Toggle menu</span>
               </Button>
-              <Button
-                className="border-0 focus-visible:border-0 justify-start bg-white text-[#3F0607] hover:bg-white/90"
-                asChild
-              >
-                <Link href="/auth/login" onClick={() => setOpen(false)}>
-                  Masuk ke Portal
-                </Link>
-              </Button>
-            </div>
-          </SheetContent>
-        </Sheet>
+            </SheetTrigger>
+            <SheetContent
+              side="top"
+              className={cn(
+                "pt-6",
+                headerBackgroundClass,
+                "shadow-none border-b border-transparent bg-[#371314]",
+              )}
+            >
+              <SheetHeader>
+                <SheetTitle className="text-left text-base font-semibold text-white">
+                  Navigasi SIP-Kepengawasan Jateng
+                </SheetTitle>
+              </SheetHeader>
+              <nav className="mt-4 space-y-4">
+                {siteConfig.navigation.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setOpen(false)}
+                    className={cn(
+                      "block rounded-md px-3 py-2 text-base font-medium text-white/90 transition-colors hover:bg-white/10",
+                    )}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
+              <Separator className="my-4 bg-white/20" />
+              <div className="flex flex-col gap-2">
+                <Button
+                  variant="ghost"
+                  className="justify-start text-white hover:bg-white/10 hover:text-white"
+                  asChild
+                >
+                  <Link href="/berita" onClick={() => setOpen(false)}>
+                    Berita
+                  </Link>
+                </Button>
+                <Button
+                  className="border-0 focus-visible:border-0 justify-start bg-white text-[#3F0607] hover:bg-white/90"
+                  asChild
+                >
+                  <Link href="/auth/login" onClick={() => setOpen(false)}>
+                    Masuk ke Portal
+                  </Link>
+                </Button>
+              </div>
+            </SheetContent>
+          </Sheet>
+        )}
+        {!mounted && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden text-white hover:bg-white/10 hover:text-white"
+          >
+            <Menu className="h-5 w-5" />
+            <span className="sr-only">Toggle menu</span>
+          </Button>
+        )}
       </div>
     </header>
   );

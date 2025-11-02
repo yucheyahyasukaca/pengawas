@@ -9,24 +9,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PhotoSlider } from "@/components/ui/photo-slider";
 import { siteConfig } from "@/config/site";
 
-const stats = [
-  {
-    label: "Pengawas Aktif",
-    value: "182",
-    description: "Pengawas SMA & SLB terintegrasi dalam SIP Kepengawasan",
-  },
-  {
-    label: "Sekolah Binaan",
-    value: "1.204",
-    description: "Sebaran sekolah negeri dan swasta di 35 kabupaten/kota",
-  },
-  {
-    label: "Laporan Tersimpan",
-    value: "9.830",
-    description: "Dokumen supervisi, pendampingan, dan laporan berkala",
-  },
+// Placeholder images - nanti bisa diganti dengan foto-foto di folder public
+const sliderImages = [
+  "/slider/slide-1.jpg",
+  "/slider/slide-2.jpg",
+  "/slider/slide-3.jpg",
 ];
 
 const newsHighlights = [
@@ -150,24 +140,13 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Right Column - Stats Cards */}
-            <div className="mx-auto grid max-w-md gap-4 sm:mx-0 sm:max-w-none sm:grid-cols-2 md:grid-cols-3 lg:max-w-sm lg:grid-cols-1 lg:justify-items-start">
-              {stats.map((item) => (
-                <Card
-                  key={item.label}
-                  className="group border border-white/20 bg-white/5 shadow-md shadow-black/20 backdrop-blur transition-all hover:border-white/30 hover:shadow-black/30"
-                >
-                  <CardContent className="p-6">
-                    <p className="text-4xl font-bold text-[#F7CDD0]">{item.value}</p>
-                    <p className="mt-2 text-sm font-semibold uppercase tracking-wide text-white">
-                      {item.label}
-                    </p>
-                    <p className="mt-2 text-xs leading-relaxed text-white/70">
-                      {item.description}
-                    </p>
-                  </CardContent>
-                </Card>
-              ))}
+            {/* Right Column - Photo Slider */}
+            <div className="mx-auto w-full max-w-md sm:mx-0 sm:max-w-none lg:max-w-lg">
+              <PhotoSlider 
+                images={sliderImages} 
+                interval={4000}
+                className="w-full"
+              />
             </div>
           </div>
         </div>
