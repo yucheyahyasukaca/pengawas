@@ -33,6 +33,9 @@ export const metadata: Metadata = {
     "Kepengawasan",
   ],
   authors: [{ name: "MKPS SMA & SLB Provinsi Jawa Tengah" }],
+  icons: {
+    icon: "/icon.png",
+  },
   openGraph: {
     title: siteConfig.name,
     description: siteConfig.description,
