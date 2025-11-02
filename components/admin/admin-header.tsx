@@ -103,7 +103,7 @@ export function AdminHeader({ className }: AdminHeaderProps) {
   return (
     <header
       className={cn(
-        "supports-[backdrop-filter]:bg-white/80 relative isolate inset-x-0 top-0 z-40 flex flex-col gap-4 border-b border-rose-100 bg-white/70 px-4 py-3 shadow-[0_12px_30px_rgba(244,63,94,0.08)] backdrop-blur",
+        "supports-[backdrop-filter]:bg-white/80 sticky top-0 z-40 flex flex-col gap-4 border-b border-rose-100 bg-white/70 px-4 py-3 shadow-[0_12px_30px_rgba(244,63,94,0.08)] backdrop-blur",
         className,
       )}
     >
@@ -211,7 +211,7 @@ export function AdminHeader({ className }: AdminHeaderProps) {
                 <span className="text-xs font-semibold leading-none text-slate-800">
                   Admin MKPS
                 </span>
-                <span className="text-[11px] text-slate-700">admin@sip-mkps.id</span>
+                <span className="text-[11px] text-slate-700">mkps@garuda-21.com</span>
               </div>
               <ChevronDown className={cn("size-4 transition-transform", userMenuOpen && "rotate-180")} />
             </Button>
@@ -228,7 +228,7 @@ export function AdminHeader({ className }: AdminHeaderProps) {
                         <span className="text-xs font-semibold text-slate-800">
                           Admin MKPS
                         </span>
-                        <span className="text-[11px] text-slate-600">admin@sip-mkps.id</span>
+                        <span className="text-[11px] text-slate-600">mkps@garuda-21.com</span>
                       </div>
                     </div>
                   </div>

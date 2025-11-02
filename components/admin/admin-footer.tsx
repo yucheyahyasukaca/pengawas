@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export function AdminFooter() {
   return (
-    <footer className="relative border-t border-rose-100 bg-gradient-to-r from-rose-50 via-white to-amber-50 px-6 py-4 text-xs text-slate-600 backdrop-blur">
+    <footer className="sticky bottom-0 z-30 border-t border-rose-100 bg-gradient-to-r from-rose-50/95 via-white/95 to-amber-50/95 px-6 py-4 text-xs text-slate-600 backdrop-blur supports-[backdrop-filter]:bg-gradient-to-r supports-[backdrop-filter]:from-rose-50/90 supports-[backdrop-filter]:via-white/90 supports-[backdrop-filter]:to-amber-50/90">
       <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-rose-200 to-transparent" />
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-slate-600">
         <p className="font-semibold text-rose-700">

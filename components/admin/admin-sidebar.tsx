@@ -118,7 +118,7 @@ export function AdminSidebar({ sections = adminNavigation, onNavigate }: AdminSi
       {/* Footer Help Button */}
       <div className="relative z-10 shrink-0 border-t border-slate-200 bg-white px-3 py-2.5 lg:border-rose-100 lg:px-4 lg:py-3 lg:bg-gradient-to-r lg:from-rose-50 lg:via-white lg:to-rose-50 lg:backdrop-blur-sm">
         <Link
-          href="mailto:admin@sip-mkps.id"
+          href="mailto:mkps@garuda-21.com"
           className="group flex w-full items-center gap-2 rounded-lg bg-gradient-to-br from-rose-500 via-rose-400 to-pink-500 p-2.5 text-left shadow-lg transition hover:shadow-xl hover:scale-[1.02] lg:gap-2.5 lg:rounded-xl lg:p-3"
         >
           <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm text-white shadow-sm ring-1 ring-white/30 lg:size-9">

@@ -14,7 +14,7 @@ export const siteConfig = {
     { label: "Facebook", href: "https://facebook.com" },
   ],
   navigation: [
-    { href: "#beranda", label: "Beranda" },
+    { href: "/", label: "Beranda" },
     { href: "/profil-mkps", label: "Profil MKPS" },
     { href: "#karya", label: "Karya Pengawas" },
     { href: "#regulasi", label: "Regulasi" },
