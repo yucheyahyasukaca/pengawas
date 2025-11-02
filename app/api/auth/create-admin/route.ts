@@ -1,6 +1,8 @@
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 
+export const runtime = 'edge';
+
 /**
  * Route handler untuk membuat akun admin (hanya untuk development/setup awal)
  * PERINGATAN: Route ini seharusnya di-protect atau dihapus setelah akun admin dibuat
