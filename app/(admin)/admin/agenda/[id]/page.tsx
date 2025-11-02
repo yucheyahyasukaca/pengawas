@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -109,8 +109,7 @@ const getTypeColor = (type: string) => {
 
 export default function AgendaDetailPage() {
   const params = useParams();
-  const router = useRouter();
-  const [agenda, setAgenda] = useState<any>(null);
+  const [agenda, setAgenda] = useState<typeof agendaDatabase[0] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {

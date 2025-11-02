@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   Card,
@@ -11,7 +12,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import {
   ArrowLeft,
@@ -215,9 +215,11 @@ export default function TulisBeritaPage() {
                 <div className="space-y-4">
                   {formData.thumbnail ? (
                     <div className="relative rounded-xl overflow-hidden border-2 border-slate-200 bg-slate-50">
-                      <img
+                      <Image
                         src={formData.thumbnail}
                         alt="Thumbnail preview"
+                        width={800}
+                        height={400}
                         className="w-full h-64 object-cover"
                       />
                       <button

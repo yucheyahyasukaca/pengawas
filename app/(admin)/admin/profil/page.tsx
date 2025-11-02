@@ -28,7 +28,7 @@ export default function ProfileManagementPage() {
   const [activeTab, setActiveTab] = useState<TabType>("sambutan");
   const [isTabDropdownOpen, setIsTabDropdownOpen] = useState(false);
 
-  const tabs: { id: TabType; label: string; icon: any }[] = [
+  const tabs: { id: TabType; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { id: "sambutan", label: "Sambutan", icon: Globe },
     { id: "visi-misi", label: "Visi & Misi", icon: Building2 },
     { id: "struktur", label: "Struktur Organisasi", icon: Building2 },
@@ -509,18 +509,20 @@ function StrukturSection() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {Object.entries(struktur).filter(([key]) => key !== "bidang").map(([key, value]: [string, any]) => (
+            {Object.entries(struktur).filter(([key]) => key !== "bidang").map(([key, value]) => {
+              const strukturValue = value as { nama: string; jabatan: string };
+              return (
               <div key={key} className="space-y-2">
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-600">
-                  {value.jabatan}
+                  {strukturValue.jabatan}
                 </label>
                 <input
                   type="text"
-                  value={value.nama}
+                  value={strukturValue.nama}
                   onChange={(e) =>
                     setStruktur({
                       ...struktur,
-                      [key]: { ...value, nama: e.target.value },
+                      [key]: { ...strukturValue, nama: e.target.value },
                     })
                   }
                   className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-700 shadow-sm transition focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-100"
@@ -528,18 +530,19 @@ function StrukturSection() {
                 />
                 <input
                   type="text"
-                  value={value.jabatan}
+                  value={strukturValue.jabatan}
                   onChange={(e) =>
                     setStruktur({
                       ...struktur,
-                      [key]: { ...value, jabatan: e.target.value },
+                      [key]: { ...strukturValue, jabatan: e.target.value },
                     })
                   }
                   className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-700 shadow-sm transition focus:border-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-100"
                   placeholder="Jabatan..."
                 />
               </div>
-            ))}
+              );
+            })}
           </div>
         </CardContent>
       </Card>

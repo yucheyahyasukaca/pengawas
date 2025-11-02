@@ -4,28 +4,21 @@ import Link from "next/link";
 import { ShieldAlert, ArrowLeft, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useMemo, useState, useEffect } from "react";
+import { useState } from "react";
 
 export function AdminUnauthorized() {
-  const [isMounted, setIsMounted] = useState(false);
-
-  // Generate random positions for particles only on client
-  const particles = useMemo(
-    () =>
-      isMounted
-        ? Array.from({ length: 20 }, () => ({
-            left: Math.random() * 100,
-            top: Math.random() * 100,
-            delay: Math.random() * 2,
-            duration: 5 + Math.random() * 5,
-          }))
-        : [],
-    [isMounted]
-  );
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  // Generate random positions for particles with lazy initialization
+  const [particles] = useState<Array<{ left: number; top: number; delay: number; duration: number }>>(() => {
+    // Only generate on client side
+    if (typeof window === 'undefined') return [];
+    
+    return Array.from({ length: 20 }, () => ({
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      delay: Math.random() * 2,
+      duration: 5 + Math.random() * 5,
+    }));
+  });
 
   return (
     <div className="relative min-h-screen flex items-center justify-center p-4 overflow-hidden bg-gradient-to-br from-violet-50 via-white to-blue-50">

@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AlignLeft, ClipboardCheck, Edit3, Globe, Plus, Upload, ChevronDown, Check, Filter } from "lucide-react";
+import { AlignLeft, ClipboardCheck, Edit3, Globe, Plus, Upload, ChevronDown, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const newsData = [

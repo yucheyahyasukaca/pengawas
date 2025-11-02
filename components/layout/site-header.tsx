@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Menu } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import jatengLogo from "@/public/jateng.png";
 import { siteConfig } from "@/config/site";
@@ -26,11 +26,8 @@ import { Separator } from "@/components/ui/separator";
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  // Only set mounted on client side to avoid hydration mismatch
+  const [isMounted] = useState(() => typeof window !== 'undefined');
   const headerBackgroundClass =
     "bg-[#371314] text-white";
 

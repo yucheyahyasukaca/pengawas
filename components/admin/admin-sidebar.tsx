@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { type AdminNavSection, adminNavigation } from "@/config/admin";
 import { cn } from "@/lib/utils";
@@ -22,9 +23,11 @@ export function AdminSidebar({ sections = adminNavigation, onNavigate }: AdminSi
       {/* Header */}
       <div className="relative z-10 shrink-0 border-b border-slate-200 px-3 pt-4 pb-3 bg-white lg:border-rose-100/50 lg:px-4 lg:pt-6 lg:pb-4 lg:bg-white/95 lg:backdrop-blur-sm">
         <div className="flex items-center gap-2.5 lg:gap-3 lg:px-2">
-          <img
+          <Image
             src="/jateng.png"
             alt="Logo Jateng"
+            width={48}
+            height={48}
             className="h-10 w-10 rounded-lg object-cover shadow-[0_12px_28px_rgba(244,63,94,0.25)] lg:h-12 lg:w-12 lg:rounded-xl"
           />
           <div className="flex min-w-0 flex-1 flex-col">

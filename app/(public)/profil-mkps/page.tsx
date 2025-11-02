@@ -163,7 +163,7 @@ export default function ProfilMKPSPage() {
             </CardHeader>
             <CardContent className="space-y-4 text-base leading-relaxed text-white/90 sm:text-lg">
               <p>
-                Assalamu'alaikum warahmatullahi wabarakatuh. Puji syukur kehadirat Allah SWT yang telah memberikan kesempatan kepada kami untuk mengemban amanah sebagai Ketua MKPS SMA & SLB Provinsi Jawa Tengah.
+                Assalamu&apos;alaikum warahmatullahi wabarakatuh. Puji syukur kehadirat Allah SWT yang telah memberikan kesempatan kepada kami untuk mengemban amanah sebagai Ketua MKPS SMA & SLB Provinsi Jawa Tengah.
               </p>
               <p>
                 MKPS hadir sebagai wadah profesional pengawas untuk berkolaborasi, berbagi praktik baik, dan mengembangkan kompetensi kepengawasan. Melalui platform SIP-Kepengawasan Jateng, kami berkomitmen untuk mendigitalisasi seluruh siklus kepengawasan, mulai dari perencanaan, pelaksanaan, hingga pelaporan.

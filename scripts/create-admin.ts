@@ -64,10 +64,11 @@ async function createAdmin() {
       console.log(`   Email: ${adminEmail}`);
       console.log(`   Password: ${adminPassword}`);
     }
-  } catch (error: any) {
-    console.error("❌ Error:", error.message);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("❌ Error:", errorMessage);
     
-    if (error.message.includes("already registered")) {
+    if (errorMessage.includes("already registered")) {
       console.log("\n💡 Akun sudah ada. Jika lupa password, reset melalui Supabase Dashboard.");
     } else {
       console.log("\n💡 Pastikan:");

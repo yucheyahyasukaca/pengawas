@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +17,6 @@ import {
   Clock,
   ArrowRight,
   Search,
-  Filter,
   Eye,
 } from "lucide-react";
 
@@ -93,6 +95,15 @@ const categories = ["Semua", "Inovasi", "Kolaborasi", "Best Practice", "Pendampi
 export default function BeritaPage() {
   const featuredNews = newsData.find((news) => news.featured);
   const regularNews = newsData.filter((news) => !news.featured);
+  
+  // Generate view counts once with lazy initialization
+  const [viewCounts] = useState<Record<string, number>>(() => {
+    const counts: Record<string, number> = {};
+    newsData.forEach((news) => {
+      counts[news.id] = Math.floor(Math.random() * 900 + 100);
+    });
+    return counts;
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
@@ -306,7 +317,7 @@ export default function BeritaPage() {
                       </h3>
                       <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
                         <Eye className="size-3.5" />
-                        <span>{Math.floor(Math.random() * 900 + 100)} dilihat</span>
+                        <span>{viewCounts[news.id] || 0} dilihat</span>
                       </div>
                     </div>
                   </Link>

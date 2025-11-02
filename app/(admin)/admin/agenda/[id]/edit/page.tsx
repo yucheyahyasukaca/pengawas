@@ -82,7 +82,7 @@ export default function EditAgendaPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [originalAgenda, setOriginalAgenda] = useState<any>(null);
+  const [originalAgenda, setOriginalAgenda] = useState<typeof agendaDatabase[0] | null>(null);
 
   const [formData, setFormData] = useState({
     title: "",
