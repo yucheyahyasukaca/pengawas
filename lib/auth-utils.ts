@@ -21,9 +21,10 @@ function isAdminEmail(email: string): boolean {
 export async function getAdminUser() {
   try {
     const supabase = await createSupabaseServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user }, error } = await supabase.auth.getUser();
 
-    if (!user || !user.email) {
+    // Silently handle refresh token errors - this is normal when user is not logged in
+    if (error || !user || !user.email) {
       return null;
     }
 
@@ -36,7 +37,7 @@ export async function getAdminUser() {
       email: user.email,
     };
   } catch (error) {
-    console.error("Error getting admin user:", error);
+    // Silently handle errors - this is normal when user is not logged in
     return null;
   }
 }

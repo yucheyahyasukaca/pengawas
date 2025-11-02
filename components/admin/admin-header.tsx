@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   adminNavigation,
-  adminQuickActions,
   type AdminNavItem,
 } from "@/config/admin";
 import { cn } from "@/lib/utils";
@@ -103,14 +102,91 @@ export function AdminHeader({ className }: AdminHeaderProps) {
   return (
     <header
       className={cn(
-        "supports-[backdrop-filter]:bg-white/80 sticky top-0 z-40 flex flex-col gap-4 border-b border-rose-100 bg-white/70 px-4 py-3 shadow-[0_12px_30px_rgba(244,63,94,0.08)] backdrop-blur",
+        "supports-[backdrop-filter]:bg-white/90 sticky top-0 z-40 border-b border-rose-100 bg-white/90 px-4 py-2.5 shadow-sm backdrop-blur",
         className,
       )}
     >
-      <div className="pointer-events-none absolute inset-x-4 top-0 h-24 rounded-full bg-gradient-to-r from-rose-200/40 via-transparent to-amber-200/40 blur-2xl" />
-      <div className="pointer-events-none absolute right-10 top-4 h-24 w-24 rounded-full bg-rose-100/40 blur-3xl" />
+      {/* Mobile Layout - Compact */}
+      <div className="relative flex items-center gap-3 md:hidden">
+        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+          <SheetTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100"
+            >
+              <Menu className="size-5" />
+              <span className="sr-only">Menu</span>
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="flex flex-col gap-0 p-0 border-r border-slate-200 bg-white">
+            <SheetHeader className="sr-only">
+              <SheetTitle>Navigasi Panel Admin</SheetTitle>
+            </SheetHeader>
+            <div className="flex h-full flex-col overflow-hidden">
+              <AdminSidebar onNavigate={() => setMobileOpen(false)} />
+            </div>
+          </SheetContent>
+        </Sheet>
 
-      <div className="relative flex items-center gap-2 sm:gap-3">
+        <div className="flex min-w-0 flex-1 flex-col">
+          <h1 className="truncate text-base font-bold text-rose-900">
+            {activeItem?.title ?? "Panel Admin"}
+          </h1>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 rounded-lg text-rose-600 hover:bg-rose-50"
+          >
+            <Bell className="size-5" />
+            <span className="sr-only">Notifikasi</span>
+          </Button>
+          
+          <div className="relative" ref={userMenuRef}>
+            <Button
+              variant="ghost"
+              onClick={() => setUserMenuOpen(!userMenuOpen)}
+              className="h-9 rounded-full border-0 bg-rose-50 p-0.5 hover:bg-rose-100"
+            >
+              <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 via-rose-400 to-amber-400 text-xs font-bold text-white">
+                MK
+              </div>
+            </Button>
+
+            {userMenuOpen && (
+              <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-xl border border-rose-100 bg-white shadow-lg">
+                <div className="p-1">
+                  <div className="px-3 py-2 border-b border-rose-50">
+                    <div className="flex items-center gap-2">
+                      <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 via-rose-400 to-amber-400 text-xs font-bold text-white">
+                        MK
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-xs font-semibold text-slate-800">Admin MKPS</span>
+                        <span className="text-[11px] text-slate-600">mkps@garuda-21.com</span>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleSignOut}
+                    disabled={isSigningOut}
+                    className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                  >
+                    <LogOut className="size-4" />
+                    <span>{isSigningOut ? "Keluar..." : "Keluar"}</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Layout */}
+      <div className="relative hidden md:flex items-center gap-4">
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger asChild>
             <Button
@@ -170,7 +246,7 @@ export function AdminHeader({ className }: AdminHeaderProps) {
           ) : null}
         </div>
 
-        <div className="hidden flex-1 items-center gap-2 md:flex">
+        <div className="flex flex-1 items-center gap-2">
           <div className="relative ml-auto w-full max-w-xs">
             <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-rose-400" />
             <input
@@ -182,7 +258,7 @@ export function AdminHeader({ className }: AdminHeaderProps) {
         </div>
 
         {/* User menu for desktop */}
-        <div className="hidden shrink-0 sm:block relative" ref={userMenuRef}>
+        <div className="shrink-0 relative" ref={userMenuRef}>
           <Button
             variant="outline"
             onClick={() => setUserMenuOpen(!userMenuOpen)}
@@ -228,87 +304,7 @@ export function AdminHeader({ className }: AdminHeaderProps) {
             </div>
           )}
         </div>
-      </div>
 
-      <div className="relative mt-1 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-1 items-center gap-2 md:hidden">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-rose-400" />
-            <input
-              type="search"
-              placeholder="Cari agenda atau berita…"
-              className="w-full rounded-full border border-rose-100 bg-white/90 pl-10 pr-4 text-sm text-slate-700 shadow-inner transition placeholder:text-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-200"
-            />
-          </div>
-        </div>
-
-        {/* Mobile toolbar: Bell + User menu */}
-        <div className="flex shrink-0 items-center gap-2 md:hidden">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="border-0 bg-slate-100 text-rose-600 shadow-sm transition hover:bg-slate-200 hover:text-rose-700"
-          >
-            <Bell className="size-5" />
-            <span className="sr-only">Notifikasi</span>
-          </Button>
-          
-          {/* Mobile user menu */}
-          <div className="relative" ref={userMenuRef}>
-            <Button
-              variant="outline"
-              onClick={() => setUserMenuOpen(!userMenuOpen)}
-              className="items-center gap-1 rounded-full border-0 bg-white pl-1 pr-2 text-slate-700 shadow-md transition hover:bg-rose-50"
-            >
-              <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 via-rose-400 to-amber-400 text-sm font-semibold text-white shadow-lg">
-                MK
-              </div>
-              <ChevronDown className={cn("size-4 transition-transform", userMenuOpen && "rotate-180")} />
-            </Button>
-
-            {userMenuOpen && (
-              <div className="absolute right-0 top-full z-50 mt-2 w-56 origin-top-right rounded-xl border border-rose-100 bg-white shadow-lg shadow-black/5">
-                <div className="p-1">
-                  <div className="px-3 py-2 border-b border-rose-50">
-                    <div className="flex items-center gap-2">
-                      <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 via-rose-400 to-amber-400 text-sm font-semibold text-white shadow-lg">
-                        MK
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-xs font-semibold text-slate-800">
-                          Admin MKPS
-                        </span>
-                        <span className="text-[11px] text-slate-600">mkps@garuda-21.com</span>
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={handleSignOut}
-                    disabled={isSigningOut}
-                    className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <LogOut className="size-4" />
-                    <span>{isSigningOut ? "Keluar..." : "Keluar"}</span>
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="hidden md:flex flex-wrap items-center gap-2 md:justify-end">
-          {adminQuickActions.map((action) => (
-            <Button
-              key={action.href}
-              variant="default"
-              size="sm"
-              className="rounded-full border-0 bg-rose-600 px-4 font-semibold text-white shadow-md transition hover:bg-rose-700 hover:text-white"
-              asChild
-            >
-              <Link href={action.href}>{action.title}</Link>
-            </Button>
-          ))}
-        </div>
       </div>
     </header>
   );
