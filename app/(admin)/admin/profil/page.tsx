@@ -79,120 +79,54 @@ export default function ProfileManagementPage() {
       <Card className="border border-rose-200 bg-white shadow-md shadow-rose-100/70">
         <CardContent className="p-0">
           {/* Mobile Dropdown Tabs */}
-          <div className="border-b border-gradient-to-r from-transparent via-rose-100 to-transparent bg-gradient-to-br from-rose-50/30 via-white to-violet-50/20 p-4 md:hidden">
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-rose-500 to-pink-500 shadow-md">
-                  <Globe className="size-4 text-white" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-xs font-bold uppercase tracking-wide text-rose-700">
-                    Bagian Profil
-                  </span>
-                  <span className="text-[11px] text-slate-500">
-                    Pilih kategori yang ingin dikelola
-                  </span>
-                </div>
-              </div>
-              
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setIsTabDropdownOpen(!isTabDropdownOpen)}
-                  className="group flex w-full items-center justify-between gap-4 overflow-hidden rounded-2xl border border-rose-200/50 bg-gradient-to-br from-white via-rose-50/30 to-violet-50/20 pl-4 pr-2 py-3 text-sm font-semibold text-slate-800 shadow-md shadow-rose-100/50 transition-all hover:border-rose-300 hover:shadow-lg hover:shadow-rose-200/50 focus:outline-none focus:ring-2 focus:ring-rose-300 focus:ring-offset-2"
-                >
-                  <span className="flex items-center gap-3">
-                    {tabs.find(t => t.id === activeTab) && (
-                      <>
-                        {(() => {
-                          const Icon = tabs.find(t => t.id === activeTab)!.icon;
-                          return (
-                            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-rose-500 to-pink-500 text-white shadow-sm">
-                              <Icon className="size-4" />
-                            </div>
-                          );
-                        })()}
-                        <div className="flex flex-col items-start">
-                          <span className="font-bold text-slate-900">{tabs.find(t => t.id === activeTab)?.label}</span>
-                          <span className="text-xs text-slate-500">Bagian profil aktif</span>
-                        </div>
-                      </>
+          <div className="border-b border-slate-200 bg-white p-4 md:hidden">
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsTabDropdownOpen(!isTabDropdownOpen)}
+                className="flex w-full items-center justify-between gap-4 rounded-full border-0 bg-slate-100 pl-4 pr-2 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-300 focus:ring-offset-2"
+              >
+                <span className="flex-1 text-left">{tabs.find(t => t.id === activeTab)?.label}</span>
+                <div className="flex shrink-0 items-center justify-center rounded-lg bg-white/80 px-2.5 py-1.5 mr-2 shadow-sm transition-all hover:bg-white">
+                  <ChevronDown
+                    className={cn(
+                      "size-3.5 text-rose-600 transition-all duration-200",
+                      isTabDropdownOpen && "rotate-180 text-rose-700"
                     )}
-                  </span>
-                  <div className="flex shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-rose-400 to-pink-400 px-3 py-1.5 shadow-md transition-all group-hover:from-rose-500 group-hover:to-pink-500">
-                    <ChevronDown
-                      className={cn(
-                        "size-4 text-white transition-all duration-300",
-                        isTabDropdownOpen && "rotate-180"
-                      )}
-                    />
+                  />
+                </div>
+              </button>
+              {isTabDropdownOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setIsTabDropdownOpen(false)}
+                  />
+                  <div className="absolute z-20 mt-2 w-full rounded-2xl border border-slate-200 bg-white p-2 shadow-lg shadow-slate-200/50">
+                    {tabs.map((tab) => (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => {
+                          setActiveTab(tab.id);
+                          setIsTabDropdownOpen(false);
+                        }}
+                        className={cn(
+                          "flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition hover:bg-slate-50",
+                          activeTab === tab.id
+                            ? "bg-rose-50 text-rose-700"
+                            : "text-slate-700"
+                        )}
+                      >
+                        <span>{tab.label}</span>
+                        {activeTab === tab.id && (
+                          <Check className="size-4 text-rose-600" />
+                        )}
+                      </button>
+                    ))}
                   </div>
-                </button>
-                
-                {isTabDropdownOpen && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-10 bg-black/20 backdrop-blur-sm transition-opacity"
-                      onClick={() => setIsTabDropdownOpen(false)}
-                    />
-                    <div className="absolute z-20 mt-3 w-full overflow-hidden rounded-2xl border border-rose-200/50 bg-white/95 backdrop-blur-xl p-2 shadow-2xl shadow-rose-200/30 ring-1 ring-rose-100/50">
-                      <div className="grid grid-cols-1 gap-1.5">
-                        {tabs.map((tab) => {
-                          const Icon = tab.icon;
-                          const isActive = activeTab === tab.id;
-                          return (
-                            <button
-                              key={tab.id}
-                              type="button"
-                              onClick={() => {
-                                setActiveTab(tab.id);
-                                setIsTabDropdownOpen(false);
-                              }}
-                              className={cn(
-                                "group relative flex w-full items-center justify-between gap-3 overflow-hidden rounded-xl px-4 py-3 text-left transition-all",
-                                isActive
-                                  ? "bg-gradient-to-r from-rose-50 via-pink-50 to-violet-50 text-rose-700 shadow-sm"
-                                  : "text-slate-700 hover:bg-gradient-to-r hover:from-slate-50 hover:to-rose-50/30 hover:shadow-sm"
-                              )}
-                            >
-                              <span className="flex items-center gap-3">
-                                <div className={cn(
-                                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl shadow-sm transition-all",
-                                  isActive
-                                    ? "bg-gradient-to-br from-rose-500 to-pink-500 text-white"
-                                    : "bg-gradient-to-br from-slate-100 to-slate-200 text-slate-600 group-hover:from-rose-100 group-hover:to-pink-100 group-hover:text-rose-600"
-                                )}>
-                                  <Icon className="size-4" />
-                                </div>
-                                <div className="flex flex-col items-start">
-                                  <span className={cn(
-                                    "text-sm font-semibold",
-                                    isActive ? "text-rose-700" : "text-slate-900"
-                                  )}>
-                                    {tab.label}
-                                  </span>
-                                  {isActive && (
-                                    <span className="text-xs text-rose-600 font-medium">Saat ini aktif</span>
-                                  )}
-                                </div>
-                              </span>
-                              {isActive && (
-                                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 to-pink-500 shadow-sm">
-                                  <Check className="size-3 text-white" />
-                                </div>
-                              )}
-                              {/* Decorative gradient overlay */}
-                              {isActive && (
-                                <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 via-transparent to-violet-500/5 pointer-events-none" />
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
+                </>
+              )}
             </div>
           </div>
 

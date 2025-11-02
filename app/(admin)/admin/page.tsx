@@ -1,4 +1,7 @@
+"use client";
+
 export const runtime = 'edge';
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -50,18 +53,21 @@ const stats = [
 
 const upcomingAgenda = [
   {
+    id: "agd-001",
     title: "Supervisi Mutu SMA Negeri 1 Semarang",
     date: "5 November 2025",
     type: "Supervisi",
     status: "Siap Jalan",
   },
   {
+    id: "agd-002",
     title: "Pendampingan Kurikulum Merdeka",
     date: "8 November 2025",
     type: "Pendampingan",
     status: "Butuh Dokumen",
   },
   {
+    id: "agd-004",
     title: "Rakor Pengawas Kabupaten Kudus",
     date: "12 November 2025",
     type: "Rakor",
@@ -140,9 +146,10 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {upcomingAgenda.map((agenda) => (
-              <div
-                key={agenda.title}
-                className="rounded-2xl border border-rose-100 bg-white p-4 shadow-sm transition hover:-translate-y-[1px] hover:border-rose-200 hover:shadow-lg hover:shadow-rose-100"
+              <Link
+                key={agenda.id}
+                href={`/admin/agenda/${agenda.id}`}
+                className="block rounded-2xl border border-rose-100 bg-white p-4 shadow-sm transition hover:-translate-y-[1px] hover:border-rose-200 hover:shadow-lg hover:shadow-rose-100"
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex flex-col gap-1 flex-1">
@@ -162,7 +169,7 @@ export default function AdminDashboardPage() {
                   <span>•</span>
                   <span>Koordinasi dengan tim pengawas telah dijadwalkan.</span>
                 </div>
-              </div>
+              </Link>
             ))}
           </CardContent>
         </Card>

@@ -58,6 +58,14 @@ export default function NewsManagementPage() {
   const [selectedFilter, setSelectedFilter] = useState("Semua Status");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
+  // Filter news data based on selected filter
+  const filteredNews = newsData.filter((news) => {
+    if (selectedFilter === "Semua Status") {
+      return true;
+    }
+    return news.status === selectedFilter;
+  });
+
   return (
     <div className="flex flex-col gap-6">
       <Card className="border border-rose-200 bg-white shadow-md shadow-rose-100/70">
@@ -160,14 +168,15 @@ export default function NewsManagementPage() {
           {/* Desktop Button Filter */}
           <div className="hidden flex-wrap items-center gap-2 text-sm text-slate-600 md:flex">
             <span className="font-semibold text-slate-900">Filter:</span>
-            {newsFilters.map((filter, index) => (
+            {newsFilters.map((filter) => (
               <Button
                 key={filter}
-                variant={index === 0 ? "default" : "outline"}
+                onClick={() => setSelectedFilter(filter)}
+                variant={selectedFilter === filter ? "default" : "outline"}
                 size="sm"
                 className={cn(
                   "rounded-full border-0 px-4",
-                  index === 0
+                  selectedFilter === filter
                     ? "bg-rose-600 px-4 font-semibold text-white shadow-md transition hover:bg-rose-700 hover:text-white"
                     : "bg-slate-100 px-4 font-semibold text-slate-800 shadow-sm transition hover:bg-slate-200 hover:text-slate-900",
                 )}
@@ -199,7 +208,7 @@ export default function NewsManagementPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-rose-100">
-                {newsData.map((news) => (
+                {filteredNews.map((news) => (
                   <tr key={news.id} className="hover:bg-rose-50/70">
                     <td className="px-5 py-4 align-top">
                       <div className="flex flex-col gap-1">
@@ -261,7 +270,7 @@ export default function NewsManagementPage() {
 
           {/* Mobile Card View */}
           <div className="flex flex-col gap-3 md:hidden">
-            {newsData.map((news) => (
+            {filteredNews.map((news) => (
               <div
                 key={news.id}
                 className="rounded-2xl border border-rose-200 bg-white p-4 shadow-md shadow-rose-100/70"
@@ -337,7 +346,7 @@ export default function NewsManagementPage() {
           </div>
         </CardContent>
         <CardFooter className="flex flex-col items-center justify-center gap-3 text-xs text-slate-500 sm:flex-row sm:justify-between">
-          <p>Menampilkan 1-4 dari 18 berita.</p>
+          <p>Menampilkan {filteredNews.length} dari {newsData.length} berita.</p>
           <div className="flex items-center gap-1">
             <Button
               variant="outline"

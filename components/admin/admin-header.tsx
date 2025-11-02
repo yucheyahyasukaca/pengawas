@@ -61,9 +61,14 @@ export function AdminHeader({ className }: AdminHeaderProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const activeItem = useActiveNavItem(pathname);
   const breadcrumbs = formatBreadcrumb(pathname);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Close user menu when clicking outside
   useEffect(() => {
@@ -108,26 +113,38 @@ export function AdminHeader({ className }: AdminHeaderProps) {
     >
       {/* Mobile Layout - Compact */}
       <div className="relative flex items-center gap-3 md:hidden">
-        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100"
-            >
-              <Menu className="size-5" />
-              <span className="sr-only">Menu</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="flex flex-col gap-0 p-0 border-r border-slate-200 bg-white">
-            <SheetHeader className="sr-only">
-              <SheetTitle>Navigasi Panel Admin</SheetTitle>
-            </SheetHeader>
-            <div className="flex h-full flex-col overflow-hidden">
-              <AdminSidebar onNavigate={() => setMobileOpen(false)} />
-            </div>
-          </SheetContent>
-        </Sheet>
+        {isMounted && (
+          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+            <SheetTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100"
+              >
+                <Menu className="size-5" />
+                <span className="sr-only">Menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="flex flex-col gap-0 p-0 border-r border-slate-200 bg-white">
+              <SheetHeader className="sr-only">
+                <SheetTitle>Navigasi Panel Admin</SheetTitle>
+              </SheetHeader>
+              <div className="flex h-full flex-col overflow-hidden">
+                <AdminSidebar onNavigate={() => setMobileOpen(false)} />
+              </div>
+            </SheetContent>
+          </Sheet>
+        )}
+        {!isMounted && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100"
+          >
+            <Menu className="size-5" />
+            <span className="sr-only">Menu</span>
+          </Button>
+        )}
 
         <div className="flex min-w-0 flex-1 flex-col">
           <h1 className="truncate text-base font-bold text-rose-900">
@@ -187,26 +204,38 @@ export function AdminHeader({ className }: AdminHeaderProps) {
 
       {/* Desktop Layout */}
       <div className="relative hidden md:flex items-center gap-4">
-        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden border-0 bg-slate-100 text-rose-600 shadow-sm transition hover:bg-slate-200 hover:text-rose-700"
-            >
-              <Menu className="size-5" />
-              <span className="sr-only">Buka navigasi</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="flex flex-col gap-0 p-0 border-r border-slate-200 bg-white">
-            <SheetHeader className="sr-only">
-              <SheetTitle>Navigasi Panel Admin</SheetTitle>
-            </SheetHeader>
-            <div className="flex h-full flex-col overflow-hidden">
-              <AdminSidebar onNavigate={() => setMobileOpen(false)} />
-            </div>
-          </SheetContent>
-        </Sheet>
+        {isMounted && (
+          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+            <SheetTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="lg:hidden border-0 bg-slate-100 text-rose-600 shadow-sm transition hover:bg-slate-200 hover:text-rose-700"
+              >
+                <Menu className="size-5" />
+                <span className="sr-only">Buka navigasi</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="flex flex-col gap-0 p-0 border-r border-slate-200 bg-white">
+              <SheetHeader className="sr-only">
+                <SheetTitle>Navigasi Panel Admin</SheetTitle>
+              </SheetHeader>
+              <div className="flex h-full flex-col overflow-hidden">
+                <AdminSidebar onNavigate={() => setMobileOpen(false)} />
+              </div>
+            </SheetContent>
+          </Sheet>
+        )}
+        {!isMounted && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden border-0 bg-slate-100 text-rose-600 shadow-sm transition hover:bg-slate-200 hover:text-rose-700"
+          >
+            <Menu className="size-5" />
+            <span className="sr-only">Buka navigasi</span>
+          </Button>
+        )}
 
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <nav className="text-xs font-semibold text-rose-500">

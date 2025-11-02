@@ -151,6 +151,99 @@
   }
 }
 
+/* Prose Content Styles */
+.prose {
+  color: rgb(51, 65, 85);
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+  color: rgb(15, 23, 42);
+  font-weight: 700;
+  margin-top: 1.25em;
+  margin-bottom: 0.5em;
+}
+
+.prose h1 {
+  font-size: 2.25em;
+}
+
+.prose h2 {
+  font-size: 1.875em;
+}
+
+.prose h3 {
+  font-size: 1.5em;
+}
+
+.prose p {
+  color: rgb(51, 65, 85);
+  margin-bottom: 1em;
+  margin-top: 0;
+  line-height: 1.75;
+}
+
+.prose ul {
+  color: rgb(51, 65, 85);
+  margin-bottom: 1em;
+  margin-top: 0.5em;
+  padding-left: 2em;
+  list-style-type: disc !important;
+  list-style-position: outside;
+}
+
+.prose ol {
+  color: rgb(51, 65, 85);
+  margin-bottom: 1em;
+  margin-top: 0.5em;
+  padding-left: 2em;
+  list-style-type: decimal !important;
+  list-style-position: outside;
+}
+
+.prose li {
+  color: rgb(51, 65, 85);
+  margin-bottom: 0.25em;
+  margin-left: 0;
+  padding-left: 0.5em;
+  list-style-position: outside;
+  display: list-item;
+}
+
+.prose li::marker {
+  color: rgb(225, 29, 72);
+  font-weight: bold;
+}
+
+.prose a {
+  color: rgb(225, 29, 72);
+  text-decoration: underline;
+}
+
+.prose a:hover {
+  color: rgb(190, 18, 60);
+}
+
+.prose code {
+  color: rgb(239, 68, 68);
+  background-color: rgb(254, 242, 242);
+  padding: 0.125em 0.375em;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+}
+
+.prose blockquote {
+  border-left: 4px solid rgb(254, 226, 226);
+  padding-left: 1em;
+  margin: 1em 0;
+  color: rgb(71, 85, 105);
+  font-style: italic;
+}
+
+.prose img {
+  border-radius: 0.5rem;
+  margin: 1em 0;
+}
+
 /* Tiptap Editor Styles */
 .ProseMirror {
   outline: none;

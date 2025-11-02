@@ -7,6 +7,7 @@ import {
   Settings,
   Users,
   Building2,
+  BookOpen,
 } from "lucide-react";
 
 export type AdminNavItem = {
@@ -56,6 +57,12 @@ export const adminNavigation: AdminNavSection[] = [
         href: "/admin/profil",
         icon: Building2,
         description: "Kelola profil MKPS di landing page",
+      },
+      {
+        title: "Tulisan & Karya",
+        href: "/admin/karya-pengawas",
+        icon: BookOpen,
+        description: "Manajemen tulisan ilmiah, penelitian, dan praktik baik pengawas",
       },
     ],
   },

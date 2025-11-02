@@ -70,6 +70,14 @@ export default function AgendaManagementPage() {
   const [selectedFilter, setSelectedFilter] = useState("Semua");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
+  // Filter agenda data based on selected filter
+  const filteredAgenda = agendaData.filter((agenda) => {
+    if (selectedFilter === "Semua") {
+      return true;
+    }
+    return agenda.type === selectedFilter;
+  });
+
   return (
     <div className="flex flex-col gap-6">
       <Card className="border border-rose-200 bg-white shadow-md shadow-rose-100/70">
@@ -172,14 +180,15 @@ export default function AgendaManagementPage() {
           {/* Desktop Button Filter */}
           <div className="hidden flex-wrap items-center gap-2 text-sm text-slate-600 md:flex">
             <span className="font-semibold text-slate-900">Filter:</span>
-            {agendaFilters.map((filter, index) => (
+            {agendaFilters.map((filter) => (
               <Button
                 key={filter}
-                variant={index === 0 ? "default" : "outline"}
+                onClick={() => setSelectedFilter(filter)}
+                variant={selectedFilter === filter ? "default" : "outline"}
                 size="sm"
                 className={cn(
                   "rounded-full border-0 px-4",
-                  index === 0
+                  selectedFilter === filter
                     ? "bg-rose-600 px-4 font-semibold text-white shadow-md transition hover:bg-rose-700 hover:text-white"
                     : "bg-slate-100 px-4 font-semibold text-slate-800 shadow-sm transition hover:bg-slate-200 hover:text-slate-900",
                 )}
@@ -211,7 +220,7 @@ export default function AgendaManagementPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-rose-100">
-                {agendaData.map((agenda) => (
+                {filteredAgenda.map((agenda) => (
                   <tr key={agenda.id} className="hover:bg-rose-50/70">
                     <td className="px-5 py-4 align-top">
                       <div className="flex flex-col gap-1">
@@ -288,7 +297,7 @@ export default function AgendaManagementPage() {
 
           {/* Mobile Card View */}
           <div className="flex flex-col gap-3 md:hidden">
-            {agendaData.map((agenda) => (
+            {filteredAgenda.map((agenda) => (
               <div
                 key={agenda.id}
                 className="rounded-2xl border border-rose-200 bg-white p-4 shadow-md shadow-rose-100/70"
@@ -377,7 +386,7 @@ export default function AgendaManagementPage() {
           </div>
         </CardContent>
         <CardFooter className="flex flex-col items-center justify-center gap-3 text-xs text-slate-500 sm:flex-row sm:justify-between">
-          <p>Menampilkan 1-4 dari 24 agenda aktif.</p>
+          <p>Menampilkan {filteredAgenda.length} dari {agendaData.length} agenda aktif.</p>
           <div className="flex items-center gap-1">
             <Button
               variant="outline"
@@ -397,56 +406,28 @@ export default function AgendaManagementPage() {
         </CardFooter>
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="border border-rose-200 bg-white shadow-md shadow-rose-100/70">
-          <CardHeader>
-            <CardTitle className="text-base font-semibold text-slate-900">
-              Blueprint Agenda Kolaboratif
-            </CardTitle>
-            <CardDescription className="text-slate-600">
-              Gunakan template kolaborasi untuk mengundang pengawas lintas wilayah.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3 text-sm text-slate-600">
-            <p>
-              • Sinkronkan jadwal dengan Google Calendar dan Supabase secara otomatis.
-            </p>
-            <p>• Bagikan agenda dan catatan persiapan kepada seluruh tim.</p>
-            <p>• Monitor progres dan dokumen pendukung dalam satu panel.</p>
-          </CardContent>
-          <CardFooter>
-            <Button
-              variant="outline"
-              className="rounded-full border-0 bg-slate-100 px-4 font-semibold text-slate-800 shadow-sm transition hover:bg-slate-200 hover:text-slate-900"
-            >
-              Pelajari Lebih Lanjut
-            </Button>
-          </CardFooter>
-        </Card>
-
-        <Card className="border border-rose-200 bg-white shadow-md shadow-rose-100/70">
-          <CardHeader>
-            <CardTitle className="text-base font-semibold text-slate-900">Agenda Perlu Tindak Lanjut</CardTitle>
-            <CardDescription className="text-slate-600">
-              Pastikan dokumen, notulen, dan catatan evaluasi terselesaikan tepat waktu.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm text-slate-600">
-            <div className="rounded-2xl border border-rose-100 bg-white p-3 shadow-sm">
-              <p className="font-semibold text-slate-900">Monitoring Simulasi Asesmen</p>
-              <p className="text-xs text-slate-600">Unggah hasil analisis asesmen sebelum 6 November 2025.</p>
-            </div>
-            <div className="rounded-2xl border border-rose-100 bg-white p-3 shadow-sm">
-              <p className="font-semibold text-slate-900">Rapat Koordinasi MKPS Kabupaten</p>
-              <p className="text-xs text-slate-600">Konfirmasi kehadiran dan materi presentasi narasumber.</p>
-            </div>
-            <div className="rounded-2xl border border-rose-100 bg-white p-3 shadow-sm">
-              <p className="font-semibold text-slate-900">Pendampingan Literasi Numerasi</p>
-              <p className="text-xs text-slate-600">Lengkapi daftar hadir dan dokumentasi kegiatan.</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <Card className="border border-rose-200 bg-white shadow-md shadow-rose-100/70">
+        <CardHeader>
+          <CardTitle className="text-base font-semibold text-slate-900">Agenda Perlu Tindak Lanjut</CardTitle>
+          <CardDescription className="text-slate-600">
+            Pastikan dokumen, notulen, dan catatan evaluasi terselesaikan tepat waktu.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm text-slate-600">
+          <div className="rounded-2xl border border-rose-100 bg-white p-3 shadow-sm">
+            <p className="font-semibold text-slate-900">Monitoring Simulasi Asesmen</p>
+            <p className="text-xs text-slate-600">Unggah hasil analisis asesmen sebelum 6 November 2025.</p>
+          </div>
+          <div className="rounded-2xl border border-rose-100 bg-white p-3 shadow-sm">
+            <p className="font-semibold text-slate-900">Rapat Koordinasi MKPS Kabupaten</p>
+            <p className="text-xs text-slate-600">Konfirmasi kehadiran dan materi presentasi narasumber.</p>
+          </div>
+          <div className="rounded-2xl border border-rose-100 bg-white p-3 shadow-sm">
+            <p className="font-semibold text-slate-900">Pendampingan Literasi Numerasi</p>
+            <p className="text-xs text-slate-600">Lengkapi daftar hadir dan dokumentasi kegiatan.</p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

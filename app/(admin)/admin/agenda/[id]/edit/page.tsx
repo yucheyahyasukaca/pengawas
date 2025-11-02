@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { cn } from "@/lib/utils";
 import {
   ArrowLeft,
   Calendar,
@@ -28,6 +29,8 @@ import {
   X,
   Clock,
   Check,
+  ChevronDown,
+  Plus,
 } from "lucide-react";
 
 // Mock data - in production, this would come from an API
@@ -85,6 +88,9 @@ export default function EditAgendaPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [originalAgenda, setOriginalAgenda] = useState<typeof agendaDatabase[0] | null>(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [showAddCategory, setShowAddCategory] = useState(false);
+  const [newCategory, setNewCategory] = useState("");
 
   const [formData, setFormData] = useState({
     title: "",
@@ -97,12 +103,12 @@ export default function EditAgendaPage() {
     status: "Terjadwal",
   });
 
-  const agendaTypes = [
+  const [agendaTypes, setAgendaTypes] = useState([
     { value: "Supervisi", label: "Supervisi", color: "bg-rose-100 text-rose-600" },
     { value: "Pendampingan", label: "Pendampingan", color: "bg-blue-100 text-blue-600" },
     { value: "Monitoring", label: "Monitoring", color: "bg-emerald-100 text-emerald-600" },
     { value: "Rakor", label: "Rakor", color: "bg-amber-100 text-amber-600" },
-  ];
+  ]);
 
   const statusOptions = [
     { value: "Terjadwal", label: "Terjadwal" },
@@ -142,6 +148,20 @@ export default function EditAgendaPage() {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleAddCategory = () => {
+    if (newCategory.trim()) {
+      const newType = {
+        value: newCategory.trim(),
+        label: newCategory.trim(),
+        color: "bg-purple-100 text-purple-600",
+      };
+      setAgendaTypes([...agendaTypes, newType]);
+      setNewCategory("");
+      setShowAddCategory(false);
+      handleInputChange("type", newType.value);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -313,26 +333,99 @@ export default function EditAgendaPage() {
                   Tipe Agenda
                   <span className="text-red-500">*</span>
                 </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {agendaTypes.map((type) => (
-                    <button
-                      key={type.value}
-                      type="button"
-                      onClick={() => handleInputChange("type", type.value)}
-                      className={`relative rounded-xl border-2 px-4 py-3 text-sm font-semibold transition ${
-                        formData.type === type.value
-                          ? `${type.color} border-current shadow-md`
-                          : "border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50"
-                      }`}
-                    >
-                      {type.label}
-                      {formData.type === type.value && (
-                        <div className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-white shadow-sm">
-                          <Check className="size-3.5 text-rose-600" />
-                        </div>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    className="flex w-full items-center justify-between gap-4 rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-900 shadow-sm transition focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-200"
+                  >
+                    <span className={formData.type ? "" : "text-slate-400"}>
+                      {formData.type || "Pilih tipe agenda"}
+                    </span>
+                    <ChevronDown
+                      className={cn(
+                        "size-5 text-slate-400 transition-transform",
+                        isDropdownOpen && "rotate-180 text-rose-600"
                       )}
-                    </button>
-                  ))}
+                    />
+                  </button>
+                  {isDropdownOpen && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-10"
+                        onClick={() => setIsDropdownOpen(false)}
+                      />
+                      <div className="absolute z-20 mt-2 w-full rounded-2xl border border-slate-200 bg-white p-2 shadow-lg shadow-slate-200/50">
+                        {agendaTypes.map((type) => (
+                          <button
+                            key={type.value}
+                            type="button"
+                            onClick={() => {
+                              handleInputChange("type", type.value);
+                              setIsDropdownOpen(false);
+                            }}
+                            className="flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition hover:bg-slate-50"
+                          >
+                            <span className={formData.type === type.value ? "text-rose-700" : "text-slate-700"}>
+                              {type.label}
+                            </span>
+                            {formData.type === type.value && (
+                              <Check className="size-4 text-rose-600" />
+                            )}
+                          </button>
+                        ))}
+                        {showAddCategory ? (
+                          <div className="border-t border-slate-200 pt-2 mt-2">
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                value={newCategory}
+                                onChange={(e) => setNewCategory(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    handleAddCategory();
+                                  }
+                                }}
+                                className="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-rose-500 focus:ring-2 focus:ring-rose-200"
+                                placeholder="Kategori baru..."
+                                autoFocus
+                              />
+                              <Button
+                                type="button"
+                                onClick={handleAddCategory}
+                                className="shrink-0 rounded-xl bg-rose-600 text-white hover:bg-rose-700"
+                                size="sm"
+                              >
+                                <Check className="size-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                onClick={() => {
+                                  setShowAddCategory(false);
+                                  setNewCategory("");
+                                }}
+                                variant="ghost"
+                                className="shrink-0 rounded-xl hover:bg-slate-100"
+                                size="sm"
+                              >
+                                <X className="size-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setShowAddCategory(true)}
+                            className="flex w-full items-center gap-2 rounded-xl border-t border-slate-200 px-3 py-2.5 text-sm font-semibold text-rose-600 transition hover:bg-rose-50 mt-2 pt-2"
+                          >
+                            <Plus className="size-4" />
+                            Tambah Kategori
+                          </button>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 
