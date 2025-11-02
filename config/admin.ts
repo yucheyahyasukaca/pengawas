@@ -76,7 +76,7 @@ export const adminNavigation: AdminNavSection[] = [
         description: "Atur peran dan hak akses kolaborator",
       },
       {
-        title: "Pelaporan",
+        title: "Perencanaan & Pelaporan",
         href: "/admin/pelaporan",
         icon: FileSpreadsheet,
         description: "Analisis pelaporan pengawasan dan tindak lanjut",
