@@ -147,30 +147,30 @@ export default function HomePage() {
         
         {/* Content Container */}
         <div className="relative z-10 mx-auto min-h-screen max-w-7xl px-4 py-8 sm:px-6 sm:py-16 lg:px-8 lg:py-24">
-          <div className="flex min-h-[calc(100vh-4rem)] flex-col justify-center gap-6 sm:min-h-[calc(100vh-6rem)] sm:gap-8 lg:gap-6 xl:gap-8">
+          <div className="flex min-h-[calc(100vh-4rem)] flex-col justify-center gap-2 sm:min-h-[calc(100vh-6rem)] sm:gap-3 lg:gap-6 xl:gap-8">
             {/* Top Section - Badge and Title */}
-            <div className="space-y-4 text-center sm:space-y-6 lg:text-left">
-              <Badge className="mx-auto max-w-[280px] whitespace-normal break-words text-balance rounded-full border-white/30 bg-white/10 px-3 py-1.5 text-center text-[10px] font-medium leading-snug text-white backdrop-blur-sm sm:mx-0 sm:max-w-none sm:px-4 sm:py-2 sm:text-xs lg:text-sm">
+            <div className="space-y-2 text-center sm:space-y-3 lg:space-y-6 lg:text-left">
+              <Badge className="mx-auto max-w-[280px] whitespace-normal break-words text-balance rounded-full border-white/30 bg-white/10 px-4 py-2 text-center text-xs font-medium leading-snug text-white backdrop-blur-sm sm:mx-0 sm:max-w-none sm:px-4 sm:py-2 sm:text-sm lg:text-sm">
                 {siteConfig.tagline}
               </Badge>
-              <div className="mx-auto space-y-3 text-pretty sm:space-y-5 sm:max-w-xl lg:mx-0">
-                <h1 className="text-balance text-2xl font-bold leading-tight text-white drop-shadow-lg sm:text-4xl lg:text-5xl xl:text-6xl">
+              <div className="mx-auto space-y-2 text-pretty sm:space-y-3 sm:max-w-xl lg:space-y-5 lg:mx-0">
+                <h1 className="text-balance text-3xl font-bold leading-tight text-white drop-shadow-lg sm:text-5xl lg:text-5xl xl:text-6xl">
                   SIP-Kepengawasan
                   <span className="mt-1 block text-[#F1B0B7] sm:mt-2">
                     Jawa Tengah
                   </span>
                 </h1>
-                <p className="text-sm leading-relaxed text-white/90 drop-shadow-md sm:text-base lg:text-lg">
+                <p className="text-base leading-relaxed text-white/90 drop-shadow-md sm:text-lg lg:text-lg">
                   Platform terpadu untuk merencanakan, melaksanakan, dan melaporkan pengawasan pendidikan berbasis data dan kolaboratif.
                 </p>
               </div>
             </div>
 
             {/* Middle Section - MKPS Profiles Overlay - Slider on mobile, Grid on desktop */}
-            <div className="relative">
+            <div className="relative mt-2 sm:mt-4 lg:mt-0">
               {/* Mobile Slider */}
               <div className="lg:hidden">
-                <div className="relative overflow-hidden rounded-xl">
+                <div className="relative overflow-visible rounded-xl py-1">
                   <div 
                     className="flex transition-transform duration-500 ease-in-out"
                     style={{ transform: `translateX(-${currentPillarIndex * 100}%)` }}
@@ -178,7 +178,7 @@ export default function HomePage() {
                     {programPillars.map((pillar, index) => (
                       <div
                         key={pillar.title}
-                        className="min-w-full shrink-0"
+                        className="min-w-full shrink-0 px-2"
                       >
                         <div className="group relative mx-auto max-w-sm overflow-hidden rounded-lg border border-white/10 bg-black/30 p-4 backdrop-blur-md shadow-sm shadow-black/20">
                           {/* Dark overlay for better text contrast */}
@@ -212,11 +212,11 @@ export default function HomePage() {
                   {/* Navigation Buttons - Mobile */}
                   <button
                     onClick={goToPreviousPillar}
-                    className="absolute left-3 top-1/2 z-20 -translate-y-1/2 rounded-full bg-black/50 p-2.5 text-white backdrop-blur-md shadow-lg transition-all hover:bg-black/70 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-white/50"
+                    className="absolute left-0 top-1/2 z-20 -translate-y-1/2 rounded-full bg-black/70 p-3 text-white backdrop-blur-md shadow-xl transition-all hover:bg-black/90 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-white/50"
                     aria-label="Previous profile"
                   >
                     <svg
-                      className="h-5 w-5"
+                      className="h-6 w-6"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -231,11 +231,11 @@ export default function HomePage() {
                   </button>
                   <button
                     onClick={goToNextPillar}
-                    className="absolute right-3 top-1/2 z-20 -translate-y-1/2 rounded-full bg-black/50 p-2.5 text-white backdrop-blur-md shadow-lg transition-all hover:bg-black/70 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-white/50"
+                    className="absolute right-0 top-1/2 z-20 -translate-y-1/2 rounded-full bg-black/70 p-3 text-white backdrop-blur-md shadow-xl transition-all hover:bg-black/90 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-white/50"
                     aria-label="Next profile"
                   >
                     <svg
-                      className="h-5 w-5"
+                      className="h-6 w-6"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -268,11 +268,11 @@ export default function HomePage() {
               </div>
 
               {/* Desktop Grid */}
-              <div className="hidden gap-4 lg:grid lg:grid-cols-3 lg:gap-6 lg:mb-2 xl:mb-4">
+              <div className="hidden gap-4 lg:grid lg:grid-cols-3 lg:gap-5 lg:mb-2 xl:mb-3">
                 {programPillars.map((pillar, index) => (
                   <div
                     key={pillar.title}
-                    className="group relative overflow-hidden rounded-2xl border border-white/20 bg-black/40 p-8 backdrop-blur-lg shadow-lg shadow-black/30 transition-all duration-300 hover:border-white/40 hover:bg-black/50 hover:shadow-2xl hover:shadow-black/40 hover:-translate-y-1"
+                    className="group relative overflow-hidden rounded-2xl border border-white/20 bg-black/40 p-6 backdrop-blur-lg shadow-lg shadow-black/30 transition-all duration-300 hover:border-white/40 hover:bg-black/50 hover:shadow-2xl hover:shadow-black/40 hover:-translate-y-1 xl:p-7"
                   >
                     {/* Dark overlay for better text contrast */}
                     <div className="absolute inset-0 bg-gradient-to-br from-black/40 via-black/30 to-black/40 rounded-2xl" />
@@ -281,22 +281,22 @@ export default function HomePage() {
                     <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                     
                     {/* Content */}
-                    <div className="relative z-10 space-y-3 xl:space-y-4">
+                    <div className="relative z-10 space-y-2.5 xl:space-y-3">
                       {/* Number Badge */}
                       <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/25 text-base font-bold text-white backdrop-blur-sm shadow-md transition-all group-hover:bg-white/35 lg:h-12 lg:w-12 lg:text-xl xl:group-hover:scale-110">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/25 text-base font-bold text-white backdrop-blur-sm shadow-md transition-all group-hover:bg-white/35 lg:h-11 lg:w-11 lg:text-lg xl:h-12 xl:w-12 xl:text-xl xl:group-hover:scale-110">
                           {index + 1}
                         </div>
                         <div className="h-px flex-1 bg-white/30" />
                       </div>
                       
                       {/* Title */}
-                      <h3 className="text-lg font-bold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)] xl:text-xl 2xl:text-2xl">
+                      <h3 className="text-base font-bold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)] lg:text-lg xl:text-xl">
                         {pillar.title}
                       </h3>
                       
                       {/* Description */}
-                      <p className="text-sm leading-relaxed text-white/95 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] xl:text-base">
+                      <p className="text-xs leading-relaxed text-white/95 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] lg:text-sm xl:text-base">
                         {pillar.description}
                       </p>
                     </div>
