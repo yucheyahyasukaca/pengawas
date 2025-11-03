@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -95,6 +98,29 @@ const featureCards = [
 ];
 
 export default function HomePage() {
+  const [currentPillarIndex, setCurrentPillarIndex] = useState(0);
+
+  // Auto-slide untuk profil MKPS di mobile
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentPillarIndex((prev) => (prev + 1) % programPillars.length);
+    }, 4000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const goToPillar = (index: number) => {
+    setCurrentPillarIndex(index);
+  };
+
+  const goToPreviousPillar = () => {
+    setCurrentPillarIndex((prev) => (prev - 1 + programPillars.length) % programPillars.length);
+  };
+
+  const goToNextPillar = () => {
+    setCurrentPillarIndex((prev) => (prev + 1) % programPillars.length);
+  };
+
   return (
     <div className="space-y-0">
       {/* Hero Section - Full Width with Image Overlay */}
@@ -140,47 +166,149 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Middle Section - MKPS Profiles Overlay - Compact on mobile */}
-            <div className="grid gap-2 sm:gap-4 lg:grid-cols-3 lg:gap-6 lg:mb-2 xl:mb-4">
-              {programPillars.map((pillar, index) => (
-                <div
-                  key={pillar.title}
-                  className="group relative overflow-hidden rounded-lg border border-white/10 bg-black/30 p-2.5 backdrop-blur-md shadow-sm shadow-black/20 transition-all duration-300 hover:border-white/20 hover:bg-black/40 hover:shadow-md hover:shadow-black/25 sm:rounded-xl sm:border-white/15 sm:bg-black/35 sm:p-4 sm:shadow-md sm:shadow-black/20 sm:hover:border-white/30 sm:hover:bg-black/45 sm:hover:shadow-lg sm:hover:shadow-black/30 lg:rounded-2xl lg:border-white/20 lg:bg-black/40 lg:p-8 lg:backdrop-blur-lg lg:shadow-lg lg:shadow-black/30 lg:hover:border-white/40 lg:hover:bg-black/50 lg:hover:shadow-2xl lg:hover:shadow-black/40 lg:hover:-translate-y-1"
-                >
-                  {/* Dark overlay for better text contrast */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-black/40 via-black/30 to-black/40 rounded-lg sm:rounded-xl lg:rounded-2xl" />
-                  
-                  {/* Decorative gradient overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-white/2 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 sm:from-white/3 lg:from-white/5" />
-                  
-                  {/* Content */}
-                  <div className="relative z-10 space-y-1.5 sm:space-y-2 lg:space-y-3 xl:space-y-4">
-                    {/* Number Badge - Smaller on mobile */}
-                    <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-3">
-                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/25 text-xs font-bold text-white backdrop-blur-sm shadow-md transition-all group-hover:bg-white/35 sm:h-7 sm:w-7 sm:text-xs lg:h-10 lg:w-10 lg:text-base xl:h-12 xl:w-12 xl:text-xl xl:group-hover:scale-110">
-                        {index + 1}
+            {/* Middle Section - MKPS Profiles Overlay - Slider on mobile, Grid on desktop */}
+            <div className="relative">
+              {/* Mobile Slider */}
+              <div className="lg:hidden">
+                <div className="relative overflow-hidden rounded-xl">
+                  <div 
+                    className="flex transition-transform duration-500 ease-in-out"
+                    style={{ transform: `translateX(-${currentPillarIndex * 100}%)` }}
+                  >
+                    {programPillars.map((pillar, index) => (
+                      <div
+                        key={pillar.title}
+                        className="min-w-full shrink-0"
+                      >
+                        <div className="group relative mx-auto max-w-sm overflow-hidden rounded-lg border border-white/10 bg-black/30 p-4 backdrop-blur-md shadow-sm shadow-black/20">
+                          {/* Dark overlay for better text contrast */}
+                          <div className="absolute inset-0 bg-gradient-to-br from-black/40 via-black/30 to-black/40 rounded-lg" />
+                          
+                          {/* Content */}
+                          <div className="relative z-10 space-y-2">
+                            {/* Number Badge */}
+                            <div className="flex items-center gap-2">
+                              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/25 text-xs font-bold text-white backdrop-blur-sm shadow-md">
+                                {index + 1}
+                              </div>
+                              <div className="h-px flex-1 bg-white/20" />
+                            </div>
+                            
+                            {/* Title */}
+                            <h3 className="text-base font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                              {pillar.title}
+                            </h3>
+                            
+                            {/* Description */}
+                            <p className="text-xs leading-relaxed text-white/90 drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)]">
+                              {pillar.description}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                      <div className="h-px flex-1 bg-white/20 sm:bg-white/25 lg:bg-white/30" />
+                    ))}
+                  </div>
+
+                  {/* Navigation Buttons - Mobile */}
+                  <button
+                    onClick={goToPreviousPillar}
+                    className="absolute left-3 top-1/2 z-20 -translate-y-1/2 rounded-full bg-black/50 p-2.5 text-white backdrop-blur-md shadow-lg transition-all hover:bg-black/70 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-white/50"
+                    aria-label="Previous profile"
+                  >
+                    <svg
+                      className="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2.5}
+                        d="M15 19l-7-7 7-7"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={goToNextPillar}
+                    className="absolute right-3 top-1/2 z-20 -translate-y-1/2 rounded-full bg-black/50 p-2.5 text-white backdrop-blur-md shadow-lg transition-all hover:bg-black/70 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-white/50"
+                    aria-label="Next profile"
+                  >
+                    <svg
+                      className="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2.5}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </button>
+
+                  {/* Dots Indicator - Mobile */}
+                  <div className="mt-4 flex justify-center gap-2">
+                    {programPillars.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => goToPillar(index)}
+                        className={`h-2 rounded-full transition-all ${
+                          index === currentPillarIndex
+                            ? "w-8 bg-white"
+                            : "w-2 bg-white/50 hover:bg-white/75"
+                        }`}
+                        aria-label={`Go to profile ${index + 1}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Desktop Grid */}
+              <div className="hidden gap-4 lg:grid lg:grid-cols-3 lg:gap-6 lg:mb-2 xl:mb-4">
+                {programPillars.map((pillar, index) => (
+                  <div
+                    key={pillar.title}
+                    className="group relative overflow-hidden rounded-2xl border border-white/20 bg-black/40 p-8 backdrop-blur-lg shadow-lg shadow-black/30 transition-all duration-300 hover:border-white/40 hover:bg-black/50 hover:shadow-2xl hover:shadow-black/40 hover:-translate-y-1"
+                  >
+                    {/* Dark overlay for better text contrast */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-black/40 via-black/30 to-black/40 rounded-2xl" />
+                    
+                    {/* Decorative gradient overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                    
+                    {/* Content */}
+                    <div className="relative z-10 space-y-3 xl:space-y-4">
+                      {/* Number Badge */}
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/25 text-base font-bold text-white backdrop-blur-sm shadow-md transition-all group-hover:bg-white/35 lg:h-12 lg:w-12 lg:text-xl xl:group-hover:scale-110">
+                          {index + 1}
+                        </div>
+                        <div className="h-px flex-1 bg-white/30" />
+                      </div>
+                      
+                      {/* Title */}
+                      <h3 className="text-lg font-bold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)] xl:text-xl 2xl:text-2xl">
+                        {pillar.title}
+                      </h3>
+                      
+                      {/* Description */}
+                      <p className="text-sm leading-relaxed text-white/95 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] xl:text-base">
+                        {pillar.description}
+                      </p>
                     </div>
                     
-                    {/* Title - Smaller on mobile */}
-                    <h3 className="text-sm font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] sm:text-base sm:drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)] lg:text-lg xl:text-xl 2xl:text-2xl">
-                      {pillar.title}
-                    </h3>
+                    {/* Animated border effect */}
+                    <div className="absolute inset-0 rounded-2xl border-2 border-white/0 transition-all duration-300 group-hover:border-white/30" />
                     
-                    {/* Description - Smaller on mobile */}
-                    <p className="text-[10px] leading-snug text-white/90 drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)] line-clamp-2 sm:text-xs sm:leading-relaxed sm:text-white/90 lg:text-sm lg:text-white/95 xl:text-base xl:drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-                      {pillar.description}
-                    </p>
+                    {/* Shine effect on hover */}
+                    <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 group-hover:translate-x-full" />
                   </div>
-                  
-                  {/* Animated border effect - Desktop only */}
-                  <div className="absolute inset-0 hidden rounded-2xl border-2 border-white/0 transition-all duration-300 lg:block lg:group-hover:border-white/30" />
-                  
-                  {/* Shine effect on hover - Desktop only */}
-                  <div className="absolute inset-0 hidden -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 lg:block lg:group-hover:translate-x-full" />
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
 
             {/* Bottom Section - CTA Buttons */}
