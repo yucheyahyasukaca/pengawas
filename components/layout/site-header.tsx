@@ -2,8 +2,19 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Menu } from "lucide-react";
+import { 
+  Menu, 
+  Home, 
+  Building2, 
+  BookOpen, 
+  FileText, 
+  MessageSquare, 
+  Newspaper,
+  LogIn,
+  X
+} from "lucide-react";
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 import jatengLogo from "@/public/jateng.png";
 import { siteConfig } from "@/config/site";
@@ -24,9 +35,19 @@ import {
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 
+// Icon mapping for navigation items
+const navigationIcons: Record<string, typeof Home> = {
+  "/": Home,
+  "/profil-mkps": Building2,
+  "/karya-pengawas": BookOpen,
+  "#regulasi": FileText,
+  "#forum": MessageSquare,
+};
+
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const pathname = usePathname();
   const headerBackgroundClass =
     "bg-[#371314] text-white";
 
@@ -110,50 +131,119 @@ export function SiteHeader() {
             <SheetContent
               side="top"
               className={cn(
-                "pt-6",
-                headerBackgroundClass,
-                "shadow-none border-b border-transparent bg-[#371314]",
+                "h-full overflow-y-auto bg-gradient-to-b from-[#371314] via-[#4a1a1c] to-[#371314]",
+                "border-0 shadow-2xl",
+                "p-0"
               )}
             >
-              <SheetHeader>
-                <SheetTitle className="text-left text-base font-semibold text-white">
-                  Navigasi SIP-Kepengawasan Jateng
-                </SheetTitle>
+              {/* Accessibility: Required SheetTitle for screen readers */}
+              <SheetHeader className="sr-only">
+                <SheetTitle>Navigasi SIP-Kepengawasan Jateng</SheetTitle>
               </SheetHeader>
-              <nav className="mt-4 space-y-4">
-                {siteConfig.navigation.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setOpen(false)}
-                    className={cn(
-                      "block rounded-md px-3 py-2 text-base font-medium text-white/90 transition-colors hover:bg-white/10",
-                    )}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              </nav>
-              <Separator className="my-4 bg-white/20" />
-              <div className="flex flex-col gap-2">
+
+              {/* Header with logo and close button */}
+              <div className="sticky top-0 z-10 flex items-center justify-between bg-gradient-to-r from-[#371314] to-[#4a1a1c] px-6 py-5 backdrop-blur-sm border-b border-white/10">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 bg-white/10 p-1.5 shadow-lg backdrop-blur-sm">
+                    <Image
+                      src={jatengLogo}
+                      alt="Logo MKPS Jawa Tengah"
+                      width={32}
+                      height={32}
+                      className="h-full w-full object-contain"
+                      priority
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-white/80">
+                      Navigasi
+                    </span>
+                    <span className="text-sm font-bold text-white leading-tight">
+                      SIP-Kepengawasan Jateng
+                    </span>
+                  </div>
+                </div>
                 <Button
                   variant="ghost"
-                  className="justify-start text-white hover:bg-white/10 hover:text-white"
-                  asChild
+                  size="icon"
+                  onClick={() => setOpen(false)}
+                  className="h-10 w-10 rounded-xl text-white hover:bg-white/20 hover:text-white transition-all"
                 >
-                  <Link href="/berita" onClick={() => setOpen(false)}>
-                    Berita
-                  </Link>
-                </Button>
-                <Button
-                  className="border-0 focus-visible:border-0 justify-start bg-white text-[#3F0607] hover:bg-white/90"
-                  asChild
-                >
-                  <Link href="/auth/login" onClick={() => setOpen(false)}>
-                    Masuk ke Portal
-                  </Link>
+                  <X className="h-5 w-5" />
+                  <span className="sr-only">Close menu</span>
                 </Button>
               </div>
+
+              {/* Navigation Items */}
+              <div className="px-4 py-6 space-y-2">
+                {siteConfig.navigation.map((item) => {
+                  const Icon = navigationIcons[item.href] || Home;
+                  const isActive = pathname === item.href || 
+                    (item.href === "/" && pathname === "/");
+                  
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setOpen(false)}
+                      className={cn(
+                        "group flex items-center gap-4 rounded-xl px-4 py-3.5",
+                        "text-base font-medium transition-all duration-200",
+                        "min-h-[56px] touch-manipulation",
+                        isActive
+                          ? "bg-white/15 text-white shadow-lg shadow-black/10"
+                          : "text-white/90 hover:bg-white/10 hover:text-white hover:shadow-md"
+                      )}
+                    >
+                      <div className={cn(
+                        "flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-200",
+                        isActive
+                          ? "bg-white/20 text-white"
+                          : "bg-white/5 text-white/80 group-hover:bg-white/15 group-hover:text-white"
+                      )}>
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <span className="flex-1">{item.label}</span>
+                      {isActive && (
+                        <div className="h-2 w-2 rounded-full bg-white/80" />
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+
+              {/* Separator */}
+              <div className="px-4 py-2">
+                <Separator className="bg-white/20" />
+              </div>
+
+              {/* Additional Actions */}
+              <div className="px-4 py-4 space-y-3">
+                <Link
+                  href="/berita"
+                  onClick={() => setOpen(false)}
+                  className="group flex items-center gap-4 rounded-xl px-4 py-3.5 min-h-[56px] touch-manipulation text-white/90 hover:bg-white/10 hover:text-white transition-all duration-200"
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/5 text-white/80 group-hover:bg-white/15 group-hover:text-white transition-all duration-200">
+                    <Newspaper className="h-5 w-5" />
+                  </div>
+                  <span className="flex-1 text-base font-medium">Berita</span>
+                </Link>
+
+                <Link
+                  href="/auth/login"
+                  onClick={() => setOpen(false)}
+                  className="group flex items-center gap-4 rounded-xl px-4 py-3.5 min-h-[56px] touch-manipulation bg-white text-[#3F0607] hover:bg-white/90 shadow-lg shadow-black/20 transition-all duration-200 font-semibold"
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#3F0607]/10 text-[#3F0607]">
+                    <LogIn className="h-5 w-5" />
+                  </div>
+                  <span className="flex-1 text-base">Masuk ke Portal</span>
+                </Link>
+              </div>
+
+              {/* Footer spacing */}
+              <div className="h-6" />
             </SheetContent>
           </Sheet>
         )}
