@@ -97,56 +97,109 @@ const featureCards = [
 export default function HomePage() {
   return (
     <div className="space-y-0">
-      {/* Hero Section - Modern & Clean */}
+      {/* Hero Section - Full Width with Image Overlay */}
       <section
         id="beranda"
-        className="relative overflow-hidden bg-gradient-to-br from-[#371314] via-[#4A1B1C] to-[#2A0A0B] text-white"
+        className="relative min-h-screen overflow-hidden text-white sm:min-h-screen"
       >
-        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10 mix-blend-overlay" />
-        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20 lg:px-8 lg:py-32">
-          <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
-            {/* Left Column - Content */}
-            <div className="space-y-6 text-center sm:space-y-8 sm:text-left">
-              <Badge className="mx-auto max-w-[280px] whitespace-normal break-words text-balance rounded-full border-white/30 bg-white/10 px-4 py-2 text-center text-xs font-medium leading-snug text-white sm:mx-0 sm:max-w-none sm:text-sm">
+        {/* Background Image Carousel */}
+        <div className="absolute inset-0">
+          <PhotoSlider 
+            images={sliderImages} 
+            interval={5000}
+            fullScreen={true}
+            className="h-full w-full"
+          />
+        </div>
+        
+        {/* Dark Overlay Gradient - Lighter on mobile */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#371314]/85 via-[#4A1B1C]/80 to-[#2A0A0B]/85 sm:from-[#371314]/95 sm:via-[#4A1B1C]/90 sm:to-[#2A0A0B]/95" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent sm:from-black/60" />
+        
+        {/* Grid Pattern Overlay */}
+        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-3 mix-blend-overlay sm:opacity-5" />
+        
+        {/* Content Container */}
+        <div className="relative z-10 mx-auto min-h-screen max-w-7xl px-4 py-8 sm:px-6 sm:py-16 lg:px-8 lg:py-24">
+          <div className="flex min-h-[calc(100vh-4rem)] flex-col justify-center gap-6 sm:min-h-[calc(100vh-6rem)] sm:gap-8 lg:gap-6 xl:gap-8">
+            {/* Top Section - Badge and Title */}
+            <div className="space-y-4 text-center sm:space-y-6 lg:text-left">
+              <Badge className="mx-auto max-w-[280px] whitespace-normal break-words text-balance rounded-full border-white/30 bg-white/10 px-3 py-1.5 text-center text-[10px] font-medium leading-snug text-white backdrop-blur-sm sm:mx-0 sm:max-w-none sm:px-4 sm:py-2 sm:text-xs lg:text-sm">
                 {siteConfig.tagline}
               </Badge>
-              <div className="mx-auto space-y-5 text-pretty sm:mx-0 sm:max-w-xl">
-                <h1 className="text-balance text-3xl font-bold leading-tight text-white sm:text-5xl lg:text-6xl">
+              <div className="mx-auto space-y-3 text-pretty sm:space-y-5 sm:max-w-xl lg:mx-0">
+                <h1 className="text-balance text-2xl font-bold leading-tight text-white drop-shadow-lg sm:text-4xl lg:text-5xl xl:text-6xl">
                   SIP-Kepengawasan
-                  <span className="mt-2 block text-[#F1B0B7]">
+                  <span className="mt-1 block text-[#F1B0B7] sm:mt-2">
                     Jawa Tengah
                   </span>
                 </h1>
-                <p className="text-base leading-relaxed text-white/85 sm:text-lg">
+                <p className="text-sm leading-relaxed text-white/90 drop-shadow-md sm:text-base lg:text-lg">
                   Platform terpadu untuk merencanakan, melaksanakan, dan melaporkan pengawasan pendidikan berbasis data dan kolaboratif.
                 </p>
               </div>
-              <div className="mx-auto flex w-full max-w-xs flex-col gap-3 sm:mx-0 sm:w-auto sm:max-w-none sm:flex-row sm:items-center sm:justify-start">
-                <Button
-                  size="lg"
-                  className="w-full whitespace-normal rounded-full bg-white px-6 py-6 text-base text-[#371314] shadow-lg shadow-black/30 hover:bg-white/90 sm:w-auto"
-                  asChild
-                >
-                  <Link href="/auth/login">Masuk ke Portal Pengawas</Link>
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="w-full whitespace-normal rounded-full border-white/60 px-6 py-6 text-base text-white hover:bg-white/10 sm:w-auto"
-                  asChild
-                >
-                  <Link href="/profil-mkps">Jelajahi Lebih Lanjut</Link>
-                </Button>
-              </div>
             </div>
 
-            {/* Right Column - Photo Slider */}
-            <div className="mx-auto w-full max-w-md sm:mx-0 sm:max-w-none lg:max-w-lg">
-              <PhotoSlider 
-                images={sliderImages} 
-                interval={4000}
-                className="w-full"
-              />
+            {/* Middle Section - MKPS Profiles Overlay - Compact on mobile */}
+            <div className="grid gap-2 sm:gap-4 lg:grid-cols-3 lg:gap-6 lg:mb-2 xl:mb-4">
+              {programPillars.map((pillar, index) => (
+                <div
+                  key={pillar.title}
+                  className="group relative overflow-hidden rounded-lg border border-white/10 bg-black/30 p-2.5 backdrop-blur-md shadow-sm shadow-black/20 transition-all duration-300 hover:border-white/20 hover:bg-black/40 hover:shadow-md hover:shadow-black/25 sm:rounded-xl sm:border-white/15 sm:bg-black/35 sm:p-4 sm:shadow-md sm:shadow-black/20 sm:hover:border-white/30 sm:hover:bg-black/45 sm:hover:shadow-lg sm:hover:shadow-black/30 lg:rounded-2xl lg:border-white/20 lg:bg-black/40 lg:p-8 lg:backdrop-blur-lg lg:shadow-lg lg:shadow-black/30 lg:hover:border-white/40 lg:hover:bg-black/50 lg:hover:shadow-2xl lg:hover:shadow-black/40 lg:hover:-translate-y-1"
+                >
+                  {/* Dark overlay for better text contrast */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-black/40 via-black/30 to-black/40 rounded-lg sm:rounded-xl lg:rounded-2xl" />
+                  
+                  {/* Decorative gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/2 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 sm:from-white/3 lg:from-white/5" />
+                  
+                  {/* Content */}
+                  <div className="relative z-10 space-y-1.5 sm:space-y-2 lg:space-y-3 xl:space-y-4">
+                    {/* Number Badge - Smaller on mobile */}
+                    <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-3">
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/25 text-xs font-bold text-white backdrop-blur-sm shadow-md transition-all group-hover:bg-white/35 sm:h-7 sm:w-7 sm:text-xs lg:h-10 lg:w-10 lg:text-base xl:h-12 xl:w-12 xl:text-xl xl:group-hover:scale-110">
+                        {index + 1}
+                      </div>
+                      <div className="h-px flex-1 bg-white/20 sm:bg-white/25 lg:bg-white/30" />
+                    </div>
+                    
+                    {/* Title - Smaller on mobile */}
+                    <h3 className="text-sm font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] sm:text-base sm:drop-shadow-[0_2px_6px_rgba(0,0,0,0.9)] lg:text-lg xl:text-xl 2xl:text-2xl">
+                      {pillar.title}
+                    </h3>
+                    
+                    {/* Description - Smaller on mobile */}
+                    <p className="text-[10px] leading-snug text-white/90 drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)] line-clamp-2 sm:text-xs sm:leading-relaxed sm:text-white/90 lg:text-sm lg:text-white/95 xl:text-base xl:drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                      {pillar.description}
+                    </p>
+                  </div>
+                  
+                  {/* Animated border effect - Desktop only */}
+                  <div className="absolute inset-0 hidden rounded-2xl border-2 border-white/0 transition-all duration-300 lg:block lg:group-hover:border-white/30" />
+                  
+                  {/* Shine effect on hover - Desktop only */}
+                  <div className="absolute inset-0 hidden -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-1000 lg:block lg:group-hover:translate-x-full" />
+                </div>
+              ))}
+            </div>
+
+            {/* Bottom Section - CTA Buttons */}
+            <div className="mx-auto flex w-full max-w-xs flex-col gap-2.5 sm:max-w-none sm:flex-row sm:items-center sm:justify-center sm:gap-3 lg:justify-center lg:-mt-2 xl:-mt-1">
+              <Button
+                size="lg"
+                className="w-full whitespace-normal rounded-full bg-white px-5 py-5 text-sm text-[#371314] shadow-lg shadow-black/50 transition-all hover:bg-white/90 hover:shadow-xl hover:shadow-black/60 sm:px-6 sm:py-6 sm:text-base lg:w-auto"
+                asChild
+              >
+                <Link href="/auth/login">Masuk ke Portal Pengawas</Link>
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="w-full whitespace-normal rounded-full border-2 border-white/50 bg-white/5 px-5 py-5 text-sm text-white backdrop-blur-sm transition-all hover:border-white/70 hover:bg-white/8 sm:border-white/60 sm:px-6 sm:py-6 sm:text-base sm:hover:border-white/80 sm:hover:bg-white/10 lg:w-auto"
+                asChild
+              >
+                <Link href="/profil-mkps">Jelajahi Lebih Lanjut</Link>
+              </Button>
             </div>
           </div>
         </div>
@@ -217,43 +270,6 @@ export default function HomePage() {
                 ))}
               </CardContent>
             </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Profil MKPS Section */}
-      <section
-        id="profil"
-        className="bg-gradient-to-br from-[#1C0B0C] via-[#311112] to-[#1A0707] py-16 text-white sm:py-20"
-      >
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-12 text-center">
-            <Badge className="mb-4 rounded-full border-white/30 bg-white/10 text-white">
-              Profil MKPS
-            </Badge>
-            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-              Menguatkan Ekosistem Kepengawasan Provinsi Jawa Tengah
-            </h2>
-            <p className="mx-auto mt-4 max-w-3xl text-lg text-white/75">
-              MKPS SMA & SLB Provinsi Jawa Tengah hadir sebagai penggerak utama peningkatan mutu melalui supervisi akademik, manajerial, dan pendampingan kepala sekolah yang terstruktur.
-            </p>
-          </div>
-          <div className="grid gap-6 md:grid-cols-3">
-            {programPillars.map((pillar) => (
-              <Card
-                key={pillar.title}
-                className="group border border-white/15 bg-white/5 text-white shadow-lg shadow-black/30 transition-all hover:border-white/30 hover:bg-white/10"
-              >
-                <CardHeader>
-                  <CardTitle className="text-lg font-semibold text-white">
-                    {pillar.title}
-                  </CardTitle>
-                  <CardDescription className="leading-relaxed text-white/70">
-                    {pillar.description}
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-            ))}
           </div>
         </div>
       </section>

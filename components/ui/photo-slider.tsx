@@ -6,12 +6,14 @@ interface PhotoSliderProps {
   images: string[];
   interval?: number;
   className?: string;
+  fullScreen?: boolean;
 }
 
 export function PhotoSlider({ 
   images, 
   interval = 4000,
-  className = ""
+  className = "",
+  fullScreen = false
 }: PhotoSliderProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
@@ -47,9 +49,9 @@ export function PhotoSlider({
   }
 
   return (
-    <div className={`relative w-full overflow-hidden rounded-xl ${className}`}>
+    <div className={`relative w-full overflow-hidden ${fullScreen ? 'h-full' : 'rounded-xl'} ${className}`}>
       {/* Main Slider Container */}
-      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-gradient-to-br from-white/5 to-white/10">
+      <div className={`relative w-full overflow-hidden bg-gradient-to-br from-white/5 to-white/10 ${fullScreen ? 'h-full' : 'aspect-[4/3] rounded-xl'}`}>
         {images.map((image, index) => (
           <div
             key={index}
@@ -93,8 +95,8 @@ export function PhotoSlider({
           </div>
         ))}
 
-        {/* Navigation Arrows */}
-        {images.length > 1 && (
+        {/* Navigation Arrows - Hidden in fullScreen mode */}
+        {images.length > 1 && !fullScreen && (
           <>
             <button
               onClick={goToPrevious}
@@ -137,8 +139,8 @@ export function PhotoSlider({
           </>
         )}
 
-        {/* Dots Indicator */}
-        {images.length > 1 && (
+        {/* Dots Indicator - Hidden in fullScreen mode */}
+        {images.length > 1 && !fullScreen && (
           <div className="absolute bottom-4 left-1/2 z-20 flex -translate-x-1/2 gap-2">
             {images.map((_, index) => (
               <button
