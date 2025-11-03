@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   Card,
   CardContent,
@@ -22,6 +23,8 @@ import {
   GraduationCap,
   Award,
   Filter,
+  ChevronDown,
+  Check,
 } from "lucide-react";
 
 // Mock data - in production, this would come from an API
@@ -139,6 +142,7 @@ export default function KaryaPengawasPage() {
   const [selectedType, setSelectedType] = useState("Semua");
   const [selectedCategory, setSelectedCategory] = useState("Semua Kategori");
   const [searchQuery, setSearchQuery] = useState("");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const featuredKarya = karyaData.find((karya) => karya.featured);
   const regularKarya = karyaData.filter((karya) => !karya.featured);
@@ -191,7 +195,7 @@ export default function KaryaPengawasPage() {
       </section>
 
       {/* Search and Filter */}
-      <section className="border-b border-slate-200 bg-white shadow-sm sticky top-0 z-10">
+      <section className="border-b border-slate-200 bg-white shadow-sm">
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-4">
             {/* Search Bar */}
@@ -208,9 +212,68 @@ export default function KaryaPengawasPage() {
 
             {/* Filters */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex flex-wrap items-center gap-2">
+              {/* Mobile Dropdown Filter */}
+              <div className="flex flex-col gap-3 md:hidden">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Filter className="size-4 text-slate-600" />
+                    <span className="text-sm font-semibold text-slate-900">Tipe Karya:</span>
+                  </div>
+                </div>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsFilterOpen(!isFilterOpen)}
+                    className="flex w-full items-center justify-between gap-4 rounded-full border-0 bg-slate-100 pl-4 pr-2 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-300 focus:ring-offset-2"
+                  >
+                    <span className="flex-1 text-left">{selectedType}</span>
+                    <div className="flex shrink-0 items-center justify-center rounded-lg bg-white/80 px-2.5 py-1.5 mr-2 shadow-sm transition-all hover:bg-white">
+                      <ChevronDown
+                        className={cn(
+                          "size-3.5 text-rose-600 transition-all duration-200",
+                          isFilterOpen && "rotate-180 text-rose-700"
+                        )}
+                      />
+                    </div>
+                  </button>
+                  {isFilterOpen && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-10"
+                        onClick={() => setIsFilterOpen(false)}
+                      />
+                      <div className="absolute z-20 mt-2 w-full rounded-2xl border border-slate-200 bg-white p-2 shadow-lg shadow-slate-200/50">
+                        {typeOptions.map((type) => (
+                          <button
+                            key={type}
+                            type="button"
+                            onClick={() => {
+                              setSelectedType(type);
+                              setIsFilterOpen(false);
+                            }}
+                            className={cn(
+                              "flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition hover:bg-slate-50",
+                              selectedType === type
+                                ? "bg-rose-50 text-rose-700"
+                                : "text-slate-700"
+                            )}
+                          >
+                            <span>{type}</span>
+                            {selectedType === type && (
+                              <Check className="size-4 text-rose-600" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Desktop Button Filter */}
+              <div className="hidden flex-wrap items-center gap-2 md:flex">
                 <Filter className="size-4 text-slate-600" />
-                <span className="text-sm font-semibold text-slate-700">Tipe Karya:</span>
+                <span className="text-sm font-semibold text-slate-900">Tipe Karya:</span>
                 {typeOptions.map((type) => (
                   <Button
                     key={type}
@@ -260,7 +323,7 @@ export default function KaryaPengawasPage() {
           <div className="lg:col-span-2 space-y-8">
             {/* Featured Karya */}
             {featuredKarya && (
-              <Card className="group overflow-hidden border-0 bg-gradient-to-br from-rose-500 to-pink-600 shadow-2xl transition hover:shadow-3xl">
+              <Card className="group overflow-hidden border-0 bg-gradient-to-br from-rose-600 to-orange-600 shadow-2xl transition hover:shadow-3xl p-0">
                 <div className="grid md:grid-cols-2 gap-0">
                   <div className="relative h-64 md:h-auto overflow-hidden">
                     <Image
@@ -270,13 +333,13 @@ export default function KaryaPengawasPage() {
                       className="object-cover transition-transform duration-500 group-hover:scale-110"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                    <Badge className="absolute top-4 right-4 border-0 bg-white/20 backdrop-blur-sm px-3 py-1 text-xs font-semibold text-white">
-                      {featuredKarya.type}
-                    </Badge>
+                    <div className="absolute top-4 right-4 rounded-full border border-white/30 bg-white/90 backdrop-blur-md px-4 py-2 shadow-lg">
+                      <span className="text-xs font-bold text-slate-900">{featuredKarya.type}</span>
+                    </div>
                     {featuredKarya.category && (
-                      <Badge className="absolute top-4 left-4 border-0 bg-emerald-500/80 backdrop-blur-sm px-3 py-1 text-xs font-semibold text-white">
-                        {featuredKarya.category}
-                      </Badge>
+                      <div className="absolute top-4 left-4 rounded-full border border-emerald-300/50 bg-emerald-500/95 backdrop-blur-md px-4 py-2 shadow-lg">
+                        <span className="text-xs font-bold text-white">{featuredKarya.category}</span>
+                      </div>
                     )}
                   </div>
                   <CardContent className="flex flex-col justify-center p-8 text-white">
@@ -359,7 +422,7 @@ export default function KaryaPengawasPage() {
                               </Badge>
                             )}
                           </div>
-                          <CardHeader>
+                          <CardHeader className="pt-5">
                             <div className="flex items-center gap-3 text-xs text-slate-500">
                               <div className="flex items-center gap-1">
                                 <Calendar className="size-3.5" />
@@ -419,14 +482,17 @@ export default function KaryaPengawasPage() {
 
             {/* Load More */}
             {filteredKarya.length > 0 && (
-              <div className="flex justify-center pt-8">
+              <div className="flex justify-center pt-10">
                 <Button
                   variant="outline"
                   size="lg"
-                  className="rounded-full border-rose-200 bg-white px-8 font-semibold text-rose-600 shadow-sm transition hover:border-rose-300 hover:bg-rose-50"
+                  className="group relative overflow-hidden rounded-full border-0 bg-gradient-to-r from-rose-600 to-orange-600 px-10 py-6 font-semibold text-white shadow-lg shadow-rose-500/30 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-rose-500/40"
                 >
-                  Muat Lebih Banyak
-                  <ArrowRight className="ml-2 size-4" />
+                  <span className="relative z-10 flex items-center gap-2">
+                    Muat Lebih Banyak
+                    <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1" />
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-rose-700 to-orange-700 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                 </Button>
               </div>
             )}
@@ -449,7 +515,7 @@ export default function KaryaPengawasPage() {
                       href={`/karya-pengawas/${karya.id}`}
                       className="group flex gap-3 pb-4 border-b border-slate-100 last:border-0 last:pb-0"
                     >
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-rose-500 to-pink-600 text-lg font-bold text-white">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-rose-600 to-orange-600 text-lg font-bold text-white">
                         {index + 1}
                       </div>
                       <div className="flex-1">
