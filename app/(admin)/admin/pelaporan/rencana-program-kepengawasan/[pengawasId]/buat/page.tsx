@@ -806,15 +806,15 @@ export default function BuatRencanaProgramPage() {
 
       {/* AI Dialog */}
       <Dialog open={isAIDialogOpen} onOpenChange={handleResetDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto overflow-x-hidden w-[calc(100vw-1rem)] sm:w-full mx-2 sm:mx-auto p-4 sm:p-6 pl-4 sm:pl-6">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto overflow-x-hidden w-[calc(100vw-2.5rem)] sm:w-full mx-0 p-4 sm:p-6">
           <DialogHeader className="px-0 sm:px-0">
-            <DialogTitle className="flex flex-col sm:flex-row items-start sm:items-center gap-2 text-base sm:text-xl font-bold text-slate-900 pl-2 sm:pl-0">
+            <DialogTitle className="flex flex-col sm:flex-row items-start sm:items-center gap-2 text-base sm:text-xl font-bold text-slate-900">
               <div className="flex size-8 sm:size-10 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 via-pink-500 to-rose-500 shadow-md shrink-0">
                 <Sparkles className="size-4 sm:size-5 text-white" />
               </div>
-              <span className="leading-tight pl-2 sm:pl-0">Generator Latar Belakang dengan AI</span>
+              <span className="leading-tight">Generator Latar Belakang dengan AI</span>
             </DialogTitle>
-            <DialogDescription className="text-xs sm:text-sm text-slate-600 mt-2 pl-2 sm:pl-0">
+            <DialogDescription className="text-xs sm:text-sm text-slate-600 mt-2">
               {showJumlahForm 
                 ? "Pilih berapa indikator utama yang akan Anda kerjakan. Sistem akan menghasilkan paragraf latar belakang 350 kata berdasarkan data yang Anda masukkan."
                 : `Lengkapi data untuk ${jumlahIndikator} indikator utama sekolah. Sistem akan menghasilkan paragraf latar belakang 350 kata berdasarkan data yang Anda masukkan.`}
@@ -823,19 +823,19 @@ export default function BuatRencanaProgramPage() {
 
           {/* Jumlah Indikator Selection */}
           {showJumlahForm && (
-            <div className="space-y-4 py-2 sm:py-4 px-0 sm:px-0">
+            <div className="space-y-4 py-2 sm:py-4">
               <Card className="border border-purple-200 bg-purple-50/30">
-                <CardContent className="p-4 sm:p-6 pl-4 sm:pl-6">
-                  <h3 className="text-sm sm:text-lg font-semibold text-slate-700 mb-3 sm:mb-4 pl-2 sm:pl-0">
+                <CardContent className="p-4 sm:p-6">
+                  <h3 className="text-sm sm:text-lg font-semibold text-slate-700 mb-3 sm:mb-4">
                     Berapa indikator utama yang akan dikerjakan?
                   </h3>
-                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3 pl-2 sm:pl-0">
+                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-2.5 sm:gap-3">
                     {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map((num) => (
                       <Button
                         key={num}
                         type="button"
                         onClick={() => handleSetJumlahIndikator(num)}
-                        className="rounded-xl bg-white border-2 border-purple-200 text-purple-700 font-medium shadow-sm transition-all duration-200 hover:bg-purple-100 hover:border-purple-400 hover:shadow-md hover:scale-105 py-3 sm:py-6 text-sm sm:text-base"
+                        className="rounded-xl bg-white border-2 border-purple-200 text-purple-700 font-medium shadow-sm transition-all duration-200 hover:bg-purple-100 hover:border-purple-400 hover:shadow-md hover:scale-105 py-3 sm:py-6 text-sm sm:text-base min-w-0 w-full"
                       >
                         {num}
                       </Button>
@@ -848,7 +848,7 @@ export default function BuatRencanaProgramPage() {
 
           {/* Indicator Forms */}
           {!showJumlahForm && jumlahIndikator && (
-            <div className="space-y-3 sm:space-y-4 py-2 sm:py-4 px-0 sm:px-0 overflow-x-hidden">
+            <div className="space-y-3 sm:space-y-4 py-2 sm:py-4 overflow-x-hidden">
               {indicatorData.map((item, index) => {
               const isOpen = item.indikator !== "";
               return (
@@ -859,7 +859,7 @@ export default function BuatRencanaProgramPage() {
                     isOpen ? "border-purple-200 bg-purple-50/30" : "border-slate-200 bg-white"
                   )}
                 >
-                  <CardContent className="p-4 sm:p-4 space-y-2 sm:space-y-3 pl-4 sm:pl-4 pr-2 sm:pr-4">
+                  <CardContent className="p-4 sm:p-4 space-y-2 sm:space-y-3">
                     <div className="flex items-center justify-between">
                       <h4 className="text-sm font-semibold text-slate-700">
                         Indikator {index + 1}
@@ -963,7 +963,7 @@ export default function BuatRencanaProgramPage() {
             </div>
           )}
 
-          <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0 px-0 sm:px-0 pl-2 sm:pl-0 pr-2 sm:pr-0">
+          <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0 px-0 sm:px-0">
             <Button
               type="button"
               variant="outline"

@@ -113,14 +113,6 @@ export default function HomePage() {
     setCurrentPillarIndex(index);
   };
 
-  const goToPreviousPillar = () => {
-    setCurrentPillarIndex((prev) => (prev - 1 + programPillars.length) % programPillars.length);
-  };
-
-  const goToNextPillar = () => {
-    setCurrentPillarIndex((prev) => (prev + 1) % programPillars.length);
-  };
-
   return (
     <div className="space-y-0">
       {/* Hero Section - Full Width with Image Overlay */}
@@ -170,7 +162,7 @@ export default function HomePage() {
             <div className="relative mt-2 sm:mt-4 lg:mt-0">
               {/* Mobile Slider */}
               <div className="lg:hidden">
-                <div className="relative overflow-visible rounded-xl py-1">
+                <div className="relative overflow-hidden rounded-xl py-1 px-4 sm:px-0">
                   <div 
                     className="flex transition-transform duration-500 ease-in-out"
                     style={{ transform: `translateX(-${currentPillarIndex * 100}%)` }}
@@ -208,46 +200,6 @@ export default function HomePage() {
                       </div>
                     ))}
                   </div>
-
-                  {/* Navigation Buttons - Mobile */}
-                  <button
-                    onClick={goToPreviousPillar}
-                    className="absolute left-0 top-1/2 z-20 -translate-y-1/2 rounded-full bg-black/70 p-3 text-white backdrop-blur-md shadow-xl transition-all hover:bg-black/90 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-white/50"
-                    aria-label="Previous profile"
-                  >
-                    <svg
-                      className="h-6 w-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2.5}
-                        d="M15 19l-7-7 7-7"
-                      />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={goToNextPillar}
-                    className="absolute right-0 top-1/2 z-20 -translate-y-1/2 rounded-full bg-black/70 p-3 text-white backdrop-blur-md shadow-xl transition-all hover:bg-black/90 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-white/50"
-                    aria-label="Next profile"
-                  >
-                    <svg
-                      className="h-6 w-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2.5}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                  </button>
 
                   {/* Dots Indicator - Mobile */}
                   <div className="mt-4 flex justify-center gap-2">
