@@ -162,7 +162,7 @@ export default function HomePage() {
             <div className="relative mt-2 sm:mt-4 lg:mt-0">
               {/* Mobile Slider */}
               <div className="lg:hidden">
-                <div className="relative overflow-hidden rounded-xl py-1 px-4 sm:px-0">
+                <div className="relative overflow-hidden rounded-xl py-1">
                   <div 
                     className="flex transition-transform duration-500 ease-in-out"
                     style={{ transform: `translateX(-${currentPillarIndex * 100}%)` }}
@@ -170,9 +170,10 @@ export default function HomePage() {
                     {programPillars.map((pillar, index) => (
                       <div
                         key={pillar.title}
-                        className="min-w-full shrink-0 px-2"
+                        className="w-full shrink-0 flex-shrink-0 px-4"
+                        style={{ minWidth: '100%' }}
                       >
-                        <div className="group relative mx-auto max-w-sm overflow-hidden rounded-lg border border-white/10 bg-black/30 p-4 backdrop-blur-md shadow-sm shadow-black/20">
+                        <div className="group relative mx-auto w-full max-w-sm overflow-hidden rounded-lg border border-white/10 bg-black/30 p-4 backdrop-blur-md shadow-sm shadow-black/20">
                           {/* Dark overlay for better text contrast */}
                           <div className="absolute inset-0 bg-gradient-to-br from-black/40 via-black/30 to-black/40 rounded-lg" />
                           
