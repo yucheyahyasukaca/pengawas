@@ -22,8 +22,19 @@ import {
   TrendingUp,
   Calendar,
   Users,
+  Sparkles,
+  TrendingDown,
+  Minus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function BuatRencanaProgramPage() {
   const router = useRouter();
@@ -65,12 +76,230 @@ export default function BuatRencanaProgramPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [openSection, setOpenSection] = useState<string>("pendahuluan");
+  const [isAIDialogOpen, setIsAIDialogOpen] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [jumlahIndikator, setJumlahIndikator] = useState<number | null>(null);
+  const [showJumlahForm, setShowJumlahForm] = useState(true);
+  
+  // Dynamic indicators data based on jumlahIndikator
+  const [indicatorData, setIndicatorData] = useState<
+    Array<{
+      indikator: string;
+      hasilCapaian: string;
+      skorTahunIni: string;
+      skorTahunLalu: string;
+      tren?: "naik" | "turun" | "stabil";
+    }>
+  >([]);
+
+  const indicatorsList = [
+    "Kemampuan Literasi",
+    "Kemampuan Numerasi",
+    "Karakter",
+    "Pengalaman Pelatihan PTK",
+    "Kualitas Pembelajaran",
+    "Refleksi dan perbaikan pembelajaran oleh guru",
+    "Kepemimpinan instruksional",
+    "Iklim keamanan satuan pendidikan",
+    "Iklim Kesetaraan Gender",
+    "Iklim Kebinekaan",
+    "Iklim Inklusivitas",
+    "Partisipasi warga satuan pendidikan",
+    "Proporsi pemanfaatan sumber daya sekolah untuk peningkatan mutu",
+    "Pemanfaatan TIK untuk pengelolaan anggaran",
+    "Program dan kebijakan satuan pendidikan",
+  ];
+
+  const hasilCapaianOptions = ["baik", "sedang", "kurang"];
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
+  };
+
+  const updateIndicatorData = (index: number, field: string, value: string) => {
+    setIndicatorData((prev) => {
+      const newData = [...prev];
+      const updated = { ...newData[index], [field]: value };
+      
+      // Calculate trend if both scores are provided
+      if (field === "skorTahunIni" || field === "skorTahunLalu") {
+        const skorIni = field === "skorTahunIni" ? parseFloat(value) : parseFloat(updated.skorTahunIni);
+        const skorLalu = field === "skorTahunLalu" ? parseFloat(value) : parseFloat(updated.skorTahunLalu);
+        
+        if (!isNaN(skorIni) && !isNaN(skorLalu)) {
+          if (skorIni > skorLalu) {
+            updated.tren = "naik";
+          } else if (skorIni < skorLalu) {
+            updated.tren = "turun";
+          } else {
+            updated.tren = "stabil";
+          }
+        } else {
+          updated.tren = undefined;
+        }
+      }
+      
+      newData[index] = updated;
+      return newData;
+    });
+  };
+
+  const generateLatarBelakang = (): string => {
+    const completedIndicators = indicatorData.filter(
+      (item) => item.indikator && item.hasilCapaian && item.skorTahunIni && item.skorTahunLalu
+    );
+
+    if (completedIndicators.length === 0) {
+      return "";
+    }
+
+    let paragraph = "Berdasarkan hasil analisis data indikator utama sekolah, terdapat beberapa kondisi yang perlu mendapatkan perhatian khusus dalam upaya peningkatan mutu pendidikan. ";
+
+    // Group by achievement level
+    const baik = completedIndicators.filter((i) => i.hasilCapaian === "baik");
+    const sedang = completedIndicators.filter((i) => i.hasilCapaian === "sedang");
+    const kurang = completedIndicators.filter((i) => i.hasilCapaian === "kurang");
+
+    // Analyze trends
+    const naik = completedIndicators.filter((i) => i.tren === "naik");
+    const turun = completedIndicators.filter((i) => i.tren === "turun");
+    const stabil = completedIndicators.filter((i) => i.tren === "stabil");
+
+    if (kurang.length > 0) {
+      paragraph += `Secara keseluruhan, terdapat ${kurang.length} indikator yang masih berada pada kategori kurang, yaitu ${kurang.map((i) => i.indikator).join(", ")}. `;
+      paragraph += `Kondisi ini menunjukkan perlunya intervensi khusus dan pendampingan intensif untuk meningkatkan performa pada aspek-aspek tersebut. `;
+    }
+
+    if (sedang.length > 0) {
+      paragraph += `Sementara itu, ${sedang.length} indikator berada pada kategori sedang, di antaranya ${sedang.slice(0, 3).map((i) => i.indikator).join(", ")}. `;
+      paragraph += `Aspek-aspek ini memerlukan penguatan dan strategi khusus untuk mencapai standar yang lebih baik. `;
+    }
+
+    if (baik.length > 0) {
+      paragraph += `Meskipun demikian, sekolah menunjukkan performa yang baik pada ${baik.length} indikator, seperti ${baik.slice(0, 2).map((i) => i.indikator).join(" dan ")}. `;
+    }
+
+    // Trend analysis
+    if (turun.length > 0) {
+      paragraph += `Yang cukup mengkhawatirkan adalah adanya ${turun.length} indikator yang mengalami penurunan, yaitu ${turun.map((i) => i.indikator).join(", ")}. `;
+      paragraph += `Penurunan ini memerlukan evaluasi mendalam untuk mengidentifikasi akar masalah dan merancang program perbaikan yang tepat sasaran. `;
+    }
+
+    if (naik.length > 0) {
+      paragraph += `Di sisi positif, terdapat ${naik.length} indikator yang mengalami peningkatan, menunjukkan bahwa upaya perbaikan yang telah dilakukan memberikan dampak positif. `;
+    }
+
+    if (stabil.length > 0) {
+      paragraph += `Selain itu, ${stabil.length} indikator menunjukkan kondisi yang stabil, namun tetap memerlukan perhatian untuk memastikan tidak terjadi penurunan di masa mendatang. `;
+    }
+
+    // Specific examples with scores
+    const contohTurun = turun[0];
+    if (contohTurun) {
+      paragraph += `Sebagai contoh, pada indikator ${contohTurun.indikator}, skor mengalami penurunan dari ${contohTurun.skorTahunLalu} menjadi ${contohTurun.skorTahunIni}. `;
+    }
+
+    const contohKurang = kurang[0];
+    if (contohKurang) {
+      paragraph += `Sementara pada indikator ${contohKurang.indikator}, dengan hasil capaian kategori kurang dan skor ${contohKurang.skorTahunIni}, diperlukan langkah-langkah strategis untuk meningkatkan kualitas. `;
+    }
+
+    // Additional analysis for more content
+    if (completedIndicators.length > 5) {
+      const contohNaik = naik[0];
+      if (contohNaik) {
+        paragraph += `Perlu dicatat bahwa indikator ${contohNaik.indikator} menunjukkan tren positif dengan peningkatan skor dari ${contohNaik.skorTahunLalu} menjadi ${contohNaik.skorTahunIni}. `;
+        paragraph += `Ini menunjukkan bahwa program-program yang telah diimplementasikan memberikan hasil yang menggembirakan. `;
+      }
+    }
+
+    // Conclusion
+    paragraph += `Berdasarkan kondisi tersebut, sekolah perlu mengembangkan rencana program kepengawasan yang komprehensif dan terukur. `;
+    paragraph += `Program ini harus mampu mengatasi berbagai tantangan yang dihadapi, sekaligus mempertahankan dan meningkatkan aspek-aspek yang sudah baik. `;
+    paragraph += `Melalui pendekatan yang sistematis dan berbasis data, diharapkan semua indikator dapat mencapai standar yang diharapkan, sehingga tujuan peningkatan mutu pendidikan dapat tercapai secara optimal. `;
+    paragraph += `Peran pengawas sekolah menjadi sangat penting untuk memberikan pembinaan, supervisi, dan pendampingan yang berkelanjutan. `;
+    paragraph += `Kolaborasi antara pengawas, kepala sekolah, dan seluruh komponen sekolah perlu ditingkatkan untuk menciptakan sinergi dalam mencapai tujuan bersama. `;
+    paragraph += `Evaluasi berkala dan monitoring yang intensif akan memastikan bahwa setiap program yang diimplementasikan dapat memberikan dampak positif terhadap peningkatan mutu pendidikan di sekolah ini.`;
+
+    // Ensure it's around 350 words (target: 320-380 words)
+    let words = paragraph.split(/\s+/);
+    const currentWordCount = words.length;
+    
+    if (currentWordCount < 320) {
+      // Expand if too short
+      const additional = 350 - currentWordCount;
+      paragraph += ` Komitmen bersama dari semua pihak akan menjadi kunci kesuksesan dalam mencapai tujuan peningkatan mutu pendidikan yang berkelanjutan. `;
+      paragraph += `Oleh karena itu, diperlukan koordinasi yang baik, komunikasi yang efektif, dan evaluasi yang objektif dalam setiap tahap pelaksanaan program. `;
+      words = paragraph.split(/\s+/);
+    }
+    
+    if (words.length > 380) {
+      // Trim if too long, keep it around 350
+      paragraph = words.slice(0, 350).join(" ");
+      // Ensure it ends with proper sentence
+      if (!paragraph.endsWith('.') && !paragraph.endsWith(' ')) {
+        const lastSentence = paragraph.split('.').pop();
+        if (lastSentence && lastSentence.trim().length > 0) {
+          paragraph = paragraph.slice(0, paragraph.lastIndexOf('.')) + '.';
+        }
+      }
+    }
+
+    return paragraph;
+  };
+
+  const handleSetJumlahIndikator = (jumlah: number) => {
+    setJumlahIndikator(jumlah);
+    setShowJumlahForm(false);
+    // Initialize indicator data based on jumlah
+    setIndicatorData(
+      Array(jumlah).fill(null).map(() => ({
+        indikator: "",
+        hasilCapaian: "",
+        skorTahunIni: "",
+        skorTahunLalu: "",
+        tren: undefined,
+      }))
+    );
+  };
+
+  const handleResetDialog = () => {
+    setJumlahIndikator(null);
+    setShowJumlahForm(true);
+    setIndicatorData([]);
+    setIsAIDialogOpen(false);
+  };
+
+  const handleGenerateLatarBelakang = async () => {
+    // Validate that all selected indicators are filled
+    if (!jumlahIndikator || indicatorData.length !== jumlahIndikator) {
+      alert("Terjadi kesalahan. Silakan tutup dan buka kembali dialog.");
+      return;
+    }
+
+    const allFilled = indicatorData.every(
+      (item) => item.indikator && item.hasilCapaian && item.skorTahunIni && item.skorTahunLalu
+    );
+
+    if (!allFilled) {
+      alert(`Silakan lengkapi semua ${jumlahIndikator} indikator terlebih dahulu.`);
+      return;
+    }
+
+    setIsGenerating(true);
+    
+    // Simulate AI generation delay
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    
+    const generatedText = generateLatarBelakang();
+    // Replace entire content (will overwrite any existing text)
+    handleInputChange("latarBelakang", `<p>${generatedText}</p>`);
+    
+    setIsGenerating(false);
+    handleResetDialog();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -470,12 +699,31 @@ export default function BuatRencanaProgramPage() {
                 <CardContent className="space-y-4 sm:space-y-5 pt-4 sm:pt-5 border-t-0 p-3 sm:p-4 sm:px-6">
                   {section.fields.map((field) => (
                     <div key={field.key} className="space-y-2">
-                      <label className="flex items-center gap-2 text-xs sm:text-sm font-medium text-slate-600">
-                        {field.label}
-                        {field.required && (
-                          <span className="text-rose-400">*</span>
+                      <div className="flex items-center justify-between gap-2">
+                        <label className="flex items-center gap-2 text-xs sm:text-sm font-medium text-slate-600">
+                          {field.label}
+                          {field.required && (
+                            <span className="text-rose-400">*</span>
+                          )}
+                        </label>
+                        {field.key === "latarBelakang" && (
+                          <Button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // Reset dialog state when opening
+                              setJumlahIndikator(null);
+                              setShowJumlahForm(true);
+                              setIndicatorData([]);
+                              setIsAIDialogOpen(true);
+                            }}
+                            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-white shadow-md transition-all duration-300 hover:shadow-lg hover:scale-105 hover:from-purple-600 hover:via-pink-600 hover:to-rose-600"
+                          >
+                            <Sparkles className="size-3 sm:size-4" />
+                            <span>Gunakan AI</span>
+                          </Button>
                         )}
-                      </label>
+                      </div>
                       {field.key === "anggaran" ? (
                         <textarea
                           id={field.key}
@@ -555,6 +803,198 @@ export default function BuatRencanaProgramPage() {
           </CardContent>
         </Card>
       </form>
+
+      {/* AI Dialog */}
+      <Dialog open={isAIDialogOpen} onOpenChange={handleResetDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto overflow-x-hidden w-[calc(100vw-1rem)] sm:w-full mx-2 sm:mx-auto p-4 sm:p-6 pl-4 sm:pl-6">
+          <DialogHeader className="px-0 sm:px-0">
+            <DialogTitle className="flex flex-col sm:flex-row items-start sm:items-center gap-2 text-base sm:text-xl font-bold text-slate-900 pl-2 sm:pl-0">
+              <div className="flex size-8 sm:size-10 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 via-pink-500 to-rose-500 shadow-md shrink-0">
+                <Sparkles className="size-4 sm:size-5 text-white" />
+              </div>
+              <span className="leading-tight pl-2 sm:pl-0">Generator Latar Belakang dengan AI</span>
+            </DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm text-slate-600 mt-2 pl-2 sm:pl-0">
+              {showJumlahForm 
+                ? "Pilih berapa indikator utama yang akan Anda kerjakan. Sistem akan menghasilkan paragraf latar belakang 350 kata berdasarkan data yang Anda masukkan."
+                : `Lengkapi data untuk ${jumlahIndikator} indikator utama sekolah. Sistem akan menghasilkan paragraf latar belakang 350 kata berdasarkan data yang Anda masukkan.`}
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* Jumlah Indikator Selection */}
+          {showJumlahForm && (
+            <div className="space-y-4 py-2 sm:py-4 px-0 sm:px-0">
+              <Card className="border border-purple-200 bg-purple-50/30">
+                <CardContent className="p-4 sm:p-6 pl-4 sm:pl-6">
+                  <h3 className="text-sm sm:text-lg font-semibold text-slate-700 mb-3 sm:mb-4 pl-2 sm:pl-0">
+                    Berapa indikator utama yang akan dikerjakan?
+                  </h3>
+                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3 pl-2 sm:pl-0">
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map((num) => (
+                      <Button
+                        key={num}
+                        type="button"
+                        onClick={() => handleSetJumlahIndikator(num)}
+                        className="rounded-xl bg-white border-2 border-purple-200 text-purple-700 font-medium shadow-sm transition-all duration-200 hover:bg-purple-100 hover:border-purple-400 hover:shadow-md hover:scale-105 py-3 sm:py-6 text-sm sm:text-base"
+                      >
+                        {num}
+                      </Button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Indicator Forms */}
+          {!showJumlahForm && jumlahIndikator && (
+            <div className="space-y-3 sm:space-y-4 py-2 sm:py-4 px-0 sm:px-0 overflow-x-hidden">
+              {indicatorData.map((item, index) => {
+              const isOpen = item.indikator !== "";
+              return (
+                <Card
+                  key={index}
+                  className={cn(
+                    "border transition-all duration-200 w-full",
+                    isOpen ? "border-purple-200 bg-purple-50/30" : "border-slate-200 bg-white"
+                  )}
+                >
+                  <CardContent className="p-4 sm:p-4 space-y-2 sm:space-y-3 pl-4 sm:pl-4 pr-2 sm:pr-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-semibold text-slate-700">
+                        Indikator {index + 1}
+                      </h4>
+                      {item.tren && (
+                        <div className={cn(
+                          "flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium",
+                          item.tren === "naik" && "bg-emerald-100 text-emerald-700",
+                          item.tren === "turun" && "bg-rose-100 text-rose-700",
+                          item.tren === "stabil" && "bg-amber-100 text-amber-700"
+                        )}>
+                          {item.tren === "naik" && <TrendingUp className="size-3" />}
+                          {item.tren === "turun" && <TrendingDown className="size-3" />}
+                          {item.tren === "stabil" && <Minus className="size-3" />}
+                          <span className="capitalize">{item.tren}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-3">
+                      {/* Indikator Utama Dropdown */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-medium text-slate-600">
+                          Indikator Utama <span className="text-rose-400">*</span>
+                        </label>
+                        <select
+                          value={item.indikator}
+                          onChange={(e) => updateIndicatorData(index, "indikator", e.target.value)}
+                          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
+                        >
+                          <option value="">Pilih Indikator</option>
+                          {indicatorsList
+                            .filter((ind) => 
+                              indicatorData.every((d, i) => i === index || d.indikator !== ind)
+                            )
+                            .map((indicator) => (
+                              <option key={indicator} value={indicator}>
+                                {indicator}
+                              </option>
+                            ))}
+                        </select>
+                      </div>
+
+                      {/* Hasil Capaian Dropdown */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-medium text-slate-600">
+                          Hasil Capaian <span className="text-rose-400">*</span>
+                        </label>
+                        <select
+                          value={item.hasilCapaian}
+                          onChange={(e) => updateIndicatorData(index, "hasilCapaian", e.target.value)}
+                          className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
+                        >
+                          <option value="">Pilih Hasil Capaian</option>
+                          {hasilCapaianOptions.map((option) => (
+                            <option key={option} value={option}>
+                              {option.charAt(0).toUpperCase() + option.slice(1)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Skor Tahun Ini dan Tahun Lalu */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-medium text-slate-600">
+                            Skor Tahun Lalu <span className="text-rose-400">*</span>
+                          </label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            max="100"
+                            value={item.skorTahunLalu}
+                            onChange={(e) => updateIndicatorData(index, "skorTahunLalu", e.target.value)}
+                            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
+                            placeholder="0.00"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-xs font-medium text-slate-600">
+                            Skor Tahun Ini <span className="text-rose-400">*</span>
+                          </label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            max="100"
+                            value={item.skorTahunIni}
+                            onChange={(e) => updateIndicatorData(index, "skorTahunIni", e.target.value)}
+                            className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-700 shadow-sm outline-none transition focus:border-purple-500 focus:ring-2 focus:ring-purple-100"
+                            placeholder="0.00"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+              })}
+            </div>
+          )}
+
+          <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0 px-0 sm:px-0 pl-2 sm:pl-0 pr-2 sm:pr-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleResetDialog}
+              className="rounded-xl border-slate-300 text-slate-700 hover:bg-slate-50 w-full sm:w-auto order-2 sm:order-1"
+            >
+              Batal
+            </Button>
+            {!showJumlahForm && (
+              <Button
+                type="button"
+                onClick={handleGenerateLatarBelakang}
+                disabled={isGenerating || !indicatorData.every((item) => item.indikator && item.hasilCapaian && item.skorTahunIni && item.skorTahunLalu)}
+                className="rounded-xl bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 px-4 sm:px-6 py-2.5 font-medium text-white shadow-md transition-all duration-300 hover:shadow-lg hover:scale-105 hover:from-purple-600 hover:via-pink-600 hover:to-rose-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 w-full sm:w-auto order-1 sm:order-2 text-sm sm:text-base"
+              >
+                {isGenerating ? (
+                  <>
+                    <div className="size-4 mr-2 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    Menghasilkan...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="size-4 mr-2" />
+                    Generate Latar Belakang
+                  </>
+                )}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

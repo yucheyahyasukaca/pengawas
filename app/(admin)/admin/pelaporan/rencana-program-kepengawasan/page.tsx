@@ -4,6 +4,8 @@ import Link from "next/link";
 import {
   Card,
   CardContent,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import {
   FileText,
@@ -15,9 +17,80 @@ import {
   CheckCircle2,
   AlertCircle,
   ChevronRight,
+  Users,
+  Percent,
+  Trophy,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
+
+// Mock data rencana program kepengawasan
+const rencanaProgramStatus = [
+  {
+    pengawasId: "1",
+    hasPlan: true,
+    totalSekolah: 8,
+    completedSekolah: 8,
+    completionRate: 100,
+    firstCreatedDate: new Date("2025-01-05"),
+    lastUpdatedDate: new Date("2025-01-15"),
+  },
+  {
+    pengawasId: "2",
+    hasPlan: true,
+    totalSekolah: 6,
+    completedSekolah: 6,
+    completionRate: 100,
+    firstCreatedDate: new Date("2025-01-03"),
+    lastUpdatedDate: new Date("2025-01-12"),
+  },
+  {
+    pengawasId: "3",
+    hasPlan: true,
+    totalSekolah: 10,
+    completedSekolah: 9,
+    completionRate: 90,
+    firstCreatedDate: new Date("2025-01-02"),
+    lastUpdatedDate: new Date("2025-01-18"),
+  },
+  {
+    pengawasId: "4",
+    hasPlan: true,
+    totalSekolah: 7,
+    completedSekolah: 7,
+    completionRate: 100,
+    firstCreatedDate: new Date("2025-01-01"),
+    lastUpdatedDate: new Date("2025-01-10"),
+  },
+  {
+    pengawasId: "5",
+    hasPlan: true,
+    totalSekolah: 5,
+    completedSekolah: 4,
+    completionRate: 80,
+    firstCreatedDate: new Date("2025-01-08"),
+    lastUpdatedDate: new Date("2025-01-16"),
+  },
+  {
+    pengawasId: "6",
+    hasPlan: false,
+    totalSekolah: 9,
+    completedSekolah: 0,
+    completionRate: 0,
+    firstCreatedDate: null,
+    lastUpdatedDate: null,
+  },
+  {
+    pengawasId: "7",
+    hasPlan: false,
+    totalSekolah: 6,
+    completedSekolah: 0,
+    completionRate: 0,
+    firstCreatedDate: null,
+    lastUpdatedDate: null,
+  },
+];
 
 // Mock data pengawas
 const pengawas = [
@@ -109,6 +182,65 @@ export default function RencanaProgramKepengawasanPage() {
     pengawas.wilayah.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Calculate statistics
+  const totalPengawas = pengawas.length;
+  const pengawasDenganRencana = rencanaProgramStatus.filter((status) => status.hasPlan).length;
+  const persentaseRencana = totalPengawas > 0 ? Math.round((pengawasDenganRencana / totalPengawas) * 100) : 0;
+
+  // Find most diligent pengawas (fastest to create and most complete)
+  const pengawasDenganData = rencanaProgramStatus
+    .filter((status) => status.hasPlan && status.firstCreatedDate)
+    .map((status) => {
+      const pengawasData = pengawas.find((p) => p.id === status.pengawasId);
+      const daysToComplete = status.firstCreatedDate
+        ? Math.floor((status.lastUpdatedDate.getTime() - status.firstCreatedDate.getTime()) / (1000 * 60 * 60 * 24))
+        : 999;
+      
+      return {
+        ...status,
+        pengawasData,
+        daysToComplete,
+        score: status.completionRate * 100 - daysToComplete, // Higher completion, lower days = better score
+      };
+    })
+    .sort((a, b) => {
+      // Sort by completion rate first, then by speed
+      if (b.completionRate !== a.completionRate) {
+        return b.completionRate - a.completionRate;
+      }
+      return a.daysToComplete - b.daysToComplete;
+    });
+
+  const pengawasPalingRajin = pengawasDenganData.length > 0 ? pengawasDenganData[0] : null;
+
+  const stats = [
+    {
+      label: "Jumlah Pengawas",
+      value: totalPengawas.toString(),
+      change: `${pengawas.filter((p) => p.status === "Aktif").length} aktif`,
+      icon: Users,
+      trend: "neutral" as const,
+    },
+    {
+      label: "Sudah Membuat Rencana",
+      value: `${persentaseRencana}%`,
+      change: `${pengawasDenganRencana} dari ${totalPengawas} pengawas`,
+      icon: Percent,
+      trend: persentaseRencana >= 70 ? "positive" as const : "neutral" as const,
+    },
+    {
+      label: "Pengawas Paling Rajin",
+      value: pengawasPalingRajin?.pengawasData?.nama
+        ? pengawasPalingRajin.pengawasData.nama.split(",")[0].split(" ").slice(-2).join(" ") // Take last 2 words (usually first name)
+        : "-",
+      change: pengawasPalingRajin
+        ? `${pengawasPalingRajin.completionRate}% lengkap, ${pengawasPalingRajin.completedSekolah}/${pengawasPalingRajin.totalSekolah} sekolah`
+        : "Belum ada data",
+      icon: Trophy,
+      trend: "positive" as const,
+    },
+  ];
+
   return (
     <div className="flex flex-col gap-4 sm:gap-5 px-3 sm:px-0">
       {/* Header Section */}
@@ -126,6 +258,38 @@ export default function RencanaProgramKepengawasanPage() {
             Kelola data pengawas sekolah binaan
           </p>
         </div>
+      </div>
+
+      {/* Statistics Boxes */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {stats.map((stat) => (
+          <Card
+            key={stat.label}
+            className="border-0 bg-white/90 backdrop-blur-sm shadow-md"
+          >
+            <CardHeader className="flex flex-row items-start gap-4">
+              <div className="rounded-2xl bg-gradient-to-br from-blue-500 via-blue-400 to-cyan-400 p-2.5 text-white shadow-md">
+                <stat.icon className="size-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <CardTitle className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                  {stat.label}
+                </CardTitle>
+                <p className="mt-2 text-2xl sm:text-3xl font-bold text-slate-900 truncate">
+                  {stat.value}
+                </p>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="flex items-center gap-2 text-xs sm:text-sm font-medium text-slate-600">
+                <span className="flex size-5 sm:size-6 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                  <TrendingUp className="size-3 sm:size-3.5" />
+                </span>
+                <span className="line-clamp-2">{stat.change}</span>
+              </p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Search Bar */}
