@@ -63,6 +63,7 @@ export function AdminHeader({ className }: AdminHeaderProps) {
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const signOutButtonRef = useRef<HTMLButtonElement>(null);
   const activeItem = useActiveNavItem(pathname);
   const breadcrumbs = formatBreadcrumb(pathname);
 
@@ -72,15 +73,33 @@ export function AdminHeader({ className }: AdminHeaderProps) {
 
   // Close user menu when clicking outside
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+    function handleClickOutside(event: MouseEvent | TouchEvent) {
+      const target = event.target as HTMLElement;
+      
+      // Don't close if clicking on sign out button or its children
+      if (signOutButtonRef.current && signOutButtonRef.current.contains(target)) {
+        return;
+      }
+      
+      // Check if clicking on any button with "Keluar" text
+      const buttonElement = target.closest('button');
+      if (buttonElement && buttonElement.textContent?.trim().includes('Keluar')) {
+        return;
+      }
+      
+      if (userMenuRef.current && !userMenuRef.current.contains(target)) {
         setUserMenuOpen(false);
       }
     }
 
     if (userMenuOpen) {
       document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
+      document.addEventListener("touchstart", handleClickOutside);
+      
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+        document.removeEventListener("touchstart", handleClickOutside);
+      };
     }
   }, [userMenuOpen]);
 
@@ -188,9 +207,21 @@ export function AdminHeader({ className }: AdminHeaderProps) {
                     </div>
                   </div>
                   <button
-                    onClick={handleSignOut}
+                    ref={signOutButtonRef}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                    }}
+                    onTouchStart={(e) => {
+                      e.stopPropagation();
+                    }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setUserMenuOpen(false);
+                      handleSignOut();
+                    }}
                     disabled={isSigningOut}
-                    className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                    className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <LogOut className="size-4" />
                     <span>{isSigningOut ? "Keluar..." : "Keluar"}</span>
@@ -322,7 +353,23 @@ export function AdminHeader({ className }: AdminHeaderProps) {
                   </div>
                 </div>
                 <button
-                  onClick={handleSignOut}
+                  ref={(el) => {
+                    if (!signOutButtonRef.current) {
+                      signOutButtonRef.current = el;
+                    }
+                  }}
+                  onMouseDown={(e) => {
+                    e.stopPropagation();
+                  }}
+                  onTouchStart={(e) => {
+                    e.stopPropagation();
+                  }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setUserMenuOpen(false);
+                    handleSignOut();
+                  }}
                   disabled={isSigningOut}
                   className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-red-50 hover:text-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
