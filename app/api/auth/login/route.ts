@@ -1,6 +1,5 @@
-export const runtime = 'edge';
-
 import { createClient } from "@supabase/supabase-js";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 
 
@@ -132,8 +131,87 @@ export async function POST(request: Request) {
       );
     }
 
-    // Deteksi role berdasarkan email
-    const isAdmin = isAdminEmail(data.user.email || "");
+    // Ambil role, nama, dan status approval dari database
+    // Gunakan admin client untuk bypass RLS karena ada masalah dengan policy
+    let userData = null;
+    let userError = null;
+    
+    try {
+      const adminClient = createSupabaseAdminClient();
+      const userId = data.user.id; // Store user ID to avoid conflict
+      const { data: userDataResult, error: userErrorResult } = await adminClient
+        .from('users')
+        .select('role, nama, nip, status_approval')
+        .eq('id', userId)
+        .single();
+      
+      userData = userDataResult;
+      userError = userErrorResult;
+    } catch (err) {
+      console.error("Error using admin client:", err);
+      userError = err as Error;
+    }
+
+    console.log("Login route: User data query", { 
+      hasUserData: !!userData, 
+      userError: userError?.message,
+      role: userData?.role,
+      statusApproval: userData?.status_approval,
+      hasNama: !!userData?.nama
+    });
+
+    // Default role jika tidak ditemukan
+    let userRole = 'sekolah';
+    let redirectTo = '/dashboard';
+
+    if (userError) {
+      console.error("Login route: Error fetching user data:", userError);
+      // Jika error, tetap coba cek email untuk fallback
+      if (isAdminEmail(data.user.email || "")) {
+        userRole = 'admin';
+        redirectTo = '/admin';
+      }
+    } else if (userData && userData.role) {
+      userRole = userData.role;
+      
+      // Tentukan redirect path berdasarkan role
+      switch (userRole) {
+        case 'admin':
+          redirectTo = '/admin';
+          break;
+        case 'pengawas':
+          // Check status approval
+          const statusApproval = userData.status_approval || 'pending';
+          console.log("Login route: Pengawas status", { statusApproval, hasNama: !!userData.nama });
+          
+          if (statusApproval === 'pending' || statusApproval === 'rejected') {
+            redirectTo = '/pengawas/pending-approval';
+            console.log("Login route: Redirecting to pending-approval");
+          } else if (!userData.nama) {
+            // Jika profil belum lengkap (tidak ada nama), redirect ke lengkapi-profil
+            redirectTo = '/pengawas/lengkapi-profil';
+            console.log("Login route: Redirecting to lengkapi-profil");
+          } else {
+            redirectTo = '/pengawas';
+            console.log("Login route: Redirecting to pengawas dashboard");
+          }
+          break;
+        case 'korwas_cabdin':
+          redirectTo = '/korwas-cabdin'; // TODO: Buat dashboard untuk korwas cabdin
+          break;
+        case 'sekolah':
+          redirectTo = '/sekolah'; // TODO: Buat dashboard untuk sekolah
+          break;
+        default:
+          redirectTo = '/dashboard';
+      }
+    } else if (isAdminEmail(data.user.email || "")) {
+      // Fallback: jika user belum ada di public.users tapi email admin
+      userRole = 'admin';
+      redirectTo = '/admin';
+    }
+    
+    console.log("Login route: Final redirect", { userRole, redirectTo });
     
     // Return session tokens untuk client-side handling
     return NextResponse.json(
@@ -142,13 +220,14 @@ export async function POST(request: Request) {
         user: {
           id: data.user.id,
           email: data.user.email,
+          nama: userData?.nama || null,
         },
         session: {
           access_token: data.session.access_token,
           refresh_token: data.session.refresh_token,
         },
-        role: isAdmin ? "admin" : "pengawas",
-        redirectTo: isAdmin ? "/admin" : "/dashboard"
+        role: userRole,
+        redirectTo: redirectTo
       },
       { status: 200 }
     );

@@ -8,6 +8,7 @@ import {
   Users,
   Building2,
   BookOpen,
+  UserCheck,
 } from "lucide-react";
 
 export type AdminNavItem = {
@@ -74,6 +75,13 @@ export const adminNavigation: AdminNavSection[] = [
         href: "/admin/pengguna",
         icon: Users,
         description: "Atur peran dan hak akses kolaborator",
+      },
+      {
+        title: "Approval Pengawas",
+        href: "/admin/pengguna/approval-pengawas",
+        icon: UserCheck,
+        description: "Review dan setujui pendaftaran pengawas baru",
+        badge: "new",
       },
       {
         title: "Perencanaan & Pelaporan",

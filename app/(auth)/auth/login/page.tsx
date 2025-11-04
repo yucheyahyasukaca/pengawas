@@ -53,6 +53,12 @@ export default function LoginPage() {
       let data;
       try {
         data = await response.json();
+        console.log("Login page: Response data", { 
+          success: data.success, 
+          role: data.role, 
+          redirectTo: data.redirectTo,
+          hasSession: !!data.session
+        });
       } catch (parseError) {
         console.error("Parse response error:", parseError);
         setError("Terjadi kesalahan saat memproses respons dari server");
@@ -91,11 +97,33 @@ export default function LoginPage() {
         }
       }
 
-      // Redirect berdasarkan role
-      if (data.role === "admin") {
-        router.push("/admin");
+      // Redirect berdasarkan role dari response
+      if (data.redirectTo) {
+        console.log("Login page: Redirecting to:", data.redirectTo);
+        // Use window.location for full page reload to ensure session is properly set
+        window.location.href = data.redirectTo;
       } else {
-        router.push(data.redirectTo || "/dashboard");
+        // Fallback redirect berdasarkan role
+        let fallbackPath = "/dashboard";
+        switch (data.role) {
+          case "admin":
+            fallbackPath = "/admin";
+            break;
+          case "pengawas":
+            // Default untuk pengawas adalah pending-approval jika tidak ada redirectTo
+            fallbackPath = "/pengawas/pending-approval";
+            break;
+          case "korwas_cabdin":
+            fallbackPath = "/korwas-cabdin";
+            break;
+          case "sekolah":
+            fallbackPath = "/sekolah";
+            break;
+          default:
+            fallbackPath = "/dashboard";
+        }
+        console.log("Login page: Fallback redirecting to:", fallbackPath);
+        window.location.href = fallbackPath;
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Terjadi kesalahan saat login");
@@ -252,7 +280,7 @@ export default function LoginPage() {
             </div>
             <div className="grid gap-3 text-sm text-white/80">
               <Link
-                href="/auth/register"
+                href="/auth/register/pengawas"
                 className="flex items-center justify-center rounded-xl border border-white/20 bg-transparent px-4 py-3 font-medium transition hover:border-white/40 hover:bg-white/10"
               >
                 Daftar sebagai Pengawas Baru
