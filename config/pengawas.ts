@@ -66,12 +66,6 @@ export const pengawasNavigation: PengawasNavSection[] = [
         description: "Nama sekolah, NPSN, jenis, alamat, status binaan",
       },
       {
-        title: "Import Data Excel",
-        href: "/pengawas/manajemen-data/import",
-        icon: Upload,
-        description: "Import data dalam format Excel standar",
-      },
-      {
         title: "Filter & Statistik",
         href: "/pengawas/manajemen-data/statistik",
         icon: BarChart3,

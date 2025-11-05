@@ -28,7 +28,7 @@ export async function GET(request: Request) {
     // Client-side filtering is much faster than server-side search
     let query = adminClient
       .from('sekolah')
-      .select('id, npsn, nama_sekolah, status, jenjang, kabupaten_kota, kcd_wilayah')
+      .select('id, npsn, nama_sekolah, status, jenjang, kabupaten_kota, kcd_wilayah, alamat')
       .order('nama_sekolah', { ascending: true })
       .limit(500); // Increased limit to allow more data for client-side filtering
     
@@ -40,6 +40,15 @@ export async function GET(request: Request) {
         { error: error.message || "Gagal memuat data sekolah" },
         { status: 400 }
       );
+    }
+
+    // Log sample data to verify alamat is included
+    if (data && data.length > 0) {
+      console.log("Sample sekolah data (first item):", {
+        nama: data[0].nama_sekolah,
+        alamat: data[0].alamat,
+        hasAlamat: !!data[0].alamat
+      });
     }
 
     return NextResponse.json(
