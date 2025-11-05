@@ -24,8 +24,26 @@ export async function getCurrentUser(): Promise<UserWithRole | null> {
     const supabase = await createSupabaseServerClient();
     const { data: { user }, error } = await supabase.auth.getUser();
 
+    // Log for debugging in production
+    if (process.env.NODE_ENV === 'production') {
+      console.log('getCurrentUser:', {
+        hasUser: !!user,
+        userEmail: user?.email,
+        hasError: !!error,
+        errorMessage: error?.message,
+        errorCode: error?.code,
+      });
+    }
+
     // Silently handle refresh token errors - this is normal when user is not logged in
     if (error || !user || !user.email) {
+      if (process.env.NODE_ENV === 'production' && error) {
+        console.error('getCurrentUser error:', {
+          message: error.message,
+          code: error.code,
+          status: error.status,
+        });
+      }
       return null;
     }
 
@@ -93,9 +111,28 @@ export async function getCurrentUser(): Promise<UserWithRole | null> {
  */
 export async function getAdminUser(): Promise<UserWithRole | null> {
   const user = await getCurrentUser();
+  
+  // Log for debugging in production
+  if (process.env.NODE_ENV === 'production') {
+    console.log('getAdminUser:', {
+      hasUser: !!user,
+      userEmail: user?.email,
+      userRole: user?.role,
+      isAdmin: user?.role === 'admin',
+    });
+  }
+  
   if (user && user.role === 'admin') {
     return user;
   }
+  
+  if (process.env.NODE_ENV === 'production' && user) {
+    console.warn('getAdminUser: User found but not admin:', {
+      email: user.email,
+      role: user.role,
+    });
+  }
+  
   return null;
 }
 
