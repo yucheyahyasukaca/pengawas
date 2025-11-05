@@ -70,26 +70,33 @@ export default function DataPengawasPage() {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <Loader2 className="size-8 animate-spin text-indigo-600" />
-        <p className="text-sm text-slate-600">Memuat data pengawas...</p>
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4 animate-in fade-in">
+        <div className="relative">
+          <div className="absolute inset-0 rounded-full bg-indigo-200 animate-ping opacity-75" />
+          <Loader2 className="relative size-12 animate-spin text-indigo-600" />
+        </div>
+        <p className="text-sm font-medium text-slate-700">Memuat data pengawas...</p>
       </div>
     );
   }
 
   if (error || !pengawas) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <Card className="border-red-200 bg-red-50/50 max-w-md w-full">
-          <CardContent className="pt-6">
-            <p className="text-sm text-red-600 text-center">{error || 'Data pengawas tidak ditemukan'}</p>
-            <Button
-              onClick={loadPengawasData}
-              variant="outline"
-              className="w-full mt-4 rounded-full border-red-200 text-red-600 hover:bg-red-50"
-            >
-              Coba Lagi
-            </Button>
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4 animate-in fade-in slide-in-from-bottom-4">
+        <Card className="border-2 border-red-300 bg-gradient-to-br from-red-50 to-red-100/50 max-w-md w-full shadow-xl">
+          <CardContent className="pt-8 pb-6 px-6">
+            <div className="flex flex-col items-center gap-4">
+              <div className="flex size-16 items-center justify-center rounded-full bg-red-100 text-red-600">
+                <XCircle className="size-8" />
+              </div>
+              <p className="text-sm font-semibold text-red-700 text-center">{error || 'Data pengawas tidak ditemukan'}</p>
+              <Button
+                onClick={loadPengawasData}
+                className="w-full rounded-xl bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold shadow-lg hover:from-red-600 hover:to-red-700 hover:shadow-xl transition-all"
+              >
+                Coba Lagi
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -138,47 +145,51 @@ export default function DataPengawasPage() {
   const StatusIcon = statusConfig.icon;
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex-1">
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">
-            Profil Pengawas
-          </h1>
-          <p className="text-sm sm:text-base text-slate-600">
-            Informasi lengkap profil, NIP, wilayah tugas, dan sekolah binaan
-          </p>
+    <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Header - Soft design */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-50 via-indigo-100/50 to-blue-50 p-6 sm:p-8 border border-indigo-100/50 shadow-sm">
+        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex-1">
+            <h1 className="text-2xl sm:text-3xl font-semibold text-slate-800 mb-2">
+              Profil Pengawas
+            </h1>
+            <p className="text-sm sm:text-base text-slate-600 font-normal">
+              Informasi lengkap profil, NIP, wilayah tugas, dan sekolah binaan
+            </p>
+          </div>
+          <Button 
+            onClick={handleEditProfile}
+            className="rounded-xl border border-indigo-200 bg-white/80 backdrop-blur-sm text-indigo-600 px-6 py-2.5 font-medium shadow-sm transition-all hover:bg-indigo-50 hover:border-indigo-300 hover:shadow-md"
+          >
+            <Edit className="size-4 mr-2" />
+            <span className="hidden sm:inline">Edit Profil</span>
+            <span className="sm:hidden">Edit</span>
+          </Button>
         </div>
-        <Button 
-          onClick={handleEditProfile}
-          className="rounded-xl border-0 bg-gradient-to-r from-indigo-600 to-blue-600 px-6 py-2.5 font-semibold text-white shadow-lg transition-all hover:from-indigo-700 hover:to-blue-700 hover:shadow-xl hover:scale-105 active:scale-95"
-        >
-          <Edit className="size-4 mr-2" />
-          <span className="hidden sm:inline">Edit Profil</span>
-          <span className="sm:hidden">Edit</span>
-        </Button>
       </div>
 
-      {/* Profile Card */}
-      <Card className="border-0 bg-white shadow-xl shadow-indigo-100/50 overflow-hidden">
-        <div className="bg-gradient-to-br from-indigo-500 via-indigo-400 to-blue-400 px-6 py-8 sm:px-8 sm:py-10">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {/* Profile Card - Soft design */}
+      <Card className="border border-slate-200/60 bg-white shadow-sm overflow-hidden transition-all hover:shadow-md">
+        {/* Header - Soft gradient */}
+        <div className="relative bg-gradient-to-br from-indigo-50 via-indigo-100/30 to-blue-50 px-6 py-8 sm:px-8 sm:py-10">
+          <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
             <div className="flex items-center gap-4 sm:gap-6">
-              <div className="flex size-20 sm:size-24 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm text-white shadow-xl ring-2 ring-white/30">
+              {/* Avatar - Soft design */}
+              <div className="flex size-20 sm:size-24 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-100 to-blue-100 text-indigo-600 shadow-sm border border-indigo-200/50">
                 <User className="size-10 sm:size-12" />
               </div>
               <div className="flex-1 min-w-0">
-                <CardTitle className="text-xl sm:text-2xl font-bold text-white mb-1 truncate">
+                <CardTitle className="text-xl sm:text-2xl font-semibold text-slate-800 mb-1 truncate">
                   {pengawas.nama || 'Nama Belum Diisi'}
                 </CardTitle>
-                <CardDescription className="text-sm sm:text-base text-white/90">
+                <CardDescription className="text-sm sm:text-base text-slate-600 font-normal">
                   {pengawas.nip ? `NIP: ${pengawas.nip}` : 'NIP: Belum diisi'}
                 </CardDescription>
               </div>
             </div>
             <Badge 
               className={cn(
-                "rounded-full border px-4 py-2 text-xs sm:text-sm font-semibold flex items-center gap-2 w-fit",
+                "rounded-full border px-4 py-2 text-xs sm:text-sm font-medium flex items-center gap-2 w-fit shadow-sm",
                 statusConfig.className
               )}
             >
@@ -188,72 +199,79 @@ export default function DataPengawasPage() {
           </div>
         </div>
 
-        <CardContent className="p-6 sm:p-8">
-          <div className="grid gap-4 sm:gap-6">
-            {/* Email */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="flex size-10 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">
-                  <Mail className="size-5" />
+        <CardContent className="p-6 sm:p-8 bg-white">
+          <div className="grid gap-4 sm:gap-5">
+            {/* Email - Soft card design */}
+            <div className="relative overflow-hidden rounded-xl bg-slate-50/50 p-5 sm:p-6 border border-slate-200/50 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200">
+              <div className="flex items-start sm:items-center gap-4">
+                <div className="flex size-12 sm:size-14 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 shadow-sm border border-indigo-200/50">
+                  <Mail className="size-5 sm:size-6" />
                 </div>
-                <div className="flex-1 sm:flex-none">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs font-medium text-slate-500 uppercase tracking-wide block mb-1.5">
                     Email
                   </span>
-                  <span className="text-sm sm:text-base font-medium text-slate-900 break-all">
+                  <span className="text-sm sm:text-base font-medium text-slate-800 break-all">
                     {pengawas.email}
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Wilayah Tugas */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="flex size-10 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">
-                  <MapPin className="size-5" />
+            {/* Wilayah Tugas - Soft card design */}
+            <div className="relative overflow-hidden rounded-xl bg-slate-50/50 p-5 sm:p-6 border border-slate-200/50 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200">
+              <div className="flex items-start sm:items-center gap-4">
+                <div className="flex size-12 sm:size-14 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 shadow-sm border border-emerald-200/50">
+                  <MapPin className="size-5 sm:size-6" />
                 </div>
-                <div className="flex-1 sm:flex-none">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs font-medium text-slate-500 uppercase tracking-wide block mb-1.5">
                     Wilayah Tugas
                   </span>
-                  <span className="text-sm sm:text-base font-medium text-slate-900">
+                  <span className="text-sm sm:text-base font-medium text-slate-800">
                     {wilayahTugas}
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Jumlah Sekolah Binaan */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 p-4 rounded-xl bg-gradient-to-br from-indigo-50 to-blue-50 border-2 border-indigo-200">
-              <div className="flex items-center gap-3">
-                <div className="flex size-10 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-blue-500 text-white shadow-md">
-                  <School className="size-5" />
+            {/* Jumlah Sekolah Binaan - Soft highlight */}
+            <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-indigo-50 to-blue-50 p-6 sm:p-8 border border-indigo-200/50 shadow-sm">
+              <div className="flex items-center gap-4 sm:gap-6">
+                <div className="flex size-14 sm:size-16 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 shadow-sm border border-indigo-200/50">
+                  <School className="size-6 sm:size-7" />
                 </div>
-                <div className="flex-1 sm:flex-none">
-                  <span className="text-xs font-semibold text-indigo-600 uppercase tracking-wide block mb-1">
+                <div className="flex-1">
+                  <span className="text-xs sm:text-sm font-medium text-indigo-600 uppercase tracking-wide block mb-2">
                     Jumlah Sekolah Binaan
                   </span>
-                  <span className="text-2xl sm:text-3xl font-bold text-indigo-600">
+                  <span className="text-3xl sm:text-4xl font-semibold text-indigo-700">
                     {jumlahSekolah}
                   </span>
+                  <p className="text-xs sm:text-sm text-slate-600 mt-1 font-normal">
+                    Sekolah aktif
+                  </p>
                 </div>
               </div>
             </div>
 
             {/* Daftar Sekolah Binaan */}
             {jumlahSekolah > 0 && (
-              <div className="mt-2 pt-6 border-t-2 border-indigo-100">
-                <h3 className="text-sm sm:text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
-                  <School className="size-5 text-indigo-600" />
-                  Daftar Sekolah Binaan
-                </h3>
-                <div className="flex flex-wrap gap-2 sm:gap-3">
+              <div className="mt-2 pt-6 border-t border-slate-200">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="flex size-9 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 border border-indigo-200/50">
+                    <School className="size-4.5" />
+                  </div>
+                  <h3 className="text-base sm:text-lg font-semibold text-slate-800">
+                    Daftar Sekolah Binaan
+                  </h3>
+                </div>
+                <div className="flex flex-wrap gap-2 sm:gap-2.5">
                   {Array.isArray(sekolahBinaan) && sekolahBinaan.map((sekolah, index) => (
                     <Badge
                       key={index}
                       variant="outline"
-                      className="rounded-full border-2 border-indigo-200 bg-indigo-50 px-4 py-2 text-xs sm:text-sm font-medium text-indigo-700 hover:bg-indigo-100 hover:border-indigo-300 transition-colors"
+                      className="rounded-full border border-indigo-200 bg-indigo-50/50 px-4 py-1.5 text-xs sm:text-sm font-medium text-indigo-700 hover:bg-indigo-100 hover:border-indigo-300 transition-all duration-200"
                     >
                       {sekolah}
                     </Badge>
