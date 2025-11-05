@@ -119,7 +119,7 @@ export default function LoginPage() {
         window.location.href = data.redirectTo;
       } else {
         // Fallback redirect berdasarkan role
-        let fallbackPath = "/dashboard";
+        let fallbackPath = "/pengawas"; // Default ke pengawas dashboard
         switch (data.role) {
           case "admin":
             fallbackPath = "/admin";
@@ -135,7 +135,7 @@ export default function LoginPage() {
             fallbackPath = "/sekolah";
             break;
           default:
-            fallbackPath = "/dashboard";
+            fallbackPath = "/pengawas"; // Default ke pengawas dashboard
         }
         console.log("Login page: Fallback redirecting to:", fallbackPath);
         window.location.href = fallbackPath;

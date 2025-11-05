@@ -162,7 +162,7 @@ export async function POST(request: Request) {
 
     // Default role jika tidak ditemukan
     let userRole = 'sekolah';
-    let redirectTo = '/dashboard';
+    let redirectTo = '/pengawas'; // Default ke pengawas dashboard
 
     if (userError) {
       console.error("Login route: Error fetching user data:", userError);
@@ -203,7 +203,7 @@ export async function POST(request: Request) {
           redirectTo = '/sekolah'; // TODO: Buat dashboard untuk sekolah
           break;
         default:
-          redirectTo = '/dashboard';
+          redirectTo = '/pengawas'; // Default ke pengawas dashboard
       }
     } else if (isAdminEmail(data.user.email || "")) {
       // Fallback: jika user belum ada di public.users tapi email admin

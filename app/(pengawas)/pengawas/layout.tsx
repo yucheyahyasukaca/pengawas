@@ -29,11 +29,12 @@ export default async function PengawasRouteLayout({ children }: PengawasRouteLay
       hasNama: !!currentUser?.nama
     });
 
-    // If no user found, render children without layout
+    // If no user found, still render layout
     // Client-side components will handle redirect to login if needed
+    // This ensures sidebar, header, and footer are always visible
     if (!currentUser) {
-      console.log("Pengawas layout: No user found, rendering children without layout (client will handle redirect)");
-      return <>{children}</>;
+      console.log("Pengawas layout: No user found, but rendering layout (client will handle redirect)");
+      return <PengawasLayout>{children}</PengawasLayout>;
     }
 
     // Check if user is pengawas (regardless of approval status)
@@ -42,23 +43,20 @@ export default async function PengawasRouteLayout({ children }: PengawasRouteLay
       return <PengawasUnauthorized />;
     }
 
-    // For approved pengawas with complete profile, wrap with full layout
-    // For pending/rejected or incomplete profile, render without layout
-    // Client-side components will handle redirects to appropriate pages
-    if (currentUser.status_approval === 'approved' && currentUser.nama) {
-      console.log("Pengawas layout: User is approved, showing full layout");
-      return <PengawasLayout>{children}</PengawasLayout>;
-    }
-
-    // For pending/rejected or incomplete profile, render without layout
-    // These pages (pending-approval, lengkapi-profil) have their own full-screen layout
-    // This allows access to pending-approval and lengkapi-profil pages
-    console.log("Pengawas layout: User is pending/incomplete, rendering children without layout");
-    return <>{children}</>;
+    // Always render layout for pengawas users
+    // The layout will always show, and client-side components (PengawasProfileCheck) 
+    // will handle redirects for users who need to complete their profile or are pending approval
+    // This ensures sidebar, header, and footer are always visible
+    console.log("Pengawas layout: Rendering layout for pengawas user", {
+      statusApproval: currentUser.status_approval,
+      hasNama: !!currentUser.nama
+    });
+    return <PengawasLayout>{children}</PengawasLayout>;
   } catch (error) {
     console.error("Layout error:", error);
-    // On error, render children without layout - let client handle redirect
-    return <>{children}</>;
+    // On error, still render layout - let client handle redirect
+    // This ensures UI components are always available
+    return <PengawasLayout>{children}</PengawasLayout>;
   }
 }
 
