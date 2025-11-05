@@ -11,8 +11,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Clock, CheckCircle2, XCircle, AlertCircle, Mail, User, FileText, MapPin, School, Save, ChevronDown, Search, X } from "lucide-react";
+import { Clock, CheckCircle2, XCircle, AlertCircle, Mail, User, FileText, MapPin, School, Save, ChevronDown, Search, X, Camera, Upload, Loader2 } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import Image from "next/image";
 
 // Daftar KCD Wilayah
 const KCD_WILAYAH_OPTIONS = Array.from({ length: 13 }, (_, i) => `KCD Wilayah ${i + 1}`);
@@ -34,12 +35,14 @@ export default function PendingApprovalPage() {
   const [showForm, setShowForm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isUploadingFoto, setIsUploadingFoto] = useState(false);
 
   // Form state
   const [nama, setNama] = useState("");
   const [nip, setNip] = useState("");
   const [kcdWilayah, setKcdWilayah] = useState("");
   const [sekolahBinaan, setSekolahBinaan] = useState<Array<{id: string; nama: string; npsn: string}>>([]);
+  const [fotoProfil, setFotoProfil] = useState<string | null>(null);
   
   // KCD Wilayah combobox state
   const [kcdWilayahInput, setKcdWilayahInput] = useState("");
@@ -117,6 +120,7 @@ export default function PendingApprovalPage() {
         const wilayahTugas = metadata?.wilayah_tugas || "";
         setKcdWilayah(wilayahTugas);
         setKcdWilayahInput(wilayahTugas);
+        setFotoProfil(metadata?.foto_profil || null);
         // Convert existing sekolah binaan (string array) to object array
         const existingSekolah = metadata?.sekolah_binaan || [];
         if (Array.isArray(existingSekolah) && existingSekolah.length > 0) {
@@ -255,6 +259,52 @@ export default function PendingApprovalPage() {
     setIsKcdDropdownOpen(true);
   };
 
+  const handleFotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      setError("Format file tidak didukung. Gunakan JPG, PNG, atau WEBP");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      setError("Ukuran file terlalu besar. Maksimal 5MB");
+      return;
+    }
+
+    setIsUploadingFoto(true);
+    setError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/pengawas/upload-foto', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Gagal mengupload foto');
+      }
+
+      if (data.success && data.url) {
+        setFotoProfil(data.url);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gagal mengupload foto');
+    } finally {
+      setIsUploadingFoto(false);
+    }
+  };
+
   const handleSubmitForm = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
@@ -374,6 +424,57 @@ export default function PendingApprovalPage() {
                     <span className="flex-1 leading-relaxed">{error}</span>
                   </div>
                 )}
+
+                {/* Foto Profil Upload Section */}
+                <div className="flex flex-col items-center gap-4 pb-6 border-b border-slate-200">
+                  <label className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                    <Camera className="size-4 text-[#B53740]" />
+                    Foto Profil
+                  </label>
+                  <div className="relative">
+                    <div className="relative size-32 rounded-2xl bg-gradient-to-br from-indigo-100 to-blue-100 border-2 border-indigo-200 overflow-hidden">
+                      {fotoProfil ? (
+                        <Image
+                          src={fotoProfil}
+                          alt="Foto Profil"
+                          fill
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center h-full">
+                          <User className="size-16 text-indigo-600" />
+                        </div>
+                      )}
+                      {isUploadingFoto && (
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                          <Loader2 className="size-8 animate-spin text-white" />
+                        </div>
+                      )}
+                    </div>
+                    <label
+                      htmlFor="foto-upload"
+                      className="absolute bottom-0 right-0 flex size-10 items-center justify-center rounded-full bg-[#B53740] text-white shadow-lg cursor-pointer hover:bg-[#8B2A31] transition-all"
+                      title="Unggah Foto"
+                    >
+                      {isUploadingFoto ? (
+                        <Loader2 className="size-5 animate-spin" />
+                      ) : (
+                        <Camera className="size-5" />
+                      )}
+                    </label>
+                    <input
+                      id="foto-upload"
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png,image/webp"
+                      onChange={handleFotoUpload}
+                      className="hidden"
+                      disabled={isUploadingFoto}
+                    />
+                  </div>
+                  <p className="text-xs text-slate-500 text-center">
+                    Ukuran maksimal 5MB. Format: JPG, PNG, atau WEBP
+                  </p>
+                </div>
 
                 <div className="space-y-2">
                   <label htmlFor="nama" className="text-sm font-semibold text-slate-900 flex items-center gap-2">

@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Card,
@@ -21,123 +20,173 @@ import {
   CheckCircle2,
   AlertTriangle,
   Clock,
+  Loader2,
 } from "lucide-react";
 
-const stats = [
-  {
-    label: "Sekolah Binaan",
-    value: "8",
-    change: "3 SMA, 5 SLB",
-    icon: School,
-    trend: "neutral",
-  },
-  {
-    label: "Pelaporan Triwulan",
-    value: "75%",
-    change: "3 dari 4 triwulan",
-    icon: FileCheck,
-    trend: "positive",
-  },
-  {
-    label: "Supervisi Terjadwal",
-    value: "12",
-    change: "Bulan ini",
-    icon: Calendar,
-    trend: "positive",
-  },
-  {
-    label: "Tenggat Waktu",
-    value: "3",
-    change: "Perlu perhatian",
-    icon: Bell,
-    trend: "warning",
-  },
-];
+interface DashboardData {
+  stats: {
+    sekolahBinaan: {
+      value: string;
+      change: string;
+    };
+    pelaporanTriwulan: {
+      value: string;
+      change: string;
+    };
+    supervisiTerjadwal: {
+      value: string;
+      change: string;
+    };
+    tenggatWaktu: {
+      value: string;
+      change: string;
+    };
+  };
+  sekolahBinaan: Array<{
+    id: string;
+    nama: string;
+    npsn: string;
+    jenis: string;
+    status: string;
+    pelaporan: string;
+  }>;
+  jadwalKegiatan: Array<{
+    id: string;
+    title: string;
+    date: string;
+    type: string;
+    status: string;
+  }>;
+  notifikasi: Array<{
+    id: string;
+    title: string;
+    message: string;
+    priority: string;
+    date: string;
+  }>;
+  pelaporanTriwulan: {
+    year: number;
+    quarters: Array<{
+      triwulan: string;
+      status: string;
+      date: string;
+    }>;
+    percentage: number;
+  };
+}
 
-const sekolahBinaan = [
-  {
-    id: "skl-001",
-    nama: "SMA Negeri 1 Semarang",
-    npsn: "20325123",
-    jenis: "Negeri",
-    status: "Aktif",
-    pelaporan: "Triwulan 3 selesai",
-  },
-  {
-    id: "skl-002",
-    nama: "SLB Negeri Ungaran",
-    npsn: "20325124",
-    jenis: "Negeri",
-    status: "Aktif",
-    pelaporan: "Triwulan 3 selesai",
-  },
-  {
-    id: "skl-003",
-    nama: "SMA Negeri 2 Semarang",
-    npsn: "20325125",
-    jenis: "Negeri",
-    status: "Aktif",
-    pelaporan: "Triwulan 3 pending",
-  },
-];
-
-const jadwalKegiatan = [
-  {
-    id: "keg-001",
-    title: "Supervisi Akademik SMA Negeri 1 Semarang",
-    date: "10 November 2025",
-    type: "Supervisi Akademik",
-    status: "Terjadwal",
-  },
-  {
-    id: "keg-002",
-    title: "Pendampingan Pengembangan KSP SLB Negeri Ungaran",
-    date: "15 November 2025",
-    type: "Pendampingan",
-    status: "Terjadwal",
-  },
-  {
-    id: "keg-003",
-    title: "Supervisi Manajerial SMA Negeri 2 Semarang",
-    date: "20 November 2025",
-    type: "Supervisi Manajerial",
-    status: "Butuh Persiapan",
-  },
-];
-
-const notifikasi = [
-  {
-    id: "notif-001",
-    title: "Tenggat Pelaporan Triwulan 4",
-    message: "Batas waktu pengiriman laporan triwulan 4: 30 November 2025",
-    priority: "high",
-    date: "2 hari lagi",
-  },
-  {
-    id: "notif-002",
-    title: "Perlu Tindak Lanjut Supervisi",
-    message: "SMA Negeri 2 Semarang memerlukan tindak lanjut dari hasil supervisi bulan lalu",
-    priority: "medium",
-    date: "5 hari lalu",
-  },
-  {
-    id: "notif-003",
-    title: "Rencana Program Kepengawasan",
-    message: "Rencana program kepengawasan untuk semester genap perlu disusun",
-    priority: "medium",
-    date: "1 minggu lagi",
-  },
-];
+const statIcons = {
+  sekolahBinaan: School,
+  pelaporanTriwulan: FileCheck,
+  supervisiTerjadwal: Calendar,
+  tenggatWaktu: Bell,
+};
 
 export default function PengawasDashboardPage() {
-  // Note: We don't need to check authentication here because:
-  // 1. Server-side layout already validates user via getCurrentUser()
-  // 2. Client-side checks were causing automatic logout due to race conditions
-  // 3. PengawasProfileCheck component handles profile completion redirects
-  // 
-  // If server-side validation passes, user is authenticated.
-  // Client-side checks should only handle redirects for incomplete profiles,
-  // which is handled by PengawasProfileCheck component.
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchDashboardData() {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await fetch("/api/pengawas/dashboard");
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || "Gagal memuat data dashboard");
+        }
+
+        if (result.success && result.data) {
+          setData(result.data);
+        } else {
+          throw new Error("Format data tidak valid");
+        }
+      } catch (err) {
+        console.error("Error fetching dashboard data:", err);
+        setError(err instanceof Error ? err.message : "Terjadi kesalahan saat memuat data");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchDashboardData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="size-8 animate-spin text-indigo-600" />
+          <p className="text-sm text-slate-600">Memuat data dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Card className="border-red-200 bg-red-50/50 max-w-md">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="size-5" />
+              Terjadi Kesalahan
+            </CardTitle>
+            <CardDescription className="text-red-600">
+              {error}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button
+              onClick={() => window.location.reload()}
+              className="w-full bg-indigo-600 hover:bg-indigo-700"
+            >
+              Muat Ulang
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  const stats = [
+    {
+      label: "Sekolah Binaan",
+      value: data.stats.sekolahBinaan.value,
+      change: data.stats.sekolahBinaan.change,
+      icon: statIcons.sekolahBinaan,
+      trend: "neutral" as const,
+    },
+    {
+      label: "Pelaporan Triwulan",
+      value: data.stats.pelaporanTriwulan.value,
+      change: data.stats.pelaporanTriwulan.change,
+      icon: statIcons.pelaporanTriwulan,
+      trend: "positive" as const,
+    },
+    {
+      label: "Supervisi Terjadwal",
+      value: data.stats.supervisiTerjadwal.value,
+      change: data.stats.supervisiTerjadwal.change,
+      icon: statIcons.supervisiTerjadwal,
+      trend: "positive" as const,
+    },
+    {
+      label: "Tenggat Waktu",
+      value: data.stats.tenggatWaktu.value,
+      change: data.stats.tenggatWaktu.change,
+      icon: statIcons.tenggatWaktu,
+      trend: data.stats.tenggatWaktu.value !== "0" ? ("warning" as const) : ("neutral" as const),
+    },
+  ];
 
   return (
     <div className="flex flex-col gap-6">
@@ -193,36 +242,47 @@ export default function PengawasDashboardPage() {
             </Button>
           </CardHeader>
           <CardContent className="space-y-4">
-            {sekolahBinaan.map((sekolah) => (
-              <Link
-                key={sekolah.id}
-                href={`/pengawas/manajemen-data/sekolah/${sekolah.id}`}
-                className="block rounded-2xl border border-indigo-100 bg-white p-4 shadow-sm transition hover:-translate-y-[1px] hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-100"
-              >
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex flex-col gap-1 flex-1">
-                    <p className="text-base font-semibold text-slate-900">
-                      {sekolah.nama}
-                    </p>
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                      <span>NPSN: {sekolah.npsn}</span>
-                      <span>•</span>
-                      <span>{sekolah.jenis}</span>
+            {data.sekolahBinaan.length > 0 ? (
+              data.sekolahBinaan.map((sekolah) => (
+                <Link
+                  key={sekolah.id}
+                  href={`/pengawas/manajemen-data/sekolah/${sekolah.id}`}
+                  className="block rounded-2xl border border-indigo-100 bg-white p-4 shadow-sm transition hover:-translate-y-[1px] hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-100"
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-col gap-1 flex-1">
+                      <p className="text-base font-semibold text-slate-900">
+                        {sekolah.nama}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                        <span>NPSN: {sekolah.npsn}</span>
+                        <span>•</span>
+                        <span>{sekolah.jenis}</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge className="w-fit rounded-full border-0 bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-600 shadow-sm">
+                        {sekolah.status}
+                      </Badge>
                     </div>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge className="w-fit rounded-full border-0 bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-600 shadow-sm">
-                      {sekolah.status}
-                    </Badge>
+                  <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-slate-600">
+                    <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-600">
+                      {sekolah.pelaporan}
+                    </span>
                   </div>
-                </div>
-                <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-slate-600">
-                  <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-600">
-                    {sekolah.pelaporan}
-                  </span>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              ))
+            ) : (
+              <div className="text-center py-8 text-slate-500">
+                <p className="text-sm">Belum ada sekolah binaan</p>
+                <Link href="/pengawas/lengkapi-profil">
+                  <Button variant="link" className="text-indigo-600 mt-2">
+                    Lengkapi Profil
+                  </Button>
+                </Link>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -246,33 +306,39 @@ export default function PengawasDashboardPage() {
             </Button>
           </CardHeader>
           <CardContent className="space-y-4">
-            {jadwalKegiatan.map((kegiatan) => (
-              <div
-                key={kegiatan.id}
-                className="flex flex-col gap-1 rounded-2xl border border-indigo-100 bg-white p-4 shadow-sm transition hover:-translate-y-[1px] hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-100"
-              >
-                <p className="text-base font-semibold text-slate-900">
-                  {kegiatan.title}
-                </p>
-                <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 mt-2">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="size-3" />
-                    {kegiatan.date}
-                  </span>
-                  <span>•</span>
-                  <Badge
-                    variant="outline"
-                    className="rounded-full border-0 bg-indigo-50 px-2.5 py-0.5 text-[11px] font-semibold text-indigo-600"
-                  >
-                    {kegiatan.type}
-                  </Badge>
-                  <span>•</span>
-                  <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-[11px] font-semibold text-indigo-600">
-                    {kegiatan.status}
-                  </span>
+            {data.jadwalKegiatan.length > 0 ? (
+              data.jadwalKegiatan.map((kegiatan) => (
+                <div
+                  key={kegiatan.id}
+                  className="flex flex-col gap-1 rounded-2xl border border-indigo-100 bg-white p-4 shadow-sm transition hover:-translate-y-[1px] hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-100"
+                >
+                  <p className="text-base font-semibold text-slate-900">
+                    {kegiatan.title}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 mt-2">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="size-3" />
+                      {kegiatan.date}
+                    </span>
+                    <span>•</span>
+                    <Badge
+                      variant="outline"
+                      className="rounded-full border-0 bg-indigo-50 px-2.5 py-0.5 text-[11px] font-semibold text-indigo-600"
+                    >
+                      {kegiatan.type}
+                    </Badge>
+                    <span>•</span>
+                    <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-[11px] font-semibold text-indigo-600">
+                      {kegiatan.status}
+                    </span>
+                  </div>
                 </div>
+              ))
+            ) : (
+              <div className="text-center py-8 text-slate-500">
+                <p className="text-sm">Belum ada jadwal kegiatan</p>
               </div>
-            ))}
+            )}
           </CardContent>
         </Card>
       </section>
@@ -291,45 +357,51 @@ export default function PengawasDashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {notifikasi.map((notif) => (
-              <div
-                key={notif.id}
-                className={cn(
-                  "rounded-2xl border p-4 shadow-sm transition hover:-translate-y-[1px] hover:shadow-md",
-                  notif.priority === "high"
-                    ? "border-red-200 bg-red-50/50"
-                    : "border-indigo-100 bg-white"
-                )}
-              >
-                <div className="flex items-start gap-3">
-                  <div
-                    className={cn(
-                      "flex size-8 shrink-0 items-center justify-center rounded-lg",
-                      notif.priority === "high"
-                        ? "bg-red-100 text-red-600"
-                        : "bg-indigo-100 text-indigo-600"
-                    )}
-                  >
-                    {notif.priority === "high" ? (
-                      <AlertTriangle className="size-4" />
-                    ) : (
-                      <Clock className="size-4" />
-                    )}
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-semibold text-slate-900 text-sm">
-                      {notif.title}
-                    </p>
-                    <p className="mt-1 text-xs text-slate-600">
-                      {notif.message}
-                    </p>
-                    <p className="mt-2 text-[10px] font-medium text-slate-500">
-                      {notif.date}
-                    </p>
+            {data.notifikasi.length > 0 ? (
+              data.notifikasi.map((notif) => (
+                <div
+                  key={notif.id}
+                  className={cn(
+                    "rounded-2xl border p-4 shadow-sm transition hover:-translate-y-[1px] hover:shadow-md",
+                    notif.priority === "high"
+                      ? "border-red-200 bg-red-50/50"
+                      : "border-indigo-100 bg-white"
+                  )}
+                >
+                  <div className="flex items-start gap-3">
+                    <div
+                      className={cn(
+                        "flex size-8 shrink-0 items-center justify-center rounded-lg",
+                        notif.priority === "high"
+                          ? "bg-red-100 text-red-600"
+                          : "bg-indigo-100 text-indigo-600"
+                      )}
+                    >
+                      {notif.priority === "high" ? (
+                        <AlertTriangle className="size-4" />
+                      ) : (
+                        <Clock className="size-4" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-slate-900 text-sm">
+                        {notif.title}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-600">
+                        {notif.message}
+                      </p>
+                      <p className="mt-2 text-[10px] font-medium text-slate-500">
+                        {notif.date}
+                      </p>
+                    </div>
                   </div>
                 </div>
+              ))
+            ) : (
+              <div className="text-center py-8 text-slate-500">
+                <p className="text-sm">Tidak ada notifikasi</p>
               </div>
-            ))}
+            )}
           </CardContent>
         </Card>
 
@@ -344,19 +416,14 @@ export default function PengawasDashboardPage() {
             <div className="rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50 via-white to-blue-50 p-5 shadow-inner">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-base font-semibold text-slate-900">
-                  Pelaporan Triwulan 2025
+                  Pelaporan Triwulan {data.pelaporanTriwulan.year}
                 </p>
                 <Badge className="rounded-full border-0 bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-600">
-                  75% Selesai
+                  {data.pelaporanTriwulan.percentage}% Selesai
                 </Badge>
               </div>
               <div className="space-y-2">
-                {[
-                  { triwulan: "Triwulan 1", status: "Selesai", date: "31 Maret 2025" },
-                  { triwulan: "Triwulan 2", status: "Selesai", date: "30 Juni 2025" },
-                  { triwulan: "Triwulan 3", status: "Selesai", date: "30 September 2025" },
-                  { triwulan: "Triwulan 4", status: "Pending", date: "30 November 2025" },
-                ].map((item) => (
+                {data.pelaporanTriwulan.quarters.map((item) => (
                   <div
                     key={item.triwulan}
                     className="flex items-center justify-between rounded-xl border border-indigo-100 bg-white p-3 text-sm"

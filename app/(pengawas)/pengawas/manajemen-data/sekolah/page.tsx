@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -194,9 +195,9 @@ export default function DataSekolahPage() {
       ) : (
         <div className="grid gap-6 md:grid-cols-2">
           {filteredSekolah.map((sekolah) => (
+          <Link key={sekolah.id} href={`/pengawas/manajemen-data/sekolah/${sekolah.id}`}>
           <Card
-            key={sekolah.id}
-            className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70 transition hover:shadow-lg hover:shadow-indigo-200"
+            className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70 transition hover:shadow-lg hover:shadow-indigo-200 cursor-pointer"
           >
             <CardHeader>
               <div className="flex items-start justify-between">
@@ -251,6 +252,7 @@ export default function DataSekolahPage() {
               </div>
             </CardContent>
           </Card>
+          </Link>
           ))}
         </div>
       )}

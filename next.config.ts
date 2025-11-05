@@ -18,6 +18,19 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'images.unsplash.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'supabase2.garuda-21.com',
+      },
+      // Support for Supabase storage domains (add specific project domains if needed)
+      {
+        protocol: 'https',
+        hostname: '**.supabase.co',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.supabase.in',
+      },
     ],
   },
   
