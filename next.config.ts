@@ -10,6 +10,12 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Ensure API routes are properly included in standalone build
+  experimental: {
+    outputFileTracingIncludes: {
+      '/api/**/*': ['./app/api/**/*'],
+    },
+  },
 };
 
 export default nextConfig;
