@@ -25,15 +25,15 @@ const ToastViewport = React.forwardRef<
 ToastViewport.displayName = ToastPrimitives.Viewport.displayName;
 
 const toastVariants = cva(
-  "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-2xl border p-4 pr-6 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full backdrop-blur-sm",
+  "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-2xl border-2 p-4 pr-6 shadow-xl transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full",
   {
     variants: {
       variant: {
-        default: "border-slate-200 bg-white text-slate-900",
-        success: "border-green-200 bg-green-50/90 text-green-900",
-        error: "border-red-200 bg-red-50/90 text-red-900",
-        warning: "border-amber-200 bg-amber-50/90 text-amber-900",
-        info: "border-blue-200 bg-blue-50/90 text-blue-900",
+        default: "border-slate-300 bg-white text-slate-900 shadow-slate-200",
+        success: "border-emerald-400 bg-emerald-50 text-emerald-900 shadow-emerald-200",
+        error: "border-rose-400 bg-rose-50 text-rose-900 shadow-rose-200",
+        warning: "border-amber-400 bg-amber-50 text-amber-900 shadow-amber-200",
+        info: "border-blue-400 bg-blue-50 text-blue-900 shadow-blue-200",
       },
     },
     defaultVariants: {
@@ -96,7 +96,7 @@ const ToastTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ToastPrimitives.Title
     ref={ref}
-    className={cn("text-sm font-semibold", className)}
+    className={cn("text-sm font-bold leading-tight", className)}
     {...props}
   />
 ));
@@ -108,7 +108,7 @@ const ToastDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ToastPrimitives.Description
     ref={ref}
-    className={cn("text-sm opacity-90", className)}
+    className={cn("text-sm font-medium leading-relaxed", className)}
     {...props}
   />
 ));
@@ -124,15 +124,15 @@ const ToastIcon = ({ variant }: { variant?: "default" | "success" | "error" | "w
   
   switch (variant) {
     case "success":
-      return <CheckCircle2 className={cn(iconClass, "text-green-600")} />;
+      return <CheckCircle2 className={cn(iconClass, "text-emerald-700")} />;
     case "error":
-      return <AlertCircle className={cn(iconClass, "text-red-600")} />;
+      return <AlertCircle className={cn(iconClass, "text-rose-700")} />;
     case "warning":
-      return <AlertTriangle className={cn(iconClass, "text-amber-600")} />;
+      return <AlertTriangle className={cn(iconClass, "text-amber-700")} />;
     case "info":
-      return <Info className={cn(iconClass, "text-blue-600")} />;
+      return <Info className={cn(iconClass, "text-blue-700")} />;
     default:
-      return <Info className={cn(iconClass, "text-slate-600")} />;
+      return <Info className={cn(iconClass, "text-slate-700")} />;
   }
 };
 

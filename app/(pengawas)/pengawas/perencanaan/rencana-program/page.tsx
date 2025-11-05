@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardList, Plus, Download, FileText, Calendar, Loader2, Edit } from "lucide-react";
+import { ClipboardList, Plus, Eye, FileText, Calendar, Loader2, Edit, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface RencanaProgram {
@@ -36,18 +36,24 @@ export default function RencanaProgramPage() {
   const loadRencanaProgram = async () => {
     try {
       setIsLoading(true);
-      // TODO: Implement API call to fetch rencana program
-      // const response = await fetch('/api/pengawas/rencana-program');
-      // const data = await response.json();
       
-      // For now, use empty array - will be populated when API is implemented
-      setRencanaProgram([]);
+      // Fetch from database via API
+      const response = await fetch("/api/pengawas/rencana-program");
+      
+      if (!response.ok) {
+        throw new Error("Gagal memuat rencana program");
+      }
+
+      const data = await response.json();
+      setRencanaProgram(data.rencanaProgram || []);
     } catch (error) {
+      console.error("Error loading rencana program:", error);
       toast({
         title: "Error",
         description: "Gagal memuat rencana program",
-        variant: "error",
+        variant: "destructive",
       });
+      setRencanaProgram([]);
     } finally {
       setIsLoading(false);
     }
@@ -74,7 +80,7 @@ export default function RencanaProgramPage() {
           className="rounded-full border-0 bg-indigo-600 px-6 font-semibold text-white shadow-md transition hover:bg-indigo-700 hover:text-white"
           asChild
         >
-          <Link href="/pengawas/perencanaan/rencana-program/buat">
+          <Link href="/pengawas/perencanaan/rencana-program/pilih-sekolah">
             <Plus className="size-4 mr-2" />
             Buat Rencana Program
           </Link>
@@ -95,7 +101,7 @@ export default function RencanaProgramPage() {
               className="rounded-xl border-0 bg-indigo-600 px-6 font-semibold text-white shadow-md transition hover:bg-indigo-700"
               asChild
             >
-              <Link href="/pengawas/perencanaan/rencana-program/buat">
+              <Link href="/pengawas/perencanaan/rencana-program/pilih-sekolah">
                 <Plus className="size-4 mr-2" />
                 Buat Rencana Program Pertama
               </Link>
@@ -136,23 +142,62 @@ export default function RencanaProgramPage() {
                     <span className="text-xs truncate">{rencana.file}</span>
                   </div>
                 )}
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    className="flex-1 rounded-full border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300"
-                    asChild
-                  >
-                    <Link href={`/pengawas/perencanaan/rencana-program/${rencana.id}`}>
-                      <Edit className="size-4 mr-2" />
-                      Edit
-                    </Link>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="rounded-full border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300"
-                  >
-                    <Download className="size-4" />
-                  </Button>
+                <div className="flex flex-col gap-2">
+                  <div className="flex gap-2">
+                    <Button
+                      className="flex-1 rounded-xl bg-gradient-to-r from-indigo-500 to-blue-500 px-4 py-2 font-semibold text-white shadow-md transition-all hover:from-indigo-600 hover:to-blue-600 hover:shadow-lg hover:scale-105"
+                      asChild
+                    >
+                      <Link href={`/pengawas/perencanaan/rencana-program/${rencana.id}/edit`}>
+                        <Edit className="size-4 mr-2" />
+                        Edit
+                      </Link>
+                    </Button>
+                    <Button
+                      className="rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-2 font-semibold text-white shadow-md transition-all hover:from-purple-600 hover:to-pink-600 hover:shadow-lg hover:scale-105"
+                      asChild
+                    >
+                      <Link href={`/pengawas/perencanaan/rencana-program/${rencana.id}`}>
+                        <Eye className="size-4 mr-2" />
+                        Lihat
+                      </Link>
+                    </Button>
+                  </div>
+                  {rencana.status === "Draft" && (
+                    <Button
+                      className="w-full rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-2 font-semibold text-white shadow-md transition-all hover:from-emerald-600 hover:to-teal-600 hover:shadow-lg hover:scale-105"
+                      onClick={async () => {
+                        try {
+                          const response = await fetch(`/api/pengawas/rencana-program/${rencana.id}`, {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              status: "Terbit",
+                            }),
+                          });
+
+                          if (response.ok) {
+                            toast({
+                              title: "Berhasil",
+                              description: "Rencana program berhasil diterbitkan",
+                            });
+                            loadRencanaProgram();
+                          } else {
+                            throw new Error("Gagal menerbitkan");
+                          }
+                        } catch (error) {
+                          toast({
+                            title: "Error",
+                            description: "Gagal menerbitkan rencana program",
+                            variant: "destructive",
+                          });
+                        }
+                      }}
+                    >
+                      <Send className="size-4 mr-2" />
+                      Terbitkan
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>

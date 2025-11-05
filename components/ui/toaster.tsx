@@ -21,10 +21,10 @@ export function Toaster() {
           <Toast key={id} variant={variant} {...props} className="gap-3">
             <div className="flex items-start gap-3 flex-1">
               <ToastIcon variant={variant} />
-              <div className="flex-1 space-y-1">
-                {title && <ToastTitle className="text-sm font-semibold leading-tight">{title}</ToastTitle>}
+              <div className="flex-1 space-y-1.5">
+                {title && <ToastTitle className="text-sm font-bold leading-tight">{title}</ToastTitle>}
                 {description && (
-                  <ToastDescription className="text-sm leading-relaxed opacity-90">
+                  <ToastDescription className="text-sm font-medium leading-relaxed">
                     {description}
                   </ToastDescription>
                 )}
