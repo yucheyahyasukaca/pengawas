@@ -232,11 +232,30 @@ export default function DataSekolahPage() {
       const parseResponse = await fetch('/api/admin/sekolah/parse-excel', {
         method: 'POST',
         body: formData,
+      }).catch((fetchError) => {
+        console.error('Fetch error:', fetchError);
+        throw new Error(`Gagal menghubungkan ke server: ${fetchError.message}`);
       });
 
-      const parseData = await parseResponse.json();
+      if (!parseResponse.ok) {
+        const errorText = await parseResponse.text();
+        let errorMessage = "Gagal memparse file Excel";
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.error || errorMessage;
+        } catch {
+          errorMessage = errorText || `Server error: ${parseResponse.status} ${parseResponse.statusText}`;
+        }
+        setImportError(errorMessage);
+        setIsProcessing(false);
+        return;
+      }
 
-      if (!parseResponse.ok || !parseData.success) {
+      const parseData = await parseResponse.json().catch(() => {
+        throw new Error("Gagal membaca response dari server");
+      });
+
+      if (!parseData.success) {
         setImportError(parseData.error || "Gagal memparse file Excel");
         setIsProcessing(false);
         return;
@@ -253,7 +272,9 @@ export default function DataSekolahPage() {
       setShowPreview(true);
       setIsProcessing(false);
     } catch (err) {
-      setImportError(err instanceof Error ? err.message : "Terjadi kesalahan saat memparse file Excel");
+      console.error('Parse error:', err);
+      const errorMessage = err instanceof Error ? err.message : "Terjadi kesalahan saat memparse file Excel";
+      setImportError(errorMessage);
       setIsProcessing(false);
     }
   };
@@ -276,11 +297,30 @@ export default function DataSekolahPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ sekolahData: parsedData }),
+      }).catch((fetchError) => {
+        console.error('Fetch error:', fetchError);
+        throw new Error(`Gagal menghubungkan ke server: ${fetchError.message}`);
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
+        const errorText = await response.text();
+        let errorMessage = "Gagal mengimport data";
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.error || errorMessage;
+        } catch {
+          errorMessage = errorText || `Server error: ${response.status} ${response.statusText}`;
+        }
+        setImportError(errorMessage);
+        setIsProcessing(false);
+        return;
+      }
+
+      const data = await response.json().catch(() => {
+        throw new Error("Gagal membaca response dari server");
+      });
+
+      if (!data.success) {
         setImportError(data.error || "Gagal mengimport data");
         setIsProcessing(false);
         return;
@@ -293,8 +333,11 @@ export default function DataSekolahPage() {
       setParsedData(null);
       setShowPreview(false);
       await loadSekolah();
+      setIsProcessing(false);
     } catch (err) {
-      setImportError(err instanceof Error ? err.message : "Terjadi kesalahan saat mengimport data");
+      console.error('Import error:', err);
+      const errorMessage = err instanceof Error ? err.message : "Terjadi kesalahan saat mengimport data";
+      setImportError(errorMessage);
       setIsProcessing(false);
     }
   };

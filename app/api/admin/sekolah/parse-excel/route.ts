@@ -14,7 +14,16 @@ export async function POST(request: Request) {
     }
 
     // Dynamic import xlsx
-    const XLSX = await import('xlsx');
+    let XLSX;
+    try {
+      XLSX = await import('xlsx');
+    } catch (importError) {
+      console.error("Error importing xlsx:", importError);
+      return NextResponse.json(
+        { error: "Gagal memuat library Excel. Pastikan package xlsx terinstall." },
+        { status: 500 }
+      );
+    }
 
     const formData = await request.formData();
     const file = formData.get('file') as File;
