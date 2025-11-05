@@ -11,12 +11,40 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Clock, CheckCircle2, XCircle, AlertCircle, Mail } from "lucide-react";
+import { Clock, CheckCircle2, XCircle, AlertCircle, Mail, User, FileText, MapPin, School, Save, ChevronDown } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+
+// Daftar KCD Wilayah
+const KCD_WILAYAH_OPTIONS = Array.from({ length: 13 }, (_, i) => `KCD Wilayah ${i + 1}`);
+
+interface UserData {
+  id: string;
+  email: string;
+  nama: string | null;
+  nip: string | null;
+  role: string;
+  status_approval: string;
+  metadata: Record<string, any> | null;
+}
 
 export default function PendingApprovalPage() {
   const router = useRouter();
   const [status, setStatus] = useState<'pending' | 'rejected' | 'approved' | 'loading'>('loading');
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Form state
+  const [nama, setNama] = useState("");
+  const [nip, setNip] = useState("");
+  const [kcdWilayah, setKcdWilayah] = useState("");
+  const [sekolahBinaan, setSekolahBinaan] = useState<string[]>([]);
+  const [sekolahInput, setSekolahInput] = useState("");
+  
+  // KCD Wilayah combobox state
+  const [kcdWilayahInput, setKcdWilayahInput] = useState("");
+  const [isKcdDropdownOpen, setIsKcdDropdownOpen] = useState(false);
 
   useEffect(() => {
     checkStatus();
@@ -47,121 +75,474 @@ export default function PendingApprovalPage() {
       }
 
       const data = await response.json();
-      const userData = data.user;
+      const fetchedUserData = data.user;
 
-      if (!userData) {
+      if (!fetchedUserData) {
         console.log("PendingApprovalPage: No user data, using default pending status");
         setStatus('pending');
         return;
       }
 
-      if (userData.role !== 'pengawas') {
+      if (fetchedUserData.role !== 'pengawas') {
         router.push("/pengawas");
         return;
       }
 
-      const approvalStatus = userData.status_approval || 'pending';
+      const approvalStatus = fetchedUserData.status_approval || 'pending';
       
       if (approvalStatus === 'approved') {
         router.push("/pengawas");
         return;
       }
 
+      setUserData(fetchedUserData);
       setStatus(approvalStatus as 'pending' | 'rejected');
+
+      // Check if profile data is complete
+      const isProfileComplete = checkProfileComplete(fetchedUserData);
+      setShowForm(!isProfileComplete);
+
+      // Load existing data if available
+      if (!isProfileComplete) {
+        setNama(fetchedUserData.nama || "");
+        setNip(fetchedUserData.nip || "");
+        const metadata = fetchedUserData.metadata as Record<string, any> | null;
+        const wilayahTugas = metadata?.wilayah_tugas || "";
+        setKcdWilayah(wilayahTugas);
+        setKcdWilayahInput(wilayahTugas);
+        setSekolahBinaan(metadata?.sekolah_binaan || []);
+      }
     } catch (err) {
       console.error("Check status error:", err);
       setStatus('loading');
     }
   };
 
+  const checkProfileComplete = (data: UserData): boolean => {
+    // Check if all required fields are filled
+    const hasNama = data.nama && data.nama.trim().length > 0;
+    const hasNip = data.nip && data.nip.trim().length > 0;
+    const metadata = data.metadata as Record<string, any> | null;
+    const hasKcdWilayah = metadata?.wilayah_tugas && metadata.wilayah_tugas.trim().length > 0;
+    const hasSekolahBinaan = metadata?.sekolah_binaan && 
+      Array.isArray(metadata.sekolah_binaan) && 
+      metadata.sekolah_binaan.length > 0;
+
+    return hasNama && hasNip && hasKcdWilayah && hasSekolahBinaan;
+  };
+
+  const handleAddSekolah = () => {
+    if (sekolahInput.trim() && !sekolahBinaan.includes(sekolahInput.trim())) {
+      setSekolahBinaan([...sekolahBinaan, sekolahInput.trim()]);
+      setSekolahInput("");
+    }
+  };
+
+  const handleRemoveSekolah = (index: number) => {
+    setSekolahBinaan(sekolahBinaan.filter((_, i) => i !== index));
+  };
+
+  // Filter KCD Wilayah options based on input
+  const filteredKcdOptions = kcdWilayahInput.trim()
+    ? KCD_WILAYAH_OPTIONS.filter(option =>
+        option.toLowerCase().includes(kcdWilayahInput.toLowerCase())
+      )
+    : KCD_WILAYAH_OPTIONS;
+
+  const handleKcdWilayahSelect = (option: string) => {
+    setKcdWilayah(option);
+    setKcdWilayahInput(option);
+    setIsKcdDropdownOpen(false);
+  };
+
+  const handleKcdWilayahInputChange = (value: string) => {
+    setKcdWilayahInput(value);
+    setKcdWilayah(value);
+    setIsKcdDropdownOpen(true);
+  };
+
+  const handleSubmitForm = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(null);
+    setIsLoading(true);
+
+    // Validasi
+    if (!nama.trim()) {
+      setError("Nama lengkap dengan gelar harus diisi");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!nip.trim()) {
+      setError("NIP harus diisi");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!kcdWilayah.trim()) {
+      setError("KCD Wilayah harus diisi");
+      setIsLoading(false);
+      return;
+    }
+
+    if (sekolahBinaan.length === 0) {
+      setError("Minimal harus ada 1 sekolah binaan");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        setError("Session tidak valid. Silakan login kembali.");
+        setIsLoading(false);
+        router.push("/auth/login");
+        return;
+      }
+
+      // Update profil via API
+      const response = await fetch('/api/auth/update-profil-pengawas', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nama: nama.trim(),
+          nip: nip.trim(),
+          wilayah_tugas: kcdWilayah.trim(),
+          sekolah_binaan: sekolahBinaan,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || "Gagal menyimpan data profil");
+        setIsLoading(false);
+        return;
+      }
+
+      // Success - reload status
+      await checkStatus();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Terjadi kesalahan saat menyimpan data");
+      setIsLoading(false);
+    }
+  };
+
   if (status === 'loading') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-white via-indigo-50/90 to-blue-50/80">
-        <div className="text-center">
-          <p className="text-slate-600">Memuat...</p>
+      <div className="relative flex min-h-screen items-center justify-center overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(241,176,183,0.15),transparent_40%),radial-gradient(circle_at_80%_10%,rgba(181,55,64,0.2),transparent_45%),radial-gradient(circle_at_50%_80%,rgba(58,12,14,0.6),transparent_50%)]" />
+        <div className="relative z-10 text-center">
+          <div className="inline-flex size-12 animate-spin items-center justify-center rounded-full border-4 border-[#F1B0B7]/30 border-t-[#B53740]">
+            <div className="size-8 rounded-full bg-[#F1B0B7]/20" />
+          </div>
+          <p className="mt-4 text-sm font-medium text-slate-700">Memuat...</p>
         </div>
       </div>
     );
   }
 
+  // Show form if profile data is incomplete
+  if (showForm && status === 'pending') {
+    return (
+      <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4 py-8 sm:px-6 sm:py-12 lg:px-8 lg:py-16">
+        {/* Background gradients - same as login page */}
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(241,176,183,0.15),transparent_40%),radial-gradient(circle_at_80%_10%,rgba(181,55,64,0.2),transparent_45%),radial-gradient(circle_at_50%_80%,rgba(58,12,14,0.6),transparent_50%)]" />
+        
+        <div className="relative z-10 mx-auto w-full max-w-2xl">
+          <Card className="border border-white/20 bg-white/95 shadow-2xl shadow-black/20 backdrop-blur-xl sm:bg-white/90">
+            <CardHeader className="space-y-4 sm:space-y-6">
+              <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left">
+                <div className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#B53740]/10 via-[#F1B0B7]/20 to-[#B53740]/10 backdrop-blur-sm shadow-lg shadow-[#B53740]/10">
+                  <User className="size-8 text-[#B53740]" />
+                </div>
+                <div className="flex-1 space-y-2">
+                  <CardTitle className="text-2xl font-bold leading-tight text-slate-900 sm:text-3xl">
+                    Lengkapi Data Profil
+                  </CardTitle>
+                  <CardDescription className="text-sm leading-relaxed text-slate-600 sm:text-base">
+                    Silakan lengkapi data profil Anda untuk melanjutkan proses pendaftaran
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmitForm} className="space-y-6">
+                {error && (
+                  <div className="flex items-start gap-3 rounded-xl border border-red-200/50 bg-red-50/80 p-4 text-sm text-red-800 backdrop-blur-sm shadow-sm">
+                    <AlertCircle className="size-5 shrink-0 mt-0.5 text-red-600" />
+                    <span className="flex-1 leading-relaxed">{error}</span>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <label htmlFor="nama" className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                    <User className="size-4 text-[#B53740]" />
+                    Nama Lengkap dengan Gelar <span className="text-[#B53740]">*</span>
+                  </label>
+                  <input
+                    id="nama"
+                    type="text"
+                    placeholder="Contoh: Dr. Ahmad Fauzi, M.Pd"
+                    value={nama}
+                    onChange={(e) => setNama(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm transition-all focus:border-[#B53740] focus:outline-none focus:ring-2 focus:ring-[#B53740]/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="nip" className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                    <FileText className="size-4 text-[#B53740]" />
+                    NIP <span className="text-[#B53740]">*</span>
+                  </label>
+                  <input
+                    id="nip"
+                    type="text"
+                    placeholder="Contoh: 196512151988031001"
+                    value={nip}
+                    onChange={(e) => setNip(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm transition-all focus:border-[#B53740] focus:outline-none focus:ring-2 focus:ring-[#B53740]/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                    required
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="kcdWilayah" className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                    <MapPin className="size-4 text-[#B53740]" />
+                    KCD Wilayah <span className="text-[#B53740]">*</span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="kcdWilayah"
+                      type="text"
+                      placeholder="Ketik atau pilih KCD Wilayah..."
+                      value={kcdWilayahInput}
+                      onChange={(e) => handleKcdWilayahInputChange(e.target.value)}
+                      onFocus={() => setIsKcdDropdownOpen(true)}
+                      onBlur={() => {
+                        // Delay closing to allow click on dropdown items
+                        setTimeout(() => setIsKcdDropdownOpen(false), 200);
+                      }}
+                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 pr-10 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm transition-all focus:border-[#B53740] focus:outline-none focus:ring-2 focus:ring-[#B53740]/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                      required
+                      disabled={isLoading}
+                    />
+                    <ChevronDown className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    
+                    {/* Dropdown Options */}
+                    {isKcdDropdownOpen && (
+                      <div className="absolute z-50 mt-1 w-full max-h-60 overflow-auto rounded-xl border border-slate-200 bg-white shadow-lg">
+                        {filteredKcdOptions.length > 0 ? (
+                          <div className="py-1">
+                            {filteredKcdOptions.map((option) => (
+                              <button
+                                key={option}
+                                type="button"
+                                onClick={() => handleKcdWilayahSelect(option)}
+                                onMouseDown={(e) => e.preventDefault()} // Prevent onBlur from firing
+                                className="w-full px-4 py-2.5 text-left text-sm text-slate-700 transition-colors hover:bg-[#F1B0B7]/10 hover:text-[#B53740] focus:bg-[#F1B0B7]/10 focus:text-[#B53740] focus:outline-none"
+                                disabled={isLoading}
+                              >
+                                {option}
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="px-4 py-3 text-sm text-slate-500">
+                            Tidak ditemukan. Pilih dari: {KCD_WILAYAH_OPTIONS.join(", ")}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  {!kcdWilayahInput && (
+                    <p className="text-xs text-slate-500">Pilih KCD Wilayah I sampai XIII</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                    <School className="size-4 text-[#B53740]" />
+                    Sekolah Binaan <span className="text-[#B53740]">*</span>
+                  </label>
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <input
+                      type="text"
+                      placeholder="Nama sekolah binaan"
+                      value={sekolahInput}
+                      onChange={(e) => setSekolahInput(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddSekolah();
+                        }
+                      }}
+                      className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm transition-all focus:border-[#B53740] focus:outline-none focus:ring-2 focus:ring-[#B53740]/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={isLoading}
+                    />
+                    <Button
+                      type="button"
+                      onClick={handleAddSekolah}
+                      variant="outline"
+                      className="rounded-xl border-slate-200 bg-white text-[#B53740] shadow-sm transition-all hover:bg-[#F1B0B7]/10 hover:border-[#B53740] disabled:opacity-50 sm:whitespace-nowrap"
+                      disabled={isLoading || !sekolahInput.trim()}
+                    >
+                      Tambah
+                    </Button>
+                  </div>
+                  {sekolahBinaan.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      {sekolahBinaan.map((sekolah, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between rounded-xl border border-[#F1B0B7]/30 bg-[#F1B0B7]/5 px-4 py-2.5 shadow-sm transition-all hover:bg-[#F1B0B7]/10"
+                        >
+                          <span className="text-sm font-medium text-slate-700">{sekolah}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveSekolah(index)}
+                            className="text-xs font-medium text-[#B53740] transition-colors hover:text-[#8B2A31] disabled:opacity-50"
+                            disabled={isLoading}
+                          >
+                            Hapus
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {sekolahBinaan.length === 0 && (
+                    <p className="text-xs text-slate-500">Minimal harus ada 1 sekolah binaan</p>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-3 pt-6">
+                  <Button
+                    type="submit"
+                    className="w-full rounded-xl border-0 bg-gradient-to-r from-[#B53740] to-[#8B2A31] px-6 py-3 font-semibold text-white shadow-lg shadow-[#B53740]/25 transition-all hover:from-[#8B2A31] hover:to-[#6B1F24] hover:shadow-xl hover:shadow-[#B53740]/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <span className="flex items-center gap-2">
+                        <div className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                        Menyimpan...
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        <Save className="size-4" />
+                        Simpan dan Lanjutkan
+                      </span>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Show pending approval page if profile is complete
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-white via-indigo-50/90 to-blue-50/80 px-4 py-12">
-      <div className="w-full max-w-2xl">
-        <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
-          <CardHeader className="text-center">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-8 sm:px-6 sm:py-12 lg:px-8 lg:py-16">
+      {/* Background gradients - same as login page */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(241,176,183,0.15),transparent_40%),radial-gradient(circle_at_80%_10%,rgba(181,55,64,0.2),transparent_45%),radial-gradient(circle_at_50%_80%,rgba(58,12,14,0.6),transparent_50%)]" />
+      
+      <div className="relative z-10 w-full max-w-2xl">
+        <Card className="border border-white/20 bg-white/95 shadow-2xl shadow-black/20 backdrop-blur-xl sm:bg-white/90">
+          <CardHeader className="space-y-6 text-center">
             {status === 'pending' ? (
               <>
-                <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-indigo-100">
-                  <Clock className="size-8 text-indigo-600" />
+                <div className="mx-auto flex size-20 items-center justify-center rounded-2xl bg-gradient-to-br from-[#F1B0B7]/20 via-[#F1B0B7]/10 to-[#B53740]/10 backdrop-blur-sm shadow-lg shadow-[#F1B0B7]/20">
+                  <Clock className="size-10 text-[#B53740] animate-pulse" />
                 </div>
-                <CardTitle className="mt-4 text-2xl font-bold text-slate-900">
-                  Menunggu Persetujuan Admin
-                </CardTitle>
-                <CardDescription className="mt-2 text-base text-slate-600">
-                  Pendaftaran Anda sedang dalam proses review oleh admin
-                </CardDescription>
+                <div className="space-y-2">
+                  <CardTitle className="text-2xl font-bold leading-tight text-slate-900 sm:text-3xl">
+                    Menunggu Persetujuan Admin
+                  </CardTitle>
+                  <CardDescription className="text-sm leading-relaxed text-slate-600 sm:text-base">
+                    Pendaftaran Anda sedang dalam proses review oleh admin
+                  </CardDescription>
+                </div>
               </>
             ) : (
               <>
-                <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-red-100">
-                  <XCircle className="size-8 text-red-600" />
+                <div className="mx-auto flex size-20 items-center justify-center rounded-2xl bg-gradient-to-br from-red-100/50 via-red-50/30 to-red-100/50 backdrop-blur-sm shadow-lg shadow-red-100/20">
+                  <XCircle className="size-10 text-red-600" />
                 </div>
-                <CardTitle className="mt-4 text-2xl font-bold text-slate-900">
-                  Pendaftaran Ditolak
-                </CardTitle>
-                <CardDescription className="mt-2 text-base text-slate-600">
-                  Pendaftaran Anda tidak disetujui oleh admin
-                </CardDescription>
+                <div className="space-y-2">
+                  <CardTitle className="text-2xl font-bold leading-tight text-slate-900 sm:text-3xl">
+                    Pendaftaran Ditolak
+                  </CardTitle>
+                  <CardDescription className="text-sm leading-relaxed text-slate-600 sm:text-base">
+                    Pendaftaran Anda tidak disetujui oleh admin
+                  </CardDescription>
+                </div>
               </>
             )}
           </CardHeader>
           <CardContent className="space-y-6">
             {status === 'pending' ? (
               <>
-                <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
-                  <div className="flex items-start gap-3">
-                    <AlertCircle className="size-5 text-indigo-600 mt-0.5 shrink-0" />
-                    <div className="flex-1">
+                <div className="rounded-xl border border-[#F1B0B7]/30 bg-gradient-to-br from-[#F1B0B7]/10 via-[#F1B0B7]/5 to-transparent p-5 shadow-sm backdrop-blur-sm">
+                  <div className="flex items-start gap-4">
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#F1B0B7]/20">
+                      <AlertCircle className="size-5 text-[#B53740]" />
+                    </div>
+                    <div className="flex-1 space-y-1">
                       <p className="text-sm font-semibold text-slate-900">
                         Status: Menunggu Persetujuan
                       </p>
-                      <p className="mt-1 text-sm text-slate-600">
+                      <p className="text-sm leading-relaxed text-slate-600">
                         Admin akan memeriksa data pendaftaran Anda. Setelah disetujui, Anda akan dapat mengakses dashboard pengawas.
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-4 rounded-xl border border-slate-200/50 bg-slate-50/50 p-5 backdrop-blur-sm">
                   <h3 className="text-sm font-semibold text-slate-900">
                     Langkah selanjutnya:
                   </h3>
-                  <ul className="space-y-2 text-sm text-slate-600">
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="size-4 text-indigo-600 mt-0.5 shrink-0" />
-                      <span>Pastikan Anda telah melengkapi data profil dengan benar</span>
+                  <ul className="space-y-3 text-sm text-slate-600">
+                    <li className="flex items-start gap-3">
+                      <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-[#F1B0B7]/20">
+                        <CheckCircle2 className="size-3 text-[#B53740]" />
+                      </div>
+                      <span className="leading-relaxed">Data profil Anda sudah lengkap</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="size-4 text-indigo-600 mt-0.5 shrink-0" />
-                      <span>Tunggu admin memproses pendaftaran Anda</span>
+                    <li className="flex items-start gap-3">
+                      <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-[#F1B0B7]/20">
+                        <CheckCircle2 className="size-3 text-[#B53740]" />
+                      </div>
+                      <span className="leading-relaxed">Tunggu admin memproses pendaftaran Anda</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="size-4 text-indigo-600 mt-0.5 shrink-0" />
-                      <span>Anda akan menerima notifikasi setelah status berubah</span>
+                    <li className="flex items-start gap-3">
+                      <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-[#F1B0B7]/20">
+                        <CheckCircle2 className="size-3 text-[#B53740]" />
+                      </div>
+                      <span className="leading-relaxed">Anda akan menerima notifikasi setelah status berubah</span>
                     </li>
                   </ul>
                 </div>
 
-                <div className="flex flex-col gap-2 pt-4">
+                <div className="flex flex-col gap-3 pt-4">
                   <Button
                     onClick={checkStatus}
-                    className="w-full rounded-full border-0 bg-indigo-600 px-6 font-semibold text-white shadow-md transition hover:bg-indigo-700 hover:text-white"
+                    className="w-full rounded-xl border-0 bg-gradient-to-r from-[#B53740] to-[#8B2A31] px-6 py-3 font-semibold text-white shadow-lg shadow-[#B53740]/25 transition-all hover:from-[#8B2A31] hover:to-[#6B1F24] hover:shadow-xl hover:shadow-[#B53740]/30"
                   >
                     Refresh Status
                   </Button>
                   <Button
                     variant="outline"
-                    className="w-full rounded-full border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300"
+                    className="w-full rounded-xl border-slate-200 bg-white text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300"
                     asChild
                   >
                     <Link href="/auth/login">
@@ -172,34 +553,36 @@ export default function PendingApprovalPage() {
               </>
             ) : (
               <>
-                <div className="rounded-xl border border-red-100 bg-red-50/50 p-4">
-                  <div className="flex items-start gap-3">
-                    <AlertCircle className="size-5 text-red-600 mt-0.5 shrink-0" />
-                    <div className="flex-1">
+                <div className="rounded-xl border border-red-200/50 bg-gradient-to-br from-red-50/80 via-red-50/50 to-transparent p-5 shadow-sm backdrop-blur-sm">
+                  <div className="flex items-start gap-4">
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-red-100/50">
+                      <AlertCircle className="size-5 text-red-600" />
+                    </div>
+                    <div className="flex-1 space-y-1">
                       <p className="text-sm font-semibold text-slate-900">
                         Pendaftaran Tidak Disetujui
                       </p>
-                      <p className="mt-1 text-sm text-slate-600">
+                      <p className="text-sm leading-relaxed text-slate-600">
                         Jika Anda merasa ini adalah kesalahan, silakan hubungi admin untuk informasi lebih lanjut.
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-2 pt-4">
+                <div className="flex flex-col gap-3 pt-4">
                   <Button
                     variant="outline"
-                    className="w-full rounded-full border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300"
+                    className="w-full rounded-xl border-slate-200 bg-white text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300"
                     asChild
                   >
-                    <Link href="mailto:mkps@garuda-21.com">
-                      <Mail className="size-4 mr-2" />
+                    <Link href="mailto:mkps@garuda-21.com" className="flex items-center justify-center gap-2">
+                      <Mail className="size-4" />
                       Hubungi Admin
                     </Link>
                   </Button>
                   <Button
                     variant="outline"
-                    className="w-full rounded-full border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300"
+                    className="w-full rounded-xl border-slate-200 bg-white text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300"
                     asChild
                   >
                     <Link href="/auth/login">

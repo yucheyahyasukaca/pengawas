@@ -10,8 +10,8 @@ export function PengawasProfileCheck() {
 
   useEffect(() => {
     async function checkProfile() {
-      // Skip check jika di halaman lengkapi-profil atau login
-      if (pathname?.includes('/lengkapi-profil') || pathname?.includes('/auth')) {
+      // Skip check jika di halaman lengkapi-profil, pending-approval, atau login
+      if (pathname?.includes('/lengkapi-profil') || pathname?.includes('/pending-approval') || pathname?.includes('/auth')) {
         return;
       }
 

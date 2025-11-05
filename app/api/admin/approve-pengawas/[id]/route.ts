@@ -1,4 +1,4 @@
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 import { getAdminUser } from "@/lib/auth-utils";
 
@@ -26,16 +26,18 @@ export async function POST(
       );
     }
 
-    const supabase = await createSupabaseServerClient();
+    // Use admin client to bypass RLS
+    const adminClient = createSupabaseAdminClient();
 
     // Verify user is pengawas
-    const { data: userData, error: userError } = await supabase
+    const { data: userData, error: userError } = await adminClient
       .from('users')
       .select('id, role, status_approval')
       .eq('id', id)
       .single();
 
     if (userError || !userData) {
+      console.error("Error fetching user:", userError);
       return NextResponse.json(
         { error: "User not found" },
         { status: 404 }
@@ -52,7 +54,7 @@ export async function POST(
     // Update status approval
     const newStatus = action === 'approve' ? 'approved' : 'rejected';
     
-    const { data, error } = await supabase
+    const { data, error } = await adminClient
       .from('users')
       .update({ 
         status_approval: newStatus,
@@ -63,7 +65,12 @@ export async function POST(
       .single();
 
     if (error) {
-      console.error("Update approval error:", error);
+      console.error("Update approval error:", {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
       return NextResponse.json(
         { error: error.message || "Failed to update approval status" },
         { status: 400 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -10,8 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { User, CheckCircle2, XCircle, Clock, Mail, FileText, MapPin, School } from "lucide-react";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import { User, CheckCircle2, XCircle, Clock, Mail, FileText, MapPin, School, Search, Filter } from "lucide-react";
 
 interface PengawasPending {
   id: string;
@@ -28,6 +27,9 @@ export default function ApprovalPengawasPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
   const [pendingCount, setPendingCount] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "rejected">("all");
 
   useEffect(() => {
     loadPengawasPending();
@@ -35,26 +37,46 @@ export default function ApprovalPengawasPage() {
 
   const loadPengawasPending = async () => {
     try {
-      const supabase = createSupabaseBrowserClient();
-      const { data, error } = await supabase
-        .from('users')
-        .select('id, email, nama, nip, status_approval, created_at, metadata')
-        .eq('role', 'pengawas')
-        .in('status_approval', ['pending', 'rejected'])
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error("Error loading pengawas:", error);
+      setIsLoading(true);
+      setError(null);
+      
+      // Use API route that bypasses RLS using admin client
+      const response = await fetch('/api/admin/pengawas-pending');
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Gagal memuat data pengawas' }));
+        const errorMessage = errorData.error || 'Gagal memuat data pengawas';
+        console.error("Error loading pengawas:", {
+          status: response.status,
+          message: errorMessage
+        });
+        setError(errorMessage);
+        setPengawasPending([]);
+        setPendingCount(0);
         return;
       }
 
-      setPengawasPending(data || []);
+      const data = await response.json();
       
-      // Count pending
-      const pending = (data || []).filter(p => p.status_approval === 'pending').length;
-      setPendingCount(pending);
+      if (!data.success) {
+        const errorMessage = data.error || 'Gagal memuat data pengawas';
+        setError(errorMessage);
+        setPengawasPending([]);
+        setPendingCount(0);
+        return;
+      }
+
+      setPengawasPending(data.pengawas || []);
+      setPendingCount(data.pendingCount || 0);
     } catch (err) {
-      console.error("Error:", err);
+      const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan saat memuat data';
+      console.error("Error loading pengawas:", {
+        message: errorMessage,
+        error: err
+      });
+      setError(errorMessage);
+      setPengawasPending([]);
+      setPendingCount(0);
     } finally {
       setIsLoading(false);
     }
@@ -88,10 +110,47 @@ export default function ApprovalPengawasPage() {
     }
   };
 
+  // Filter pengawas berdasarkan search query dan status filter
+  const filteredPengawas = useMemo(() => {
+    let filtered = pengawasPending;
+
+    // Filter by status
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(p => p.status_approval === statusFilter);
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(p => {
+        const nama = p.nama?.toLowerCase() || "";
+        const email = p.email?.toLowerCase() || "";
+        const nip = p.nip?.toLowerCase() || "";
+        const wilayah = p.metadata?.wilayah_tugas?.toLowerCase() || "";
+        const sekolahBinaan = Array.isArray(p.metadata?.sekolah_binaan) 
+          ? p.metadata.sekolah_binaan.join(" ").toLowerCase() 
+          : "";
+
+        return nama.includes(query) || 
+               email.includes(query) || 
+               nip.includes(query) || 
+               wilayah.includes(query) ||
+               sekolahBinaan.includes(query);
+      });
+    }
+
+    return filtered;
+  }, [pengawasPending, searchQuery, statusFilter]);
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-slate-600">Memuat...</p>
+        <div className="text-center">
+          <div className="inline-flex size-12 animate-spin items-center justify-center rounded-full border-4 border-rose-200 border-t-rose-600">
+            <div className="size-8 rounded-full bg-rose-100" />
+          </div>
+          <p className="mt-4 text-sm font-medium text-slate-600">Memuat...</p>
+        </div>
       </div>
     );
   }
@@ -112,7 +171,85 @@ export default function ApprovalPengawasPage() {
         )}
       </div>
 
-      {pengawasPending.length === 0 ? (
+      {/* Search and Filter */}
+      <div className="flex flex-col gap-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Cari nama, email, NIP, atau wilayah..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm transition-all focus:border-[#B53740] focus:outline-none focus:ring-2 focus:ring-[#B53740]/20"
+          />
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant={statusFilter === "all" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setStatusFilter("all")}
+            className={cn(
+              "rounded-xl text-xs sm:text-sm font-medium transition-all",
+              statusFilter === "all"
+                ? "bg-[#B53740] text-white hover:bg-[#8B2A31]"
+                : "border-slate-200 text-slate-700 hover:bg-slate-50"
+            )}
+          >
+            <Filter className="size-3 mr-1.5" />
+            Semua ({pengawasPending.length})
+          </Button>
+          <Button
+            variant={statusFilter === "pending" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setStatusFilter("pending")}
+            className={cn(
+              "rounded-xl text-xs sm:text-sm font-medium transition-all",
+              statusFilter === "pending"
+                ? "bg-amber-600 text-white hover:bg-amber-700"
+                : "border-slate-200 text-slate-700 hover:bg-slate-50"
+            )}
+          >
+            Pending ({pengawasPending.filter(p => p.status_approval === 'pending').length})
+          </Button>
+          <Button
+            variant={statusFilter === "rejected" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setStatusFilter("rejected")}
+            className={cn(
+              "rounded-xl text-xs sm:text-sm font-medium transition-all",
+              statusFilter === "rejected"
+                ? "bg-red-600 text-white hover:bg-red-700"
+                : "border-slate-200 text-slate-700 hover:bg-slate-50"
+            )}
+          >
+            Ditolak ({pengawasPending.filter(p => p.status_approval === 'rejected').length})
+          </Button>
+        </div>
+      </div>
+
+      {error && (
+        <Card className="border border-red-200 bg-red-50/50">
+          <CardContent className="py-6">
+            <div className="flex items-start gap-3">
+              <XCircle className="size-5 shrink-0 text-red-600 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="text-sm font-semibold text-red-900">Error Memuat Data</h3>
+                <p className="mt-1 text-sm text-red-700">{error}</p>
+                <Button
+                  onClick={loadPengawasPending}
+                  variant="outline"
+                  size="sm"
+                  className="mt-3 rounded-full border-red-200 text-red-600 hover:bg-red-100 hover:border-red-300"
+                >
+                  Coba Lagi
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {!error && pengawasPending.length === 0 ? (
         <Card className="border border-rose-200 bg-white shadow-md shadow-rose-100/70">
           <CardContent className="py-12 text-center">
             <div className="flex flex-col items-center gap-4">
@@ -130,9 +267,165 @@ export default function ApprovalPengawasPage() {
             </div>
           </CardContent>
         </Card>
+      ) : filteredPengawas.length === 0 ? (
+        <Card className="border border-slate-200 bg-white shadow-md">
+          <CardContent className="py-12 text-center">
+            <div className="flex flex-col items-center gap-4">
+              <div className="flex size-16 items-center justify-center rounded-full bg-slate-100">
+                <Search className="size-8 text-slate-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900">
+                  Tidak Ditemukan
+                </h3>
+                <p className="mt-1 text-sm text-slate-600">
+                  Tidak ada pengawas yang sesuai dengan pencarian Anda
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {pengawasPending.map((pengawas) => (
+        <>
+          {/* Desktop Table View */}
+          <div className="hidden overflow-hidden rounded-2xl border border-rose-200 bg-white shadow-md shadow-rose-100/70 md:block">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-left text-sm text-slate-700">
+                <thead className="bg-gradient-to-r from-rose-50 via-white to-amber-50 text-xs font-semibold uppercase tracking-wide text-slate-700">
+                  <tr>
+                    <th className="px-5 py-4 font-semibold">Nama Pengawas</th>
+                    <th className="px-5 py-4 font-semibold">Email</th>
+                    <th className="px-5 py-4 font-semibold">NIP</th>
+                    <th className="px-5 py-4 font-semibold">Wilayah</th>
+                    <th className="px-5 py-4 font-semibold">Tanggal Daftar</th>
+                    <th className="px-5 py-4 font-semibold">Status</th>
+                    <th className="px-5 py-4 font-semibold text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-rose-100">
+                  {filteredPengawas.map((pengawas) => (
+                    <tr key={pengawas.id} className="transition-colors hover:bg-rose-50/50">
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 via-rose-400 to-amber-400 text-white shadow-sm">
+                            <User className="size-5" />
+                          </div>
+                          <div>
+                            <div className="font-semibold text-slate-900">
+                              {pengawas.nama || 'Belum mengisi nama'}
+                            </div>
+                            {pengawas.metadata?.sekolah_binaan && Array.isArray(pengawas.metadata.sekolah_binaan) && (
+                              <div className="mt-0.5 text-xs text-slate-500">
+                                {pengawas.metadata.sekolah_binaan.length} sekolah binaan
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-2 text-slate-600">
+                          <Mail className="size-3.5 text-rose-500" />
+                          <span className="text-xs">{pengawas.email}</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4">
+                        {pengawas.nip ? (
+                          <div className="flex items-center gap-2 text-slate-600">
+                            <FileText className="size-3.5 text-rose-500" />
+                            <span className="text-xs font-mono">{pengawas.nip}</span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-slate-400">-</span>
+                        )}
+                      </td>
+                      <td className="px-5 py-4">
+                        {pengawas.metadata?.wilayah_tugas ? (
+                          <div className="flex items-center gap-2 text-slate-600">
+                            <MapPin className="size-3.5 text-rose-500" />
+                            <span className="text-xs">{pengawas.metadata.wilayah_tugas}</span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-slate-400">-</span>
+                        )}
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                          <Clock className="size-3.5" />
+                          {new Date(pengawas.created_at).toLocaleDateString('id-ID', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric'
+                          })}
+                        </div>
+                      </td>
+                      <td className="px-5 py-4">
+                        <Badge className={cn(
+                          "rounded-full border-0 px-3 py-1 text-xs font-semibold",
+                          pengawas.status_approval === 'pending'
+                            ? "bg-amber-100 text-amber-600"
+                            : "bg-red-100 text-red-600"
+                        )}>
+                          {pengawas.status_approval === 'pending' ? 'Pending' : 'Ditolak'}
+                        </Badge>
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex items-center justify-end gap-2">
+                          {pengawas.status_approval === 'pending' ? (
+                            <>
+                              <Button
+                                onClick={() => handleApproval(pengawas.id, 'approve')}
+                                disabled={processing === pengawas.id}
+                                size="sm"
+                                className="rounded-lg border-0 bg-green-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-green-700 disabled:opacity-50"
+                              >
+                                {processing === pengawas.id ? (
+                                  <div className="size-3 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                                ) : (
+                                  <>
+                                    <CheckCircle2 className="size-3 mr-1" />
+                                    Setujui
+                                  </>
+                                )}
+                              </Button>
+                              <Button
+                                onClick={() => handleApproval(pengawas.id, 'reject')}
+                                disabled={processing === pengawas.id}
+                                size="sm"
+                                variant="outline"
+                                className="rounded-lg border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 hover:border-red-300 disabled:opacity-50"
+                              >
+                                <XCircle className="size-3" />
+                              </Button>
+                            </>
+                          ) : (
+                            <Button
+                              onClick={() => handleApproval(pengawas.id, 'approve')}
+                              disabled={processing === pengawas.id}
+                              size="sm"
+                              className="rounded-lg border-0 bg-green-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-green-700 disabled:opacity-50"
+                            >
+                              {processing === pengawas.id ? (
+                                <div className="size-3 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                              ) : (
+                                <>
+                                  <CheckCircle2 className="size-3 mr-1" />
+                                  Setujui
+                                </>
+                              )}
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="grid gap-4 md:hidden">
+            {filteredPengawas.map((pengawas) => (
             <Card
               key={pengawas.id}
               className="border border-rose-200 bg-white shadow-md shadow-rose-100/70 transition hover:shadow-lg hover:shadow-rose-200"
@@ -235,7 +528,8 @@ export default function ApprovalPengawasPage() {
               </CardContent>
             </Card>
           ))}
-        </div>
+          </div>
+        </>
       )}
     </div>
   );
