@@ -17,7 +17,9 @@ Error loading pengawas data: Error: Gagal memuat data pengawas
 ## ✅ Solusi yang Sudah Dilakukan
 
 ### 1. Update next.config.ts
-✅ **Sudah diperbaiki** - Menambahkan `experimental.outputFileTracingIncludes` untuk memastikan API routes ter-include dalam standalone build
+✅ **Sudah diperbaiki** - Menambahkan `outputFileTracingIncludes` (root level, bukan di experimental) untuk memastikan API routes ter-include dalam standalone build
+
+**Catatan:** Di Next.js 16, `outputFileTracingIncludes` sudah dipindahkan dari `experimental` ke root level config.
 
 ### 2. Verifikasi Dockerfile
 ✅ Dockerfile sudah benar - menggunakan `.next/standalone` yang sudah include API routes
