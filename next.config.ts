@@ -21,11 +21,13 @@ const nextConfig: NextConfig = {
     ],
   },
   
-  // Ensure API routes are properly included in standalone build
+  // Ensure API routes and dynamic routes are properly included in standalone build
   // In Next.js 16, outputFileTracingIncludes is at root level, not under experimental
-  // This ensures all API routes are included in the standalone output
+  // This ensures all API routes and dynamic routes are included in the standalone output
   outputFileTracingIncludes: {
     '/api/**/*': ['./app/api/**/*'],
+    // Include dynamic routes for sekolah
+    '/pengawas/manajemen-data/sekolah/*': ['./app/(pengawas)/pengawas/manajemen-data/sekolah/**/*'],
   },
 };
 
