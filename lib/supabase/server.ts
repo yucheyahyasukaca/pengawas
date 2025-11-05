@@ -33,21 +33,32 @@ export async function createSupabaseServerClient() {
         },
         set(name: string, value: string, options: CookieOptions) {
           try {
-            // Let Supabase SSR handle cookie expiration by default
-            // Only add additional settings if not already set
+            // Detect if running in production (HTTPS)
+            const isProduction = process.env.NODE_ENV === 'production';
+            const isSecure = options.secure !== undefined 
+              ? options.secure 
+              : isProduction;
+            
+            // Set cookie with proper production settings
             cookieStore.set({ 
               name, 
               value, 
               ...options,
               // Ensure sameSite is set for security
+              // Use 'lax' for production, allows cookies in same-site and top-level navigation
               sameSite: options.sameSite || 'lax',
-              // Ensure secure in production
-              secure: options.secure !== undefined 
-                ? options.secure 
-                : process.env.NODE_ENV === 'production',
+              // Secure flag: true in production (HTTPS), false in development
+              secure: isSecure,
+              // Ensure path is set (default to root)
+              path: options.path || '/',
+              // HTTPOnly should be handled by Supabase SSR
+              httpOnly: options.httpOnly !== undefined ? options.httpOnly : true,
             });
-          } catch {
-            // Ignore set cookie errors
+          } catch (error) {
+            // Log cookie errors in development, ignore in production to avoid noise
+            if (process.env.NODE_ENV === 'development') {
+              console.error('Cookie set error:', error);
+            }
           }
         },
         remove(name: string, options: CookieOptions) {

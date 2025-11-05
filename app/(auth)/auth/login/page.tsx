@@ -109,7 +109,9 @@ export default function LoginPage() {
         console.log("Login page: Session verified, user:", user.email);
         
         // Wait a bit to ensure session is persisted to cookies
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // In production, cookies need more time to be set properly
+        const waitTime = process.env.NODE_ENV === 'production' ? 1000 : 500;
+        await new Promise(resolve => setTimeout(resolve, waitTime));
       }
 
       // Redirect berdasarkan role dari response
