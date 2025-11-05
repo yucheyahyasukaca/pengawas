@@ -61,6 +61,12 @@ RUN chown nextjs:nodejs .next
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Environment variables will be set at runtime via docker-compose
+# These are placeholders - actual values come from docker-compose.yml or .env file
+ENV NEXT_PUBLIC_SUPABASE_URL=""
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=""
+ENV SUPABASE_SERVICE_ROLE_KEY=""
+
 USER nextjs
 
 EXPOSE 3000
