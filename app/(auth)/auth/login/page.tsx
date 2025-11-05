@@ -95,6 +95,21 @@ export default function LoginPage() {
           setIsLoading(false);
           return;
         }
+        
+        // Verify session is set by getting user
+        const { data: { user }, error: verifyError } = await supabase.auth.getUser();
+        
+        if (verifyError || !user) {
+          console.error("Verify session error:", verifyError);
+          setError("Gagal memverifikasi session. Silakan coba lagi.");
+          setIsLoading(false);
+          return;
+        }
+        
+        console.log("Login page: Session verified, user:", user.email);
+        
+        // Wait a bit to ensure session is persisted to cookies
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
 
       // Redirect berdasarkan role dari response

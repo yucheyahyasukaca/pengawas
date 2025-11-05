@@ -24,14 +24,31 @@ export async function createSupabaseServerClient() {
         },
         set(name: string, value: string, options: CookieOptions) {
           try {
-            cookieStore.set({ name, value, ...options });
+            // Let Supabase SSR handle cookie expiration by default
+            // Only add additional settings if not already set
+            cookieStore.set({ 
+              name, 
+              value, 
+              ...options,
+              // Ensure sameSite is set for security
+              sameSite: options.sameSite || 'lax',
+              // Ensure secure in production
+              secure: options.secure !== undefined 
+                ? options.secure 
+                : process.env.NODE_ENV === 'production',
+            });
           } catch {
             // Ignore set cookie errors
           }
         },
         remove(name: string, options: CookieOptions) {
           try {
-            cookieStore.set({ name, value: '', ...options });
+            cookieStore.set({ 
+              name, 
+              value: '', 
+              ...options,
+              maxAge: 0,
+            });
           } catch {
             // Ignore remove cookie errors
           }

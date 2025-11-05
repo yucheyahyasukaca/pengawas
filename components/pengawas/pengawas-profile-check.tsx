@@ -2,40 +2,42 @@
 
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export function PengawasProfileCheck() {
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    async function checkProfile() {
-      // Skip check jika di halaman lengkapi-profil, pending-approval, atau login
-      if (pathname?.includes('/lengkapi-profil') || pathname?.includes('/pending-approval') || pathname?.includes('/auth')) {
-        return;
-      }
+    // Skip check jika di halaman lengkapi-profil, pending-approval, atau login
+    if (pathname?.includes('/lengkapi-profil') || pathname?.includes('/pending-approval') || pathname?.includes('/auth')) {
+      return;
+    }
 
-      try {
-        const supabase = createSupabaseBrowserClient();
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-        if (authError || !user) {
-          return;
-        }
-
-        // Check apakah profil sudah lengkap dan status approval
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('nama, role, status_approval')
-          .eq('id', user.id)
-          .single();
-
-        if (userError || !userData) {
-          return;
-        }
-
-        // Jika role pengawas
-        if (userData.role === 'pengawas' && pathname?.startsWith('/pengawas')) {
+    // Add a delay to avoid race conditions with session setting
+    // Server-side layout already validates authentication, so we only need to check
+    // for profile completion redirects, not authentication
+    const timeoutId = setTimeout(() => {
+      async function checkProfile() {
+        try {
+          // Use API route to get user data instead of direct Supabase query
+          // This is more reliable and bypasses potential RLS issues
+          const response = await fetch('/api/auth/get-current-user');
+          
+          if (!response.ok) {
+            // If API fails, don't redirect - server-side layout handles auth
+            return;
+          }
+          
+          const data = await response.json();
+          const userData = data.user;
+          
+          if (!userData || userData.role !== 'pengawas') {
+            // Not a pengawas or no user data, don't redirect
+            return;
+          }
+          
+          // Only handle redirects for incomplete profiles
+          // Server-side layout already handles authentication
           const statusApproval = userData.status_approval || 'pending';
           
           // Check status approval terlebih dahulu
@@ -50,13 +52,16 @@ export function PengawasProfileCheck() {
           if (!userData.nama && !pathname?.includes('/lengkapi-profil')) {
             router.push('/pengawas/lengkapi-profil');
           }
+        } catch (err) {
+          console.error("Profile check error:", err);
+          // Don't redirect on error, just log it
         }
-      } catch (err) {
-        console.error("Profile check error:", err);
       }
-    }
+      
+      checkProfile();
+    }, 1000); // Wait 1 second before checking - server-side layout already validated auth
 
-    checkProfile();
+    return () => clearTimeout(timeoutId);
   }, [pathname, router]);
 
   return null;

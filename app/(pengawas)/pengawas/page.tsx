@@ -130,51 +130,14 @@ const notifikasi = [
 ];
 
 export default function PengawasDashboardPage() {
-  const router = useRouter();
-
-  useEffect(() => {
-    // Check if user is approved and has complete profile
-    async function checkAccess() {
-      try {
-        const { createSupabaseBrowserClient } = await import("@/lib/supabase/client");
-        const supabase = createSupabaseBrowserClient();
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-        if (authError || !user) {
-          router.push("/auth/login");
-          return;
-        }
-
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('role, nama, status_approval')
-          .eq('id', user.id)
-          .single();
-
-        if (userError || !userData || userData.role !== 'pengawas') {
-          router.push("/auth/login");
-          return;
-        }
-
-        const statusApproval = userData.status_approval || 'pending';
-        
-        // Redirect jika belum approved atau profil belum lengkap
-        if (statusApproval === 'pending' || statusApproval === 'rejected') {
-          router.push("/pengawas/pending-approval");
-          return;
-        }
-
-        if (!userData.nama) {
-          router.push("/pengawas/lengkapi-profil");
-          return;
-        }
-      } catch (err) {
-        console.error("Check access error:", err);
-      }
-    }
-
-    checkAccess();
-  }, [router]);
+  // Note: We don't need to check authentication here because:
+  // 1. Server-side layout already validates user via getCurrentUser()
+  // 2. Client-side checks were causing automatic logout due to race conditions
+  // 3. PengawasProfileCheck component handles profile completion redirects
+  // 
+  // If server-side validation passes, user is authenticated.
+  // Client-side checks should only handle redirects for incomplete profiles,
+  // which is handled by PengawasProfileCheck component.
 
   return (
     <div className="flex flex-col gap-6">
