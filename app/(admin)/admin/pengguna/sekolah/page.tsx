@@ -962,7 +962,7 @@ export default function DataSekolahPage() {
 
       {/* Import Excel Dialog */}
       <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
-        <DialogContent className="max-w-2xl p-4 sm:p-6">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader className="pb-4 sm:pb-6">
             <DialogTitle className="flex items-center gap-2 text-base sm:text-lg font-bold text-slate-900">
               <Upload className="size-5 sm:size-6 text-[#B53740] shrink-0" />
@@ -972,7 +972,7 @@ export default function DataSekolahPage() {
               Upload file Excel (.xlsx atau .xls) dengan format sesuai template
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-2 sm:py-4">
             {importError && (
               <div className="flex items-start gap-2 rounded-xl border border-red-200/50 bg-red-50/80 p-4 text-sm text-red-800 backdrop-blur-sm shadow-sm">
                 <AlertCircle className="size-5 shrink-0 mt-0.5 text-red-600" />
@@ -980,7 +980,7 @@ export default function DataSekolahPage() {
               </div>
             )}
 
-            <div className="rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 p-8 text-center">
+            <div className="rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 p-6 sm:p-8 text-center">
               <Upload className="mx-auto size-12 text-slate-400 mb-4" />
               <p className="text-sm font-semibold text-slate-900 mb-2">
                 {importFile ? importFile.name : "Seret file Excel ke sini atau klik untuk memilih"}
@@ -1029,8 +1029,8 @@ export default function DataSekolahPage() {
 
             {/* Preview Data Section */}
             {showPreview && parsedData && parsedData.length > 0 && (
-              <div className="mt-6 space-y-4 border-t border-slate-200 pt-6">
-                <div className="flex items-center justify-between">
+              <div className="mt-6 space-y-3 border-t border-slate-200 pt-4">
+                <div className="flex items-center justify-between gap-2">
                   <h3 className="text-base font-semibold text-slate-900">
                     Preview Data ({parsedData.length} baris)
                   </h3>
@@ -1041,57 +1041,59 @@ export default function DataSekolahPage() {
                       setShowPreview(false);
                       setParsedData(null);
                     }}
-                    className="rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50"
+                    className="shrink-0 rounded-xl border-slate-200 text-slate-700 hover:bg-slate-50"
                   >
                     Sembunyikan
                   </Button>
                 </div>
-                <div className="rounded-xl border border-slate-200 bg-white max-h-[400px] overflow-auto shadow-sm">
+                <div className="rounded-xl border border-slate-200 bg-white max-h-[450px] overflow-auto shadow-sm">
                   {/* Desktop Table View */}
-                  <div className="hidden md:block overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="bg-slate-50 sticky top-0">
-                        <tr>
-                          <th className="px-4 py-3 text-left font-semibold text-slate-900 border-b border-slate-200">NPSN</th>
-                          <th className="px-4 py-3 text-left font-semibold text-slate-900 border-b border-slate-200">Nama Sekolah</th>
-                          <th className="px-4 py-3 text-left font-semibold text-slate-900 border-b border-slate-200">Status</th>
-                          <th className="px-4 py-3 text-left font-semibold text-slate-900 border-b border-slate-200">Jenjang</th>
-                          <th className="px-4 py-3 text-left font-semibold text-slate-900 border-b border-slate-200">Kabupaten/Kota</th>
-                          <th className="px-4 py-3 text-left font-semibold text-slate-900 border-b border-slate-200">KCD Wilayah</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {parsedData.map((row, index) => (
-                          <tr key={index} className="hover:bg-slate-50">
-                            <td className="px-4 py-3 text-slate-700 font-mono text-xs">{row.npsn}</td>
-                            <td className="px-4 py-3 text-slate-700">{row.nama_sekolah}</td>
-                            <td className="px-4 py-3">
-                              <Badge className={cn(
-                                "rounded-full border-0 px-2 py-1 text-xs font-semibold",
-                                row.status === 'Negeri' ? "bg-blue-100 text-blue-600" : "bg-purple-100 text-purple-600"
-                              )}>
-                                {row.status}
-                              </Badge>
-                            </td>
-                            <td className="px-4 py-3">
-                              <Badge className={cn(
-                                "rounded-full border-0 px-2 py-1 text-xs font-semibold",
-                                row.jenjang === 'SMK' ? "bg-amber-100 text-amber-600" :
-                                row.jenjang === 'SMA' ? "bg-green-100 text-green-600" : "bg-indigo-100 text-indigo-600"
-                              )}>
-                                {row.jenjang}
-                              </Badge>
-                            </td>
-                            <td className="px-4 py-3 text-slate-700 text-xs">{row.kabupaten_kota}</td>
-                            <td className="px-4 py-3">
-                              <Badge className="rounded-full border-0 bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">
-                                {row.kcd_wilayah}
-                              </Badge>
-                            </td>
+                  <div className="hidden md:block">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm border-collapse min-w-full">
+                        <thead className="bg-slate-50 sticky top-0 z-10 border-b border-slate-200">
+                          <tr>
+                            <th className="px-4 py-3 text-left font-semibold text-slate-900 whitespace-nowrap w-[110px]">NPSN</th>
+                            <th className="px-4 py-3 text-left font-semibold text-slate-900 min-w-[250px]">Nama Sekolah</th>
+                            <th className="px-4 py-3 text-left font-semibold text-slate-900 whitespace-nowrap w-[100px]">Status</th>
+                            <th className="px-4 py-3 text-left font-semibold text-slate-900 whitespace-nowrap w-[90px]">Jenjang</th>
+                            <th className="px-4 py-3 text-left font-semibold text-slate-900 min-w-[200px]">Kabupaten/Kota</th>
+                            <th className="px-4 py-3 text-left font-semibold text-slate-900 whitespace-nowrap w-[120px]">KCD Wilayah</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 bg-white">
+                          {parsedData.map((row, index) => (
+                            <tr key={index} className="hover:bg-slate-50/50 transition-colors">
+                              <td className="px-4 py-2.5 text-slate-700 font-mono text-xs whitespace-nowrap">{row.npsn || '-'}</td>
+                              <td className="px-4 py-2.5 text-slate-700 text-xs break-words">{row.nama_sekolah || '-'}</td>
+                              <td className="px-4 py-2.5 whitespace-nowrap">
+                                <Badge className={cn(
+                                  "rounded-full border-0 px-2.5 py-1 text-xs font-semibold whitespace-nowrap inline-flex items-center",
+                                  row.status === 'Negeri' ? "bg-blue-100 text-blue-600" : "bg-purple-100 text-purple-600"
+                                )}>
+                                  {row.status || '-'}
+                                </Badge>
+                              </td>
+                              <td className="px-4 py-2.5 whitespace-nowrap">
+                                <Badge className={cn(
+                                  "rounded-full border-0 px-2.5 py-1 text-xs font-semibold whitespace-nowrap inline-flex items-center",
+                                  row.jenjang === 'SMK' ? "bg-amber-100 text-amber-600" :
+                                  row.jenjang === 'SMA' ? "bg-green-100 text-green-600" : "bg-indigo-100 text-indigo-600"
+                                )}>
+                                  {row.jenjang || '-'}
+                                </Badge>
+                              </td>
+                              <td className="px-4 py-2.5 text-slate-700 text-xs break-words">{row.kabupaten_kota || '-'}</td>
+                              <td className="px-4 py-2.5 whitespace-nowrap">
+                                <Badge className="rounded-full border-0 bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 whitespace-nowrap inline-flex items-center">
+                                  {row.kcd_wilayah || '-'}
+                                </Badge>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                   {/* Mobile Card View */}
                   <div className="md:hidden divide-y divide-slate-100">

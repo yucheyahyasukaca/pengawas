@@ -1,43 +1,51 @@
 import { NextResponse } from "next/server";
 import { getAdminUser } from "@/lib/auth-utils";
 
+// Static import xlsx for server-side API route
+// @ts-ignore - xlsx might not have types
+import * as XLSX from 'xlsx';
+
 // POST - Parse Excel file
 export async function POST(request: Request) {
   try {
+    console.log("Parse Excel: Starting request...");
+    
     // Check admin authentication
     const adminUser = await getAdminUser();
     if (!adminUser) {
+      console.log("Parse Excel: Unauthorized");
       return NextResponse.json(
         { error: "Unauthorized: Admin access required" },
         { status: 401 }
       );
     }
 
-    // Dynamic import xlsx
-    let XLSX;
-    try {
-      XLSX = await import('xlsx');
-    } catch (importError) {
-      console.error("Error importing xlsx:", importError);
-      return NextResponse.json(
-        { error: "Gagal memuat library Excel. Pastikan package xlsx terinstall." },
-        { status: 500 }
-      );
-    }
+    console.log("Parse Excel: Admin authenticated, xlsx library ready");
 
+    console.log("Parse Excel: Getting form data...");
     const formData = await request.formData();
     const file = formData.get('file') as File;
 
     if (!file) {
+      console.log("Parse Excel: No file found");
       return NextResponse.json(
         { error: "File tidak ditemukan" },
         { status: 400 }
       );
     }
 
+    console.log("Parse Excel: File found, reading as ArrayBuffer...", {
+      name: file.name,
+      size: file.size,
+      type: file.type
+    });
+
     // Read file as ArrayBuffer for Excel files
     const arrayBuffer = await file.arrayBuffer();
+    console.log("Parse Excel: ArrayBuffer read, parsing Excel...");
+    
     const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+    console.log("Parse Excel: Workbook parsed, sheet names:", workbook.SheetNames);
     
     // Get first sheet
     const sheetName = workbook.SheetNames[0];
@@ -150,10 +158,19 @@ export async function POST(request: Request) {
       },
       { status: 200 }
     );
-  } catch (err) {
+  } catch (err: any) {
     console.error("Error parsing Excel:", err);
+    console.error("Error details:", {
+      message: err?.message,
+      stack: err?.stack,
+      name: err?.name,
+      code: err?.code
+    });
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Terjadi kesalahan saat memparse file" },
+      { 
+        error: err instanceof Error ? err.message : "Terjadi kesalahan saat memparse file",
+        details: err?.message || "Unknown error"
+      },
       { status: 500 }
     );
   }
