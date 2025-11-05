@@ -96,7 +96,7 @@ export default function BuatRencanaProgramPage() {
       toast({
         title: "Error",
         description: "Gagal menyimpan rencana program",
-        variant: "destructive",
+        variant: "error",
       });
     } finally {
       setIsSubmitting(false);

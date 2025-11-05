@@ -5,7 +5,7 @@ import { getAdminUser } from "@/lib/auth-utils";
 // PUT - Update sekolah
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
     // Check admin authentication
@@ -17,7 +17,9 @@ export async function PUT(
       );
     }
 
-    const { id } = params;
+    // Resolve params if it's a Promise (Next.js 15+)
+    const resolvedParams = await Promise.resolve(params);
+    const { id } = resolvedParams;
     const body = await request.json();
     const { npsn, nama_sekolah, status, jenjang, kabupaten_kota, alamat, kcd_wilayah } = body;
 
@@ -101,7 +103,7 @@ export async function PUT(
 // DELETE - Delete sekolah
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
     // Check admin authentication
@@ -113,7 +115,9 @@ export async function DELETE(
       );
     }
 
-    const { id } = params;
+    // Resolve params if it's a Promise (Next.js 15+)
+    const resolvedParams = await Promise.resolve(params);
+    const { id } = resolvedParams;
 
     // Use admin client to bypass RLS
     const adminClient = createSupabaseAdminClient();
