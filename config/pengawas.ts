@@ -66,7 +66,7 @@ export const pengawasNavigation: PengawasNavSection[] = [
         description: "Nama sekolah, NPSN, jenis, alamat, status binaan",
       },
       {
-        title: "Filter & Statistik",
+        title: "Analitik Data",
         href: "/pengawas/manajemen-data/statistik",
         icon: BarChart3,
         description: "Filter per kabupaten/kota, jenis sekolah, jumlah kegiatan",
