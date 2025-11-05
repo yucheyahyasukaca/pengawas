@@ -91,74 +91,107 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check for duplicate NPSN in incoming data
+    // Filter duplicate NPSN in incoming data (keep first occurrence, skip duplicates)
     const npsnSet = new Set<string>();
     const duplicateNPSN: string[] = [];
+    const uniqueValidData: SekolahData[] = [];
+    
     validData.forEach((data, index) => {
       if (npsnSet.has(data.npsn)) {
         duplicateNPSN.push(data.npsn);
+        errors.push(`Baris ${index + 2}: NPSN ${data.npsn} duplikat dalam data import (dilewati)`);
       } else {
         npsnSet.add(data.npsn);
+        uniqueValidData.push(data);
       }
     });
 
-    if (duplicateNPSN.length > 0) {
+    if (uniqueValidData.length === 0) {
       return NextResponse.json(
         { 
-          error: `NPSN duplikat ditemukan: ${duplicateNPSN.join(', ')}`,
+          error: "Semua data memiliki NPSN duplikat atau tidak valid",
           errors
         },
         { status: 400 }
       );
     }
 
-    // Check existing NPSN in database
-    const npsnList = validData.map(d => d.npsn);
+    // Check existing NPSN in database and filter them out
+    const npsnList = uniqueValidData.map(d => d.npsn);
     const { data: existing } = await adminClient
       .from('sekolah')
       .select('npsn')
       .in('npsn', npsnList);
 
-    const existingNPSN = existing?.map(e => e.npsn) || [];
-    if (existingNPSN.length > 0) {
+    const existingNPSN = new Set(existing?.map(e => e.npsn) || []);
+    const dataToInsert: SekolahData[] = [];
+    const skippedNPSN: string[] = [];
+
+    uniqueValidData.forEach((data, index) => {
+      if (existingNPSN.has(data.npsn)) {
+        skippedNPSN.push(data.npsn);
+        errors.push(`Baris ${index + 2}: NPSN ${data.npsn} sudah terdaftar di database (dilewati)`);
+      } else {
+        dataToInsert.push(data);
+      }
+    });
+
+    if (dataToInsert.length === 0) {
       return NextResponse.json(
         { 
-          error: `NPSN sudah terdaftar: ${existingNPSN.join(', ')}`,
-          errors
+          error: "Semua NPSN sudah terdaftar di database",
+          errors,
+          skipped: skippedNPSN.length
         },
         { status: 400 }
       );
     }
 
-    // Insert data
-    const { data, error } = await adminClient
+    // Insert only non-duplicate data
+    const { data: insertedData, error: insertError } = await adminClient
       .from('sekolah')
       .insert(
-        validData.map(d => ({
+        dataToInsert.map(d => ({
           ...d,
           created_by: adminUser.id
         }))
       )
       .select();
 
-    if (error) {
-      console.error("Error importing sekolah:", error);
+    if (insertError) {
+      console.error("Error importing sekolah:", insertError);
       return NextResponse.json(
         { 
-          error: error.message || "Gagal mengimport data sekolah",
+          error: insertError.message || "Gagal mengimport data sekolah",
           errors
         },
         { status: 400 }
       );
     }
 
+    // Build success message
+    const successMessages: string[] = [];
+    successMessages.push(`${dataToInsert.length} sekolah berhasil diimport`);
+    
+    if (skippedNPSN.length > 0) {
+      successMessages.push(`${skippedNPSN.length} NPSN sudah terdaftar (dilewati)`);
+    }
+    
+    if (duplicateNPSN.length > 0) {
+      successMessages.push(`${duplicateNPSN.length} NPSN duplikat dalam data (dilewati)`);
+    }
+
     return NextResponse.json(
       { 
         success: true,
-        message: `${validData.length} sekolah berhasil diimport`,
-        imported: validData.length,
+        message: successMessages.join('. '),
+        imported: dataToInsert.length,
+        skipped: skippedNPSN.length,
+        duplicate: duplicateNPSN.length,
         errors: errors.length > 0 ? errors : undefined,
-        sekolah: data
+        skippedNPSN: skippedNPSN.length > 0 ? skippedNPSN : undefined,
+        duplicateNPSN: duplicateNPSN.length > 0 ? Array.from(new Set(duplicateNPSN)) : undefined,
+        sekolah: insertedData
       },
       { status: 200 }
     );

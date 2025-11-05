@@ -326,6 +326,21 @@ export default function DataSekolahPage() {
         return;
       }
 
+      // Success - show message with skipped/duplicate info
+      const successMessage = data.message || `${data.imported || 0} sekolah berhasil diimport`;
+      let infoMessage = successMessage;
+      
+      if (data.skipped > 0) {
+        infoMessage += `. ${data.skipped} NPSN sudah terdaftar (dilewati)`;
+      }
+      
+      if (data.duplicate > 0) {
+        infoMessage += `. ${data.duplicate} NPSN duplikat dalam data (dilewati)`;
+      }
+
+      // Show success message
+      alert(infoMessage);
+
       // Success
       setIsImportDialogOpen(false);
       setImportFile(null);
