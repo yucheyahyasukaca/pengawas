@@ -1,7 +1,5 @@
 "use client";
 
-export const runtime = 'edge';
-
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -37,197 +35,62 @@ import {
   ArrowLeft,
 } from "lucide-react";
 
-// Mock data - will be replaced with real data from Supabase
-const pengawasDatabase = [
-  {
-    id: "peng-001",
-    name: "Dr. Eka Suryani, M.Pd.",
-    nip: "19650515 198903 2 001",
-    wilayah: "Kabupaten Semarang",
-    jumlahSekolah: 8,
-    sekolahBinaan: [
-      {
-        id: 1,
-        nama: "SMA Negeri 1 Semarang",
-        npsn: "20329461",
-        jenis: "Negeri",
-        alamat: "Jl. Pemuda No. 149, Semarang",
-        kabupaten: "Kota Semarang",
-        cabangDinas: "Cabang Dinas Pendidikan Wilayah I",
-        status: "Aktif",
-      },
-      {
-        id: 2,
-        nama: "SMA Negeri 2 Semarang",
-        npsn: "20329462",
-        jenis: "Negeri",
-        alamat: "Jl. Sendangguwo Baru No. 1, Semarang",
-        kabupaten: "Kota Semarang",
-        cabangDinas: "Cabang Dinas Pendidikan Wilayah I",
-        status: "Aktif",
-      },
-      {
-        id: 3,
-        nama: "SMA Swasta Kartika",
-        npsn: "20329463",
-        jenis: "Swasta",
-        alamat: "Jl. Diponegoro No. 45, Semarang",
-        kabupaten: "Kota Semarang",
-        cabangDinas: "Cabang Dinas Pendidikan Wilayah I",
-        status: "Aktif",
-      },
-      {
-        id: 4,
-        nama: "SMA Negeri 3 Semarang",
-        npsn: "20329464",
-        jenis: "Negeri",
-        alamat: "Jl. Pemuda No. 149, Semarang",
-        kabupaten: "Kota Semarang",
-        cabangDinas: "Cabang Dinas Pendidikan Wilayah I",
-        status: "Aktif",
-      },
-      {
-        id: 5,
-        nama: "SLB Negeri Ungaran",
-        npsn: "20329465",
-        jenis: "Negeri",
-        alamat: "Jl. Raya Ungaran Km. 12, Ungaran",
-        kabupaten: "Kabupaten Semarang",
-        cabangDinas: "Cabang Dinas Pendidikan Wilayah I",
-        status: "Aktif",
-      },
-      {
-        id: 6,
-        nama: "SMA Negeri 1 Ungaran",
-        npsn: "20329466",
-        jenis: "Negeri",
-        alamat: "Jl. Diponegoro No. 1, Ungaran",
-        kabupaten: "Kabupaten Semarang",
-        cabangDinas: "Cabang Dinas Pendidikan Wilayah I",
-        status: "Aktif",
-      },
-      {
-        id: 7,
-        nama: "SMA Swasta Kristen",
-        npsn: "20329467",
-        jenis: "Swasta",
-        alamat: "Jl. Gajah Mada No. 23, Semarang",
-        kabupaten: "Kota Semarang",
-        cabangDinas: "Cabang Dinas Pendidikan Wilayah I",
-        status: "Aktif",
-      },
-      {
-        id: 8,
-        nama: "SMA Negeri 1 Kendal",
-        npsn: "20329468",
-        jenis: "Negeri",
-        alamat: "Jl. Soekarno Hatta No. 1, Kendal",
-        kabupaten: "Kabupaten Kendal",
-        cabangDinas: "Cabang Dinas Pendidikan Wilayah II",
-        status: "Aktif",
-      },
-    ],
-    pelaporanStatus: [
-      {
-        periode: "Triwulan I 2025",
-        status: "Selesai",
-        deadline: "31 Maret 2025",
-        submitted: true,
-      },
-      {
-        periode: "Triwulan II 2025",
-        status: "Selesai",
-        deadline: "30 Juni 2025",
-        submitted: true,
-      },
-      {
-        periode: "Triwulan III 2025",
-        status: "Menunggu",
-        deadline: "30 September 2025",
-        submitted: false,
-      },
-      {
-        periode: "Triwulan IV 2025",
-        status: "Belum Dimulai",
-        deadline: "31 Desember 2025",
-        submitted: false,
-      },
-      {
-        periode: "Laporan Tahunan 2024",
-        status: "Selesai",
-        deadline: "31 Januari 2025",
-        submitted: true,
-      },
-    ],
-    jadwalKegiatan: [
-      {
-        id: 1,
-        jenis: "Supervisi",
-        sekolah: "SMA Negeri 1 Semarang",
-        tanggal: "15 November 2025",
-        waktu: "08:00 - 12:00",
-        status: "Terjadwal",
-      },
-      {
-        id: 2,
-        jenis: "Pendampingan",
-        sekolah: "SMA Negeri 2 Semarang",
-        tanggal: "18 November 2025",
-        waktu: "09:00 - 15:00",
-        status: "Terjadwal",
-      },
-      {
-        id: 3,
-        jenis: "Supervisi",
-        sekolah: "SLB Negeri Ungaran",
-        tanggal: "22 November 2025",
-        waktu: "08:00 - 13:00",
-        status: "Terjadwal",
-      },
-    ],
-    notifikasi: [
-      {
-        id: 1,
-        pesan: "Deadline pelaporan Triwulan III 2025 dalam 10 hari",
-        tanggal: "20 September 2025",
-        prioritas: "tinggi",
-      },
-      {
-        id: 2,
-        pesan: "Jadwal supervisi SMA Negeri 1 Semarang akan dimulai dalam 3 hari",
-        tanggal: "12 November 2025",
-        prioritas: "sedang",
-      },
-      {
-        id: 3,
-        pesan: "Dokumen pendukung pendampingan SMA Negeri 2 Semarang perlu diunggah",
-        tanggal: "15 November 2025",
-        prioritas: "sedang",
-      },
-    ],
-    statistikData: {
-      perKabupaten: [
-        { kabupaten: "Kota Semarang", jumlah: 5 },
-        { kabupaten: "Kabupaten Semarang", jumlah: 2 },
-        { kabupaten: "Kabupaten Kendal", jumlah: 1 },
-      ],
-      perJenis: [
-        { jenis: "Negeri", jumlah: 6 },
-        { jenis: "Swasta", jumlah: 2 },
-      ],
-      kegiatan: {
-        bulanan: 12,
-        triwulanan: 3,
-        tahunan: 1,
-      },
-    },
-  },
-];
+interface Pengawas {
+  id: string;
+  name: string;
+  nip: string;
+  wilayah: string;
+  jumlahSekolah: number;
+  status: string;
+  email?: string;
+  created_at?: string;
+  updated_at?: string;
+  sekolahBinaan: Array<{
+    id: string | number;
+    nama: string;
+    npsn: string;
+    jenis: string;
+    alamat: string;
+    kabupaten: string;
+    cabangDinas: string;
+    status: string;
+  }>;
+  pelaporanStatus: Array<{
+    periode: string;
+    status: string;
+    deadline: string;
+    submitted: boolean;
+  }>;
+  jadwalKegiatan: Array<{
+    id: number;
+    jenis: string;
+    sekolah: string;
+    tanggal: string;
+    waktu: string;
+    status: string;
+  }>;
+  notifikasi: Array<{
+    id: number;
+    pesan: string;
+    tanggal: string;
+    prioritas: string;
+  }>;
+  statistikData: {
+    perKabupaten: Array<{ kabupaten: string; jumlah: number }>;
+    perJenis: Array<{ jenis: string; jumlah: number }>;
+    kegiatan: {
+      bulanan: number;
+      triwulanan: number;
+      tahunan: number;
+    };
+  };
+}
 
 export default function PenggunaDetailPage() {
   const params = useParams();
-  const [pengawas, setPengawas] = useState<typeof pengawasDatabase[0] | null>(null);
+  const [pengawas, setPengawas] = useState<Pengawas | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterKabupaten, setFilterKabupaten] = useState("Semua");
   const [filterJenis, setFilterJenis] = useState("Semua");
@@ -236,20 +99,51 @@ export default function PenggunaDetailPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   useEffect(() => {
-    // Simulate loading
-    const loadPengawas = () => {
-      setIsLoading(true);
-      const foundPengawas = pengawasDatabase.find(
-        (item) => item.id === params.id
-      );
-      
-      setTimeout(() => {
-        setPengawas(foundPengawas || null);
+    const loadPengawas = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        const response = await fetch(`/api/admin/pengawas/${params.id}`);
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: 'Pengawas tidak ditemukan' }));
+          const errorMessage = errorData.error || 'Pengawas tidak ditemukan';
+          console.error("Error loading pengawas:", {
+            status: response.status,
+            message: errorMessage
+          });
+          setError(errorMessage);
+          setPengawas(null);
+          return;
+        }
+
+        const data = await response.json();
+        
+        if (!data.success) {
+          const errorMessage = data.error || 'Pengawas tidak ditemukan';
+          setError(errorMessage);
+          setPengawas(null);
+          return;
+        }
+
+        setPengawas(data.pengawas);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan saat memuat data';
+        console.error("Error loading pengawas:", {
+          message: errorMessage,
+          error: err
+        });
+        setError(errorMessage);
+        setPengawas(null);
+      } finally {
         setIsLoading(false);
-      }, 500);
+      }
     };
 
-    loadPengawas();
+    if (params.id) {
+      loadPengawas();
+    }
   }, [params.id]);
 
   if (isLoading) {
@@ -263,7 +157,7 @@ export default function PenggunaDetailPage() {
     );
   }
 
-  if (!pengawas) {
+  if (error || !pengawas) {
     return (
       <div className="flex flex-col gap-6">
         <Card className="border border-rose-200 bg-white shadow-md shadow-rose-100/70">
@@ -275,7 +169,7 @@ export default function PenggunaDetailPage() {
               <div className="flex flex-col gap-2">
                 <h3 className="text-xl font-bold text-slate-900">Pengawas Tidak Ditemukan</h3>
                 <p className="text-slate-600">
-                  Data pengawas yang Anda cari tidak ada atau telah dihapus.
+                  {error || "Data pengawas yang Anda cari tidak ada atau telah dihapus."}
                 </p>
               </div>
               <Button

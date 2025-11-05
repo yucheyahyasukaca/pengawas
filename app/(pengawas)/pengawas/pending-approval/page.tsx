@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Clock, CheckCircle2, XCircle, AlertCircle, Mail, User, FileText, MapPin, School, Save, ChevronDown } from "lucide-react";
+import { Clock, CheckCircle2, XCircle, AlertCircle, Mail, User, FileText, MapPin, School, Save, ChevronDown, Search, X } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 // Daftar KCD Wilayah
@@ -39,12 +39,19 @@ export default function PendingApprovalPage() {
   const [nama, setNama] = useState("");
   const [nip, setNip] = useState("");
   const [kcdWilayah, setKcdWilayah] = useState("");
-  const [sekolahBinaan, setSekolahBinaan] = useState<string[]>([]);
-  const [sekolahInput, setSekolahInput] = useState("");
+  const [sekolahBinaan, setSekolahBinaan] = useState<Array<{id: string; nama: string; npsn: string}>>([]);
   
   // KCD Wilayah combobox state
   const [kcdWilayahInput, setKcdWilayahInput] = useState("");
   const [isKcdDropdownOpen, setIsKcdDropdownOpen] = useState(false);
+  
+  // Sekolah Binaan combobox state
+  const [sekolahList, setSekolahList] = useState<Array<{id: string; nama_sekolah: string; npsn: string; status: string; jenjang: string; kabupaten_kota: string}>>([]);
+  const [isSekolahDropdownOpen, setIsSekolahDropdownOpen] = useState(false);
+  const [isLoadingSekolah, setIsLoadingSekolah] = useState(false);
+  const [sekolahSearchQuery, setSekolahSearchQuery] = useState("");
+  const [isSekolahListLoaded, setIsSekolahListLoaded] = useState(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     checkStatus();
@@ -110,7 +117,23 @@ export default function PendingApprovalPage() {
         const wilayahTugas = metadata?.wilayah_tugas || "";
         setKcdWilayah(wilayahTugas);
         setKcdWilayahInput(wilayahTugas);
-        setSekolahBinaan(metadata?.sekolah_binaan || []);
+        // Convert existing sekolah binaan (string array) to object array
+        const existingSekolah = metadata?.sekolah_binaan || [];
+        if (Array.isArray(existingSekolah) && existingSekolah.length > 0) {
+          // If it's already object array, use it; otherwise convert string to object
+          const convertedSekolah = existingSekolah.map((s: any) => {
+            if (typeof s === 'string') {
+              return { id: '', nama: s, npsn: '' };
+            }
+            return { id: s.id || '', nama: s.nama || s.nama_sekolah || '', npsn: s.npsn || '' };
+          });
+          setSekolahBinaan(convertedSekolah);
+        }
+      }
+      
+      // Load sekolah list if not already loaded
+      if (!isSekolahListLoaded) {
+        loadSekolahList();
       }
     } catch (err) {
       console.error("Check status error:", err);
@@ -131,15 +154,86 @@ export default function PendingApprovalPage() {
     return hasNama && hasNip && hasKcdWilayah && hasSekolahBinaan;
   };
 
-  const handleAddSekolah = () => {
-    if (sekolahInput.trim() && !sekolahBinaan.includes(sekolahInput.trim())) {
-      setSekolahBinaan([...sekolahBinaan, sekolahInput.trim()]);
-      setSekolahInput("");
+  // Load sekolah list from API (only once, then filter client-side)
+  const loadSekolahList = async () => {
+    if (isSekolahListLoaded) return; // Already loaded, no need to reload
+    
+    try {
+      setIsLoadingSekolah(true);
+      const response = await fetch('/api/sekolah/list');
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Gagal memuat data sekolah' }));
+        console.error("Error loading sekolah list:", errorData.error || 'Gagal memuat data sekolah');
+        setSekolahList([]);
+        return;
+      }
+      
+      const data = await response.json();
+      if (data.success && data.sekolah) {
+        setSekolahList(data.sekolah);
+        setIsSekolahListLoaded(true);
+      } else {
+        console.error("Error loading sekolah list: Invalid response format");
+        setSekolahList([]);
+      }
+    } catch (err) {
+      console.error("Error loading sekolah list:", err);
+      setSekolahList([]);
+    } finally {
+      setIsLoadingSekolah(false);
     }
   };
 
-  const handleRemoveSekolah = (index: number) => {
-    setSekolahBinaan(sekolahBinaan.filter((_, i) => i !== index));
+  // Filter sekolah options based on search (client-side filtering - much faster)
+  const filteredSekolahOptions = useMemo(() => {
+    return sekolahList.filter(sekolah => {
+      const isSelected = sekolahBinaan.some(s => s.id === sekolah.id || s.nama === sekolah.nama_sekolah);
+      if (isSelected) return false; // Don't show already selected schools
+      
+      if (!sekolahSearchQuery.trim()) return true;
+      
+      const query = sekolahSearchQuery.toLowerCase();
+      return (
+        sekolah.nama_sekolah.toLowerCase().includes(query) ||
+        sekolah.npsn.toLowerCase().includes(query) ||
+        sekolah.kabupaten_kota.toLowerCase().includes(query)
+      );
+    });
+  }, [sekolahList, sekolahBinaan, sekolahSearchQuery]);
+
+  const handleSekolahSearchChange = (value: string) => {
+    setSekolahSearchQuery(value);
+    setIsSekolahDropdownOpen(true);
+    
+    // Clear previous timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    // No need to debounce client-side filtering - it's instant!
+    // Just ensure data is loaded if not already loaded
+    if (!isSekolahListLoaded && !isLoadingSekolah) {
+      loadSekolahList();
+    }
+  };
+
+  const handleSelectSekolah = (sekolah: {id: string; nama_sekolah: string; npsn: string}) => {
+    // Check if already selected
+    const isSelected = sekolahBinaan.some(s => s.id === sekolah.id || s.nama === sekolah.nama_sekolah);
+    if (isSelected) return;
+    
+    setSekolahBinaan([...sekolahBinaan, {
+      id: sekolah.id,
+      nama: sekolah.nama_sekolah,
+      npsn: sekolah.npsn
+    }]);
+    setSekolahSearchQuery("");
+    setIsSekolahDropdownOpen(false);
+  };
+
+  const handleRemoveSekolah = (id: string) => {
+    setSekolahBinaan(sekolahBinaan.filter(s => s.id !== id));
   };
 
   // Filter KCD Wilayah options based on input
@@ -202,7 +296,9 @@ export default function PendingApprovalPage() {
         return;
       }
 
-      // Update profil via API
+      // Update profil via API - convert sekolah binaan to array of names for compatibility
+      const sekolahBinaanNames = sekolahBinaan.map(s => s.nama);
+      
       const response = await fetch('/api/auth/update-profil-pengawas', {
         method: 'POST',
         headers: {
@@ -212,7 +308,7 @@ export default function PendingApprovalPage() {
           nama: nama.trim(),
           nip: nip.trim(),
           wilayah_tugas: kcdWilayah.trim(),
-          sekolah_binaan: sekolahBinaan,
+          sekolah_binaan: sekolahBinaanNames,
         }),
       });
 
@@ -372,51 +468,109 @@ export default function PendingApprovalPage() {
                     <School className="size-4 text-[#B53740]" />
                     Sekolah Binaan <span className="text-[#B53740]">*</span>
                   </label>
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <input
-                      type="text"
-                      placeholder="Nama sekolah binaan"
-                      value={sekolahInput}
-                      onChange={(e) => setSekolahInput(e.target.value)}
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleAddSekolah();
-                        }
-                      }}
-                      className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm transition-all focus:border-[#B53740] focus:outline-none focus:ring-2 focus:ring-[#B53740]/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={isLoading}
-                    />
-                    <Button
-                      type="button"
-                      onClick={handleAddSekolah}
-                      variant="outline"
-                      className="rounded-xl border-slate-200 bg-white text-[#B53740] shadow-sm transition-all hover:bg-[#F1B0B7]/10 hover:border-[#B53740] disabled:opacity-50 sm:whitespace-nowrap"
-                      disabled={isLoading || !sekolahInput.trim()}
-                    >
-                      Tambah
-                    </Button>
-                  </div>
+                  
+                  {/* Selected Schools */}
                   {sekolahBinaan.length > 0 && (
-                    <div className="mt-3 space-y-2">
-                      {sekolahBinaan.map((sekolah, index) => (
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {sekolahBinaan.map((sekolah) => (
                         <div
-                          key={index}
-                          className="flex items-center justify-between rounded-xl border border-[#F1B0B7]/30 bg-[#F1B0B7]/5 px-4 py-2.5 shadow-sm transition-all hover:bg-[#F1B0B7]/10"
+                          key={sekolah.id || sekolah.nama}
+                          className="group flex items-center gap-2 rounded-xl border border-[#F1B0B7]/30 bg-gradient-to-r from-[#F1B0B7]/10 to-[#F1B0B7]/5 px-3 py-2 shadow-sm transition-all hover:from-[#F1B0B7]/20 hover:to-[#F1B0B7]/10"
                         >
-                          <span className="text-sm font-medium text-slate-700">{sekolah}</span>
+                          <div className="flex-1">
+                            <div className="text-sm font-medium text-slate-900">{sekolah.nama}</div>
+                            {sekolah.npsn && (
+                              <div className="text-xs text-slate-500 mt-0.5">NPSN: {sekolah.npsn}</div>
+                            )}
+                          </div>
                           <button
                             type="button"
-                            onClick={() => handleRemoveSekolah(index)}
-                            className="text-xs font-medium text-[#B53740] transition-colors hover:text-[#8B2A31] disabled:opacity-50"
+                            onClick={() => handleRemoveSekolah(sekolah.id || sekolah.nama)}
+                            className="flex shrink-0 items-center justify-center size-6 rounded-lg text-slate-400 transition-all hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
                             disabled={isLoading}
+                            title="Hapus"
                           >
-                            Hapus
+                            <X className="size-4" />
                           </button>
                         </div>
                       ))}
                     </div>
                   )}
+                  
+                  {/* Searchable Dropdown */}
+                  <div className="relative">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                      <input
+                        type="text"
+                        placeholder="Ketik untuk mencari sekolah (NPSN, nama sekolah, atau kabupaten)..."
+                        value={sekolahSearchQuery}
+                        onChange={(e) => handleSekolahSearchChange(e.target.value)}
+                        onFocus={() => {
+                          setIsSekolahDropdownOpen(true);
+                          if (!isSekolahListLoaded && !isLoadingSekolah) {
+                            loadSekolahList();
+                          }
+                        }}
+                        onBlur={() => {
+                          // Delay closing to allow click on dropdown items
+                          setTimeout(() => setIsSekolahDropdownOpen(false), 200);
+                        }}
+                        className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-10 py-3 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm transition-all focus:border-[#B53740] focus:outline-none focus:ring-2 focus:ring-[#B53740]/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={isLoading || isLoadingSekolah}
+                      />
+                      <ChevronDown className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    </div>
+                    
+                    {/* Dropdown Options */}
+                    {isSekolahDropdownOpen && (
+                      <div className="absolute z-50 mt-2 w-full max-h-64 overflow-auto rounded-xl border border-slate-200 bg-white shadow-lg">
+                        {isLoadingSekolah && !isSekolahListLoaded ? (
+                          <div className="px-4 py-3 text-sm text-slate-500 text-center">
+                            <div className="inline-flex size-4 animate-spin items-center justify-center rounded-full border-2 border-slate-200 border-t-[#B53740]"></div>
+                            <span className="ml-2">Memuat data sekolah...</span>
+                          </div>
+                        ) : filteredSekolahOptions.length > 0 ? (
+                          <div className="py-1">
+                            {filteredSekolahOptions.map((sekolah) => (
+                              <button
+                                key={sekolah.id}
+                                type="button"
+                                onClick={() => handleSelectSekolah(sekolah)}
+                                onMouseDown={(e) => e.preventDefault()} // Prevent onBlur from firing
+                                className="w-full px-4 py-3 text-left transition-colors hover:bg-[#F1B0B7]/10 focus:bg-[#F1B0B7]/10 focus:outline-none"
+                                disabled={isLoading}
+                              >
+                                <div className="flex items-start gap-3">
+                                  <div className="flex-1">
+                                    <div className="text-sm font-semibold text-slate-900">{sekolah.nama_sekolah}</div>
+                                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                                      <span className="font-mono">NPSN: {sekolah.npsn}</span>
+                                      <span className="text-slate-300">•</span>
+                                      <span>{sekolah.kabupaten_kota}</span>
+                                      <span className="text-slate-300">•</span>
+                                      <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">{sekolah.jenjang}</span>
+                                      <span className="text-slate-300">•</span>
+                                      <span className={sekolah.status === 'Negeri' ? 'text-blue-600' : 'text-purple-600'}>
+                                        {sekolah.status}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="px-4 py-3 text-sm text-slate-500 text-center">
+                            {sekolahSearchQuery.trim() 
+                              ? "Tidak ada sekolah yang ditemukan" 
+                              : "Ketik untuk mencari sekolah..."}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  
                   {sekolahBinaan.length === 0 && (
                     <p className="text-xs text-slate-500">Minimal harus ada 1 sekolah binaan</p>
                   )}

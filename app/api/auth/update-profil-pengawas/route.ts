@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -30,8 +31,10 @@ export async function POST(request: Request) {
 
     const userId = user.id;
 
-    // Verify user is pengawas
-    const { data: userData, error: userError } = await supabase
+    // Verify user is pengawas using admin client to bypass RLS
+    // This allows pending pengawas to update their profile
+    const adminClient = createSupabaseAdminClient();
+    const { data: userData, error: userError } = await adminClient
       .from('users')
       .select('role')
       .eq('id', userId)
@@ -61,7 +64,8 @@ export async function POST(request: Request) {
       ...(Object.keys(metadata).length > 0 && { metadata }),
     };
 
-    const { data, error } = await supabase
+    // Use admin client to update profile to bypass RLS for pending pengawas
+    const { data, error } = await adminClient
       .from('users')
       .update(updateData)
       .eq('id', userId)

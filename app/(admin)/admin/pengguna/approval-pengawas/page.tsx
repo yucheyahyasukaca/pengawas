@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { User, CheckCircle2, XCircle, Clock, Mail, FileText, MapPin, School, Search, Filter } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface PengawasPending {
   id: string;
@@ -23,13 +24,14 @@ interface PengawasPending {
 }
 
 export default function ApprovalPengawasPage() {
+  const { toast } = useToast();
   const [pengawasPending, setPengawasPending] = useState<PengawasPending[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
   const [pendingCount, setPendingCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "rejected">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "rejected" | "approved">("all");
 
   useEffect(() => {
     loadPengawasPending();
@@ -83,28 +85,82 @@ export default function ApprovalPengawasPage() {
   };
 
   const handleApproval = async (pengawasId: string, action: 'approve' | 'reject') => {
+    // Validate inputs
+    if (!pengawasId || typeof pengawasId !== 'string' || pengawasId.trim() === '') {
+      toast({
+        variant: "error",
+        title: "ID Tidak Valid",
+        description: "ID pengawas tidak valid",
+      });
+      return;
+    }
+
+    // Validate action - ensure it's exactly 'approve' or 'reject'
+    const validAction = action === 'approve' || action === 'reject';
+    if (!validAction) {
+      toast({
+        variant: "error",
+        title: "Aksi Tidak Valid",
+        description: `Aksi harus 'approve' atau 'reject'. Diterima: ${JSON.stringify(action)} (${typeof action})`,
+      });
+      return;
+    }
+
     setProcessing(pengawasId);
     try {
-      const response = await fetch(`/api/admin/approve-pengawas/${pengawasId}`, {
+      // Ensure action is exactly 'approve' or 'reject'
+      const finalAction: 'approve' | 'reject' = action === 'approve' ? 'approve' : 'reject';
+      const requestBody = { action: finalAction };
+      
+      console.log("Sending approval request:", { 
+        pengawasId, 
+        action, 
+        finalAction,
+        requestBody,
+        stringified: JSON.stringify(requestBody)
+      });
+
+      const url = `/api/admin/approve-pengawas/${encodeURIComponent(pengawasId)}`;
+      console.log("Request URL:", url);
+
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify(requestBody),
       });
 
+      console.log("Response status:", response.status);
       const data = await response.json();
+      console.log("Response data:", data);
 
       if (!response.ok) {
-        alert(data.error || 'Gagal memproses approval');
+        toast({
+          variant: "error",
+          title: finalAction === 'approve' ? "Gagal Menyetujui" : "Gagal Menolak",
+          description: data.error || 'Gagal memproses approval',
+        });
+        setProcessing(null);
         return;
       }
+
+      // Show success toast
+      toast({
+        variant: "success",
+        title: finalAction === 'approve' ? "Pengawas Disetujui" : "Pengawas Ditolak",
+        description: data.message || `Pengawas berhasil ${finalAction === 'approve' ? 'disetujui' : 'ditolak'}`,
+      });
 
       // Reload list
       await loadPengawasPending();
     } catch (err) {
       console.error("Error:", err);
-      alert('Terjadi kesalahan saat memproses approval');
+      toast({
+        variant: "error",
+        title: "Terjadi Kesalahan",
+        description: err instanceof Error ? err.message : 'Terjadi kesalahan saat memproses approval',
+      });
     } finally {
       setProcessing(null);
     }
@@ -223,6 +279,19 @@ export default function ApprovalPengawasPage() {
             )}
           >
             Ditolak ({pengawasPending.filter(p => p.status_approval === 'rejected').length})
+          </Button>
+          <Button
+            variant={statusFilter === "approved" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setStatusFilter("approved")}
+            className={cn(
+              "rounded-xl text-xs sm:text-sm font-medium transition-all",
+              statusFilter === "approved"
+                ? "bg-green-600 text-white hover:bg-green-700"
+                : "border-slate-200 text-slate-700 hover:bg-slate-50"
+            )}
+          >
+            Disetujui ({pengawasPending.filter(p => p.status_approval === 'approved').length})
           </Button>
         </div>
       </div>
@@ -363,9 +432,11 @@ export default function ApprovalPengawasPage() {
                           "rounded-full border-0 px-3 py-1 text-xs font-semibold",
                           pengawas.status_approval === 'pending'
                             ? "bg-amber-100 text-amber-600"
+                            : pengawas.status_approval === 'approved'
+                            ? "bg-green-100 text-green-600"
                             : "bg-red-100 text-red-600"
                         )}>
-                          {pengawas.status_approval === 'pending' ? 'Pending' : 'Ditolak'}
+                          {pengawas.status_approval === 'pending' ? 'Pending' : pengawas.status_approval === 'approved' ? 'Disetujui' : 'Ditolak'}
                         </Badge>
                       </td>
                       <td className="px-5 py-4">
@@ -397,7 +468,7 @@ export default function ApprovalPengawasPage() {
                                 <XCircle className="size-3" />
                               </Button>
                             </>
-                          ) : (
+                          ) : pengawas.status_approval === 'rejected' ? (
                             <Button
                               onClick={() => handleApproval(pengawas.id, 'approve')}
                               disabled={processing === pengawas.id}
@@ -409,10 +480,12 @@ export default function ApprovalPengawasPage() {
                               ) : (
                                 <>
                                   <CheckCircle2 className="size-3 mr-1" />
-                                  Setujui
+                                  Setujui Kembali
                                 </>
                               )}
                             </Button>
+                          ) : (
+                            <span className="text-xs text-slate-400">Sudah disetujui</span>
                           )}
                         </div>
                       </td>
@@ -449,9 +522,11 @@ export default function ApprovalPengawasPage() {
                     "rounded-full border-0 px-3 py-1 text-xs font-semibold",
                     pengawas.status_approval === 'pending'
                       ? "bg-amber-100 text-amber-600"
+                      : pengawas.status_approval === 'approved'
+                      ? "bg-green-100 text-green-600"
                       : "bg-red-100 text-red-600"
                   )}>
-                    {pengawas.status_approval === 'pending' ? 'Pending' : 'Ditolak'}
+                    {pengawas.status_approval === 'pending' ? 'Pending' : pengawas.status_approval === 'approved' ? 'Disetujui' : 'Ditolak'}
                   </Badge>
                 </div>
               </CardHeader>
@@ -523,6 +598,11 @@ export default function ApprovalPengawasPage() {
                         </>
                       )}
                     </Button>
+                  )}
+                  {pengawas.status_approval === 'approved' && (
+                    <div className="flex-1 text-center text-xs text-slate-400 py-2">
+                      Sudah disetujui
+                    </div>
                   )}
                 </div>
               </CardContent>

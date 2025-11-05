@@ -32,9 +32,16 @@ import {
   XCircle,
   AlertCircle,
   Edit,
-  Trash2
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  ChevronDown,
+  Check
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 interface Sekolah {
   id: string;
@@ -50,6 +57,7 @@ interface Sekolah {
 }
 
 export default function DataSekolahPage() {
+  const { toast } = useToast();
   const [sekolahList, setSekolahList] = useState<Sekolah[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -57,6 +65,15 @@ export default function DataSekolahPage() {
   const [statusFilter, setStatusFilter] = useState<"all" | "Negeri" | "Swasta">("all");
   const [jenjangFilter, setJenjangFilter] = useState<"all" | "SMK" | "SMA" | "SLB">("all");
   const [kcdFilter, setKcdFilter] = useState<"all" | number>("all");
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  
+  // Mobile dropdown states
+  const [isStatusFilterOpen, setIsStatusFilterOpen] = useState(false);
+  const [isJenjangFilterOpen, setIsJenjangFilterOpen] = useState(false);
+  const [isKcdFilterOpen, setIsKcdFilterOpen] = useState(false);
   
   // Dialog states
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -155,6 +172,34 @@ export default function DataSekolahPage() {
     return filtered;
   }, [sekolahList, searchQuery, statusFilter, jenjangFilter, kcdFilter]);
 
+  // Pagination logic - apply pagination AFTER filtering
+  const paginatedSekolah = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredSekolah.slice(startIndex, endIndex);
+  }, [filteredSekolah, currentPage, itemsPerPage]);
+
+  // Calculate total pages
+  const totalPages = Math.ceil(filteredSekolah.length / itemsPerPage);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, jenjangFilter, kcdFilter]);
+
+  // Pagination handlers
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1); // Reset to first page when changing items per page
+  };
+
   const handleAddSekolah = async () => {
     setFormError(null);
     setIsProcessing(true);
@@ -188,12 +233,23 @@ export default function DataSekolahPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setFormError(data.error || "Gagal menambahkan sekolah");
+        const errorMsg = data.error || "Gagal menambahkan sekolah";
+        setFormError(errorMsg);
+        toast({
+          variant: "error",
+          title: "Gagal Menambahkan Sekolah",
+          description: errorMsg,
+        });
         setIsProcessing(false);
         return;
       }
 
       // Success
+      toast({
+        variant: "success",
+        title: "Sekolah Berhasil Ditambahkan",
+        description: `Sekolah ${formData.nama_sekolah} berhasil ditambahkan ke database.`,
+      });
       setIsAddDialogOpen(false);
       setFormData({
         npsn: "",
@@ -206,7 +262,13 @@ export default function DataSekolahPage() {
       });
       await loadSekolah();
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : "Terjadi kesalahan saat menambahkan sekolah");
+      const errorMessage = err instanceof Error ? err.message : "Terjadi kesalahan saat menambahkan sekolah";
+      setFormError(errorMessage);
+      toast({
+        variant: "error",
+        title: "Gagal Menambahkan Sekolah",
+        description: errorMessage,
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -339,7 +401,11 @@ export default function DataSekolahPage() {
       }
 
       // Show success message
-      alert(infoMessage);
+      toast({
+        variant: "success",
+        title: "Import Berhasil",
+        description: infoMessage,
+      });
 
       // Success
       setIsImportDialogOpen(false);
@@ -362,9 +428,18 @@ export default function DataSekolahPage() {
       setIsProcessing(true);
       // Download Excel file directly from API
       await downloadExcelFile('/api/admin/sekolah/export-excel', 'Data_Sekolah_Binaan.xlsx');
+      toast({
+        variant: "success",
+        title: "Export Berhasil",
+        description: "Data sekolah berhasil diekspor ke file Excel.",
+      });
       setIsProcessing(false);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Terjadi kesalahan saat mengekspor data");
+      toast({
+        variant: "error",
+        title: "Gagal Mengekspor Data",
+        description: err instanceof Error ? err.message : "Terjadi kesalahan saat mengekspor data",
+      });
       setIsProcessing(false);
     }
   };
@@ -374,9 +449,18 @@ export default function DataSekolahPage() {
       setIsProcessing(true);
       // Download Excel file directly from API
       await downloadExcelFile('/api/admin/sekolah/template-excel', 'Template_Import_Sekolah.xlsx');
+      toast({
+        variant: "success",
+        title: "Template Berhasil Diunduh",
+        description: "File template Excel berhasil diunduh.",
+      });
       setIsProcessing(false);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Terjadi kesalahan saat mengunduh template");
+      toast({
+        variant: "error",
+        title: "Gagal Mengunduh Template",
+        description: err instanceof Error ? err.message : "Terjadi kesalahan saat mengunduh template",
+      });
       setIsProcessing(false);
     }
   };
@@ -400,7 +484,11 @@ export default function DataSekolahPage() {
       document.body.removeChild(link);
       URL.revokeObjectURL(downloadUrl);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Gagal mengunduh file");
+      toast({
+        variant: "error",
+        title: "Gagal Mengunduh File",
+        description: err instanceof Error ? err.message : "Gagal mengunduh file",
+      });
     }
   };
 
@@ -489,7 +577,272 @@ export default function DataSekolahPage() {
             className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm transition-all focus:border-[#B53740] focus:outline-none focus:ring-2 focus:ring-[#B53740]/20"
           />
         </div>
-        <div className="flex flex-wrap gap-2">
+        
+        {/* Mobile Dropdown Filters */}
+        <div className="flex flex-col gap-3 md:hidden">
+          {/* Status Filter Dropdown */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsStatusFilterOpen(!isStatusFilterOpen)}
+              className="flex w-full items-center justify-between gap-4 rounded-full border-0 bg-slate-100 pl-4 pr-2 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-300 focus:ring-offset-2"
+            >
+              <span className="flex-1 text-left">
+                Status: {statusFilter === "all" ? "Semua Status" : statusFilter === "Negeri" ? "Negeri" : "Swasta"}
+                {statusFilter !== "all" && ` (${sekolahList.filter(s => s.status === statusFilter).length})`}
+              </span>
+              <div className="flex shrink-0 items-center justify-center rounded-lg bg-white/80 px-2.5 py-1.5 mr-2 shadow-sm transition-all hover:bg-white">
+                <ChevronDown
+                  className={cn(
+                    "size-3.5 text-rose-600 transition-all duration-200",
+                    isStatusFilterOpen && "rotate-180 text-rose-700"
+                  )}
+                />
+              </div>
+            </button>
+            {isStatusFilterOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setIsStatusFilterOpen(false)}
+                />
+                <div className="absolute z-20 mt-2 w-full rounded-2xl border border-slate-200 bg-white p-2 shadow-lg shadow-slate-200/50">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStatusFilter("all");
+                      setIsStatusFilterOpen(false);
+                    }}
+                    className={cn(
+                      "flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition hover:bg-slate-50",
+                      statusFilter === "all"
+                        ? "bg-rose-50 text-rose-700"
+                        : "text-slate-700"
+                    )}
+                  >
+                    <span>Semua Status ({sekolahList.length})</span>
+                    {statusFilter === "all" && (
+                      <Check className="size-4 text-rose-600" />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStatusFilter("Negeri");
+                      setIsStatusFilterOpen(false);
+                    }}
+                    className={cn(
+                      "flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition hover:bg-slate-50",
+                      statusFilter === "Negeri"
+                        ? "bg-blue-50 text-blue-700"
+                        : "text-slate-700"
+                    )}
+                  >
+                    <span>Negeri ({sekolahList.filter(s => s.status === 'Negeri').length})</span>
+                    {statusFilter === "Negeri" && (
+                      <Check className="size-4 text-blue-600" />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStatusFilter("Swasta");
+                      setIsStatusFilterOpen(false);
+                    }}
+                    className={cn(
+                      "flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition hover:bg-slate-50",
+                      statusFilter === "Swasta"
+                        ? "bg-purple-50 text-purple-700"
+                        : "text-slate-700"
+                    )}
+                  >
+                    <span>Swasta ({sekolahList.filter(s => s.status === 'Swasta').length})</span>
+                    {statusFilter === "Swasta" && (
+                      <Check className="size-4 text-purple-600" />
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Jenjang Filter Dropdown */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsJenjangFilterOpen(!isJenjangFilterOpen)}
+              className="flex w-full items-center justify-between gap-4 rounded-full border-0 bg-slate-100 pl-4 pr-2 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-300 focus:ring-offset-2"
+            >
+              <span className="flex-1 text-left">
+                Jenjang: {jenjangFilter === "all" ? "Semua Jenjang" : jenjangFilter}
+                {jenjangFilter !== "all" && ` (${sekolahList.filter(s => s.jenjang === jenjangFilter).length})`}
+              </span>
+              <div className="flex shrink-0 items-center justify-center rounded-lg bg-white/80 px-2.5 py-1.5 mr-2 shadow-sm transition-all hover:bg-white">
+                <ChevronDown
+                  className={cn(
+                    "size-3.5 text-rose-600 transition-all duration-200",
+                    isJenjangFilterOpen && "rotate-180 text-rose-700"
+                  )}
+                />
+              </div>
+            </button>
+            {isJenjangFilterOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setIsJenjangFilterOpen(false)}
+                />
+                <div className="absolute z-20 mt-2 w-full rounded-2xl border border-slate-200 bg-white p-2 shadow-lg shadow-slate-200/50">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setJenjangFilter("all");
+                      setIsJenjangFilterOpen(false);
+                    }}
+                    className={cn(
+                      "flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition hover:bg-slate-50",
+                      jenjangFilter === "all"
+                        ? "bg-rose-50 text-rose-700"
+                        : "text-slate-700"
+                    )}
+                  >
+                    <span>Semua Jenjang</span>
+                    {jenjangFilter === "all" && (
+                      <Check className="size-4 text-rose-600" />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setJenjangFilter("SMK");
+                      setIsJenjangFilterOpen(false);
+                    }}
+                    className={cn(
+                      "flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition hover:bg-slate-50",
+                      jenjangFilter === "SMK"
+                        ? "bg-amber-50 text-amber-700"
+                        : "text-slate-700"
+                    )}
+                  >
+                    <span>SMK ({sekolahList.filter(s => s.jenjang === 'SMK').length})</span>
+                    {jenjangFilter === "SMK" && (
+                      <Check className="size-4 text-amber-600" />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setJenjangFilter("SMA");
+                      setIsJenjangFilterOpen(false);
+                    }}
+                    className={cn(
+                      "flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition hover:bg-slate-50",
+                      jenjangFilter === "SMA"
+                        ? "bg-green-50 text-green-700"
+                        : "text-slate-700"
+                    )}
+                  >
+                    <span>SMA ({sekolahList.filter(s => s.jenjang === 'SMA').length})</span>
+                    {jenjangFilter === "SMA" && (
+                      <Check className="size-4 text-green-600" />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setJenjangFilter("SLB");
+                      setIsJenjangFilterOpen(false);
+                    }}
+                    className={cn(
+                      "flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition hover:bg-slate-50",
+                      jenjangFilter === "SLB"
+                        ? "bg-indigo-50 text-indigo-700"
+                        : "text-slate-700"
+                    )}
+                  >
+                    <span>SLB ({sekolahList.filter(s => s.jenjang === 'SLB').length})</span>
+                    {jenjangFilter === "SLB" && (
+                      <Check className="size-4 text-indigo-600" />
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* KCD Filter Dropdown */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsKcdFilterOpen(!isKcdFilterOpen)}
+              className="flex w-full items-center justify-between gap-4 rounded-full border-0 bg-slate-100 pl-4 pr-2 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-300 focus:ring-offset-2"
+            >
+              <span className="flex-1 text-left">
+                KCD: {kcdFilter === "all" ? "Semua KCD" : `KCD ${kcdFilter}`}
+              </span>
+              <div className="flex shrink-0 items-center justify-center rounded-lg bg-white/80 px-2.5 py-1.5 mr-2 shadow-sm transition-all hover:bg-white">
+                <ChevronDown
+                  className={cn(
+                    "size-3.5 text-rose-600 transition-all duration-200",
+                    isKcdFilterOpen && "rotate-180 text-rose-700"
+                  )}
+                />
+              </div>
+            </button>
+            {isKcdFilterOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setIsKcdFilterOpen(false)}
+                />
+                <div className="absolute z-20 mt-2 w-full max-h-60 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-2 shadow-lg shadow-slate-200/50">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setKcdFilter("all");
+                      setIsKcdFilterOpen(false);
+                    }}
+                    className={cn(
+                      "flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition hover:bg-slate-50",
+                      kcdFilter === "all"
+                        ? "bg-rose-50 text-rose-700"
+                        : "text-slate-700"
+                    )}
+                  >
+                    <span>Semua KCD</span>
+                    {kcdFilter === "all" && (
+                      <Check className="size-4 text-rose-600" />
+                    )}
+                  </button>
+                  {uniqueKcdWilayah.map(kcd => (
+                    <button
+                      key={kcd}
+                      type="button"
+                      onClick={() => {
+                        setKcdFilter(kcd);
+                        setIsKcdFilterOpen(false);
+                      }}
+                      className={cn(
+                        "flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition hover:bg-slate-50",
+                        kcdFilter === kcd
+                          ? "bg-slate-50 text-slate-900"
+                          : "text-slate-700"
+                      )}
+                    >
+                      <span>KCD {kcd}</span>
+                      {kcdFilter === kcd && (
+                        <Check className="size-4 text-slate-600" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Desktop Button Filters */}
+        <div className="hidden flex-wrap gap-2 md:flex">
           <Button
             variant={statusFilter === "all" ? "default" : "outline"}
             size="sm"
@@ -682,7 +1035,7 @@ export default function DataSekolahPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-rose-100">
-                  {filteredSekolah.map((sekolah) => (
+                  {paginatedSekolah.map((sekolah) => (
                     <tr key={sekolah.id} className="transition-colors hover:bg-rose-50/50">
                       <td className="px-5 py-4">
                         <span className="font-mono text-xs font-medium text-slate-900">{sekolah.npsn}</span>
@@ -735,7 +1088,7 @@ export default function DataSekolahPage() {
 
           {/* Mobile Card View */}
           <div className="grid gap-4 md:hidden">
-            {filteredSekolah.map((sekolah) => (
+            {paginatedSekolah.map((sekolah) => (
               <Card
                 key={sekolah.id}
                 className="border border-rose-200 bg-white shadow-md shadow-rose-100/70 transition hover:shadow-lg hover:shadow-rose-200"
@@ -789,6 +1142,144 @@ export default function DataSekolahPage() {
               </Card>
             ))}
           </div>
+
+          {/* Pagination */}
+          {filteredSekolah.length > 0 && (
+            <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+              {/* Info & Items Per Page */}
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
+                {/* Info */}
+                <div className="text-sm text-slate-600">
+                  Menampilkan <span className="font-semibold text-slate-900">
+                    {(currentPage - 1) * itemsPerPage + 1}
+                  </span> - <span className="font-semibold text-slate-900">
+                    {Math.min(currentPage * itemsPerPage, filteredSekolah.length)}
+                  </span> dari <span className="font-semibold text-slate-900">
+                    {filteredSekolah.length}
+                  </span> sekolah
+                </div>
+
+                {/* Items Per Page Selector */}
+                <div className="flex items-center gap-2">
+                  <label htmlFor="itemsPerPage" className="text-sm text-slate-600 whitespace-nowrap">
+                    Per halaman:
+                  </label>
+                  <select
+                    id="itemsPerPage"
+                    value={itemsPerPage}
+                    onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-900 shadow-sm transition-all focus:border-[#B53740] focus:outline-none focus:ring-2 focus:ring-[#B53740]/20"
+                  >
+                    <option value={5}>5</option>
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Pagination Controls */}
+              <div className="flex items-center gap-2">
+                {/* First Page Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(1)}
+                  disabled={currentPage === 1}
+                  className="h-9 w-9 rounded-lg border-slate-200 bg-white p-0 text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Halaman pertama"
+                >
+                  <ChevronsLeft className="h-4 w-4" />
+                </Button>
+
+                {/* Previous Page Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="h-9 w-9 rounded-lg border-slate-200 bg-white p-0 text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Halaman sebelumnya"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+
+                {/* Page Numbers */}
+                {totalPages > 0 && (
+                  <div className="flex items-center gap-1">
+                    {(() => {
+                      const pages: number[] = [];
+                      const maxVisible = 5;
+                      
+                      if (totalPages <= maxVisible) {
+                        // Show all pages if total pages <= 5
+                        for (let i = 1; i <= totalPages; i++) {
+                          pages.push(i);
+                        }
+                      } else if (currentPage <= 3) {
+                        // Show first 5 pages
+                        for (let i = 1; i <= maxVisible; i++) {
+                          pages.push(i);
+                        }
+                      } else if (currentPage >= totalPages - 2) {
+                        // Show last 5 pages
+                        for (let i = totalPages - maxVisible + 1; i <= totalPages; i++) {
+                          pages.push(i);
+                        }
+                      } else {
+                        // Show pages around current page
+                        for (let i = currentPage - 2; i <= currentPage + 2; i++) {
+                          pages.push(i);
+                        }
+                      }
+
+                      return pages.map((pageNum) => (
+                        <Button
+                          key={pageNum}
+                          variant={currentPage === pageNum ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handlePageChange(pageNum)}
+                          className={cn(
+                            "h-9 min-w-9 rounded-lg px-3 text-sm font-medium shadow-sm transition-all",
+                            currentPage === pageNum
+                              ? "border-0 bg-gradient-to-r from-[#B53740] to-[#8B2A31] text-white shadow-lg shadow-[#B53740]/25 hover:from-[#8B2A31] hover:to-[#6B1F24] hover:shadow-xl hover:shadow-[#B53740]/30"
+                              : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-300"
+                          )}
+                        >
+                          {pageNum}
+                        </Button>
+                      ));
+                    })()}
+                  </div>
+                )}
+
+                {/* Next Page Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="h-9 w-9 rounded-lg border-slate-200 bg-white p-0 text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Halaman berikutnya"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+
+                {/* Last Page Button */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange(totalPages)}
+                  disabled={currentPage === totalPages}
+                  className="h-9 w-9 rounded-lg border-slate-200 bg-white p-0 text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Halaman terakhir"
+                >
+                  <ChevronsRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </>
       )}
 

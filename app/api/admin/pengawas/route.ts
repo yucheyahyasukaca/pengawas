@@ -2,6 +2,7 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 import { getAdminUser } from "@/lib/auth-utils";
 
+// GET - Get all approved pengawas
 export async function GET() {
   try {
     // Check admin authentication
@@ -18,9 +19,9 @@ export async function GET() {
     
     const { data, error } = await adminClient
       .from('users')
-      .select('id, email, nama, nip, status_approval, created_at, metadata')
+      .select('id, email, nama, nip, status_approval, created_at, updated_at, metadata')
       .eq('role', 'pengawas')
-      .in('status_approval', ['pending', 'rejected', 'approved'])
+      .eq('status_approval', 'approved')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -36,17 +37,32 @@ export async function GET() {
       );
     }
 
+    // Map data to match frontend format
+    const pengawas = (data || []).map((user) => ({
+      id: user.id,
+      name: user.nama || 'Belum mengisi nama',
+      nip: user.nip || '',
+      wilayah: user.metadata?.wilayah_tugas || 'Belum diisi',
+      jumlahSekolah: Array.isArray(user.metadata?.sekolah_binaan) 
+        ? user.metadata.sekolah_binaan.length 
+        : 0,
+      status: 'Aktif',
+      email: user.email,
+      created_at: user.created_at,
+      updated_at: user.updated_at,
+      metadata: user.metadata,
+    }));
+
     return NextResponse.json(
       { 
         success: true,
-        pengawas: data || [],
-        count: (data || []).length,
-        pendingCount: (data || []).filter(p => p.status_approval === 'pending').length
+        pengawas: pengawas,
+        count: pengawas.length
       },
       { status: 200 }
     );
   } catch (err) {
-    console.error("Error in pengawas-pending route:", err);
+    console.error("Error in pengawas route:", err);
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Terjadi kesalahan saat memuat data" },
       { status: 500 }

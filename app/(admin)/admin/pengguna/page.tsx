@@ -1,8 +1,6 @@
 "use client";
 
-export const runtime = 'edge';
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Card,
@@ -21,94 +19,73 @@ import {
   School,
   Eye,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
 
-// Mock data - will be replaced with real data from Supabase
-const pengawasList = [
-  {
-    id: "peng-001",
-    name: "Dr. Eka Suryani, M.Pd.",
-    nip: "19650515 198903 2 001",
-    wilayah: "Kabupaten Semarang",
-    jumlahSekolah: 8,
-    status: "Aktif",
-  },
-  {
-    id: "peng-002",
-    name: "Rudi Hartono, S.Pd., M.Pd.",
-    nip: "19660520 199003 2 002",
-    wilayah: "Kota Semarang",
-    jumlahSekolah: 6,
-    status: "Aktif",
-  },
-  {
-    id: "peng-003",
-    name: "Fitri Handayani, S.Pd., M.M.",
-    nip: "19670625 199103 2 003",
-    wilayah: "Kabupaten Kendal",
-    jumlahSekolah: 7,
-    status: "Aktif",
-  },
-  {
-    id: "peng-004",
-    name: "Bambang Sutrisno, S.Pd., M.Pd.",
-    nip: "19650730 199204 1 004",
-    wilayah: "Kota Magelang",
-    jumlahSekolah: 5,
-    status: "Aktif",
-  },
-  {
-    id: "peng-005",
-    name: "Siti Nurhaliza, S.Pd., M.Pd.",
-    nip: "19680810 199305 2 005",
-    wilayah: "Kabupaten Demak",
-    jumlahSekolah: 9,
-    status: "Aktif",
-  },
-  {
-    id: "peng-006",
-    name: "Ahmad Dahlan, S.Pd., M.M.",
-    nip: "19650915 199406 1 006",
-    wilayah: "Kota Salatiga",
-    jumlahSekolah: 4,
-    status: "Aktif",
-  },
-  {
-    id: "peng-007",
-    name: "Dewi Sartika, S.Pd., M.Pd.",
-    nip: "19671020 199507 2 007",
-    wilayah: "Kabupaten Grobogan",
-    jumlahSekolah: 6,
-    status: "Aktif",
-  },
-  {
-    id: "peng-008",
-    name: "Sudarsono, S.Pd., M.M.",
-    nip: "19661125 199608 1 008",
-    wilayah: "Kota Semarang",
-    jumlahSekolah: 8,
-    status: "Aktif",
-  },
-  {
-    id: "peng-009",
-    name: "Maya Indira, S.Pd., M.Pd.",
-    nip: "19671230 199709 2 009",
-    wilayah: "Kabupaten Semarang",
-    jumlahSekolah: 7,
-    status: "Aktif",
-  },
-  {
-    id: "peng-010",
-    name: "Hendra Wijaya, S.Pd., M.M.",
-    nip: "19651305 199810 1 010",
-    wilayah: "Kota Pekalongan",
-    jumlahSekolah: 5,
-    status: "Aktif",
-  },
-];
+interface Pengawas {
+  id: string;
+  name: string;
+  nip: string;
+  wilayah: string;
+  jumlahSekolah: number;
+  status: string;
+  email?: string;
+  created_at?: string;
+  updated_at?: string;
+  metadata?: Record<string, any>;
+}
 
 export default function PenggunaListPage() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [pengawasList, setPengawasList] = useState<Pengawas[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadPengawas();
+  }, []);
+
+  const loadPengawas = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const response = await fetch('/api/admin/pengawas');
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Gagal memuat data pengawas' }));
+        const errorMessage = errorData.error || 'Gagal memuat data pengawas';
+        console.error("Error loading pengawas:", {
+          status: response.status,
+          message: errorMessage
+        });
+        setError(errorMessage);
+        setPengawasList([]);
+        return;
+      }
+
+      const data = await response.json();
+      
+      if (!data.success) {
+        const errorMessage = data.error || 'Gagal memuat data pengawas';
+        setError(errorMessage);
+        setPengawasList([]);
+        return;
+      }
+
+      setPengawasList(data.pengawas || []);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan saat memuat data';
+      console.error("Error loading pengawas:", {
+        message: errorMessage,
+        error: err
+      });
+      setError(errorMessage);
+      setPengawasList([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Filter pengawas based on search
   const filteredPengawas = pengawasList.filter(
@@ -118,6 +95,50 @@ export default function PenggunaListPage() {
       pengawas.nip.includes(searchTerm) ||
       pengawas.wilayah.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="inline-flex size-12 animate-spin items-center justify-center rounded-full border-4 border-rose-200 border-t-rose-600">
+            <div className="size-8 rounded-full bg-rose-100" />
+          </div>
+          <p className="mt-4 text-sm font-medium text-slate-600">Memuat data pengawas...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col gap-6">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Daftar Pengawas</h1>
+          <p className="mt-1 text-sm text-slate-600">
+            Kelola data pengawas sekolah binaan
+          </p>
+        </div>
+        <Card className="border border-red-200 bg-red-50/50">
+          <CardContent className="py-6">
+            <div className="flex items-start gap-3">
+              <div className="flex-1">
+                <h3 className="text-sm font-semibold text-red-900">Error Memuat Data</h3>
+                <p className="mt-1 text-sm text-red-700">{error}</p>
+                <Button
+                  onClick={loadPengawas}
+                  variant="outline"
+                  size="sm"
+                  className="mt-3 rounded-full border-red-200 text-red-600 hover:bg-red-100 hover:border-red-300"
+                >
+                  Coba Lagi
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6">
