@@ -57,15 +57,19 @@ COPY --from=builder /app/public ./public
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
 
-# Copy built application
+# Copy standalone build (optimized for production - includes only necessary files)
+# Standalone mode provides:
+# - Smaller image size (only includes necessary dependencies)
+# - Faster startup time
+# - Better performance
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Environment variables will be set at runtime via docker-compose
-# These are placeholders - actual values come from docker-compose.yml or .env file
-ENV NEXT_PUBLIC_SUPABASE_URL=""
-ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=""
-ENV SUPABASE_SERVICE_ROLE_KEY=""
+# Note: NEXT_PUBLIC_* variables are embedded at build time in the bundle
+# They should be set at build stage (which is done above)
+# At runtime, we still need to set them for server-side code
+# These will be overridden by docker-compose.yml environment section
+# Do NOT set them to empty strings as that can cause issues
 
 USER nextjs
 
