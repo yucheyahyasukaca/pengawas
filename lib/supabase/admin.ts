@@ -43,7 +43,7 @@ export function createSupabaseAdminClient() {
     // This will help catch invalid credentials early
     if (process.env.NODE_ENV === 'production') {
       // Only log, don't throw - we'll catch errors in actual usage
-      client.from('users').select('id').limit(1).then(({ error }) => {
+      Promise.resolve(client.from('users').select('id').limit(1)).then(({ error }) => {
         if (error) {
           console.error('Supabase admin client connection test failed:', {
             message: error.message,

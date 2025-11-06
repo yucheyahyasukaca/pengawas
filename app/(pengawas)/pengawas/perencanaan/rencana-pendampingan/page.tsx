@@ -269,7 +269,7 @@ export default function RencanaPendampinganPage() {
         toast({
           title: "Error",
           description: errorData.error || errorData.details || `Gagal memuat rencana pendampingan (${response.status})`,
-          variant: "destructive",
+          variant: "error",
         });
         setRencanaList([]);
       }
@@ -279,7 +279,7 @@ export default function RencanaPendampinganPage() {
       toast({
         title: "Error",
         description: error?.message || "Terjadi kesalahan saat memuat rencana pendampingan",
-        variant: "destructive",
+        variant: "error",
       });
       setRencanaList([]);
     } finally {
@@ -380,7 +380,7 @@ export default function RencanaPendampinganPage() {
       toast({
         title: "Error",
         description: "Pilih sekolah binaan terlebih dahulu",
-        variant: "destructive",
+        variant: "error",
       });
       return;
     }
@@ -389,7 +389,7 @@ export default function RencanaPendampinganPage() {
       toast({
         title: "Error",
         description: "Pilih indikator utama terlebih dahulu",
-        variant: "destructive",
+        variant: "error",
       });
       return;
     }
@@ -398,7 +398,7 @@ export default function RencanaPendampinganPage() {
       toast({
         title: "Error",
         description: "Isi akar masalah terlebih dahulu",
-        variant: "destructive",
+        variant: "error",
       });
       return;
     }
@@ -407,7 +407,7 @@ export default function RencanaPendampinganPage() {
       toast({
         title: "Error",
         description: "Isi kegiatan benahi terlebih dahulu",
-        variant: "destructive",
+        variant: "error",
       });
       return;
     }
@@ -417,7 +417,7 @@ export default function RencanaPendampinganPage() {
       toast({
         title: "Error",
         description: "Isi minimal satu penjelasan implementasi kegiatan",
-        variant: "destructive",
+        variant: "error",
       });
       return;
     }
@@ -463,7 +463,7 @@ export default function RencanaPendampinganPage() {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Gagal menyimpan rencana pendampingan",
-        variant: "destructive",
+        variant: "error",
       });
     } finally {
       setIsSaving(false);
@@ -495,7 +495,7 @@ export default function RencanaPendampinganPage() {
       toast({
         title: "Error",
         description: "Pilih sekolah binaan terlebih dahulu",
-        variant: "destructive",
+        variant: "error",
       });
       return;
     }
@@ -504,7 +504,7 @@ export default function RencanaPendampinganPage() {
       toast({
         title: "Error",
         description: "Pilih indikator utama terlebih dahulu",
-        variant: "destructive",
+        variant: "error",
       });
       return;
     }
@@ -513,7 +513,7 @@ export default function RencanaPendampinganPage() {
       toast({
         title: "Error",
         description: "Isi akar masalah terlebih dahulu",
-        variant: "destructive",
+        variant: "error",
       });
       return;
     }
@@ -522,7 +522,7 @@ export default function RencanaPendampinganPage() {
       toast({
         title: "Error",
         description: "Isi kegiatan benahi terlebih dahulu",
-        variant: "destructive",
+        variant: "error",
       });
       return;
     }
@@ -532,7 +532,7 @@ export default function RencanaPendampinganPage() {
       toast({
         title: "Error",
         description: "Isi minimal satu penjelasan implementasi kegiatan",
-        variant: "destructive",
+        variant: "error",
       });
       return;
     }
@@ -580,7 +580,7 @@ export default function RencanaPendampinganPage() {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Gagal mengupdate rencana pendampingan",
-        variant: "destructive",
+        variant: "error",
       });
     } finally {
       setIsSaving(false);
@@ -624,7 +624,7 @@ export default function RencanaPendampinganPage() {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Gagal menghapus rencana pendampingan",
-        variant: "destructive",
+        variant: "error",
       });
     } finally {
       setIsDeleting(false);

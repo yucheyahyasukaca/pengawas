@@ -138,7 +138,7 @@ export default function BuatRencanaProgramPage() {
         toast({
           title: "Error",
           description: "Gagal memuat data sekolah yang dipilih",
-          variant: "destructive",
+          variant: "error",
         });
         router.push("/pengawas/perencanaan/rencana-program/pilih-sekolah");
       } finally {
@@ -208,7 +208,7 @@ export default function BuatRencanaProgramPage() {
       toast({
         title: "Peringatan",
         description: "Silakan pilih minimal satu indikator utama",
-        variant: "destructive",
+        variant: "error",
       });
       return;
     }
@@ -239,7 +239,7 @@ export default function BuatRencanaProgramPage() {
       toast({
         title: "Peringatan",
         description: "Silakan lengkapi semua field (Akar Masalah, Harapan, Rencana Kegiatan, Ide Program)",
-        variant: "destructive",
+        variant: "error",
       });
       return;
     }
@@ -372,7 +372,7 @@ export default function BuatRencanaProgramPage() {
       toast({
         title: "Error",
         description: "Gagal menghasilkan konten",
-        variant: "destructive",
+        variant: "error",
       });
     } finally {
       setIsGenerating(false);
@@ -634,7 +634,7 @@ ${formData.ideProgram ? `<li>Biaya implementasi program khusus: ${formData.idePr
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Gagal menyimpan rencana program",
-        variant: "destructive",
+        variant: "error",
       });
     } finally {
       setIsSubmitting(false);

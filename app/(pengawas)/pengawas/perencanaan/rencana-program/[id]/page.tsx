@@ -59,7 +59,7 @@ export default function ViewRencanaProgramPage() {
       toast({
         title: "Error",
         description: "ID tidak ditemukan di URL",
-        variant: "destructive",
+        variant: "error",
       });
       router.push("/pengawas/perencanaan/rencana-program");
       return;
@@ -73,7 +73,7 @@ export default function ViewRencanaProgramPage() {
       toast({
         title: "Error",
         description: "ID rencana program tidak valid",
-        variant: "destructive",
+        variant: "error",
       });
       router.push("/pengawas/perencanaan/rencana-program");
       return;
@@ -134,7 +134,7 @@ export default function ViewRencanaProgramPage() {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Gagal memuat rencana program",
-        variant: "destructive",
+        variant: "error",
       });
       // Don't redirect immediately, let user see the error
       setTimeout(() => {

@@ -61,7 +61,7 @@ export default function RencanaProgramPage() {
       toast({
         title: "Error",
         description: "Gagal memuat rencana program",
-        variant: "destructive",
+        variant: "error",
       });
       setRencanaProgram([]);
       setSekolahBelumRencana([]);
@@ -254,7 +254,7 @@ export default function RencanaProgramPage() {
                           toast({
                             title: "Error",
                             description: "Gagal menerbitkan rencana program",
-                            variant: "destructive",
+                            variant: "error",
                           });
                         }
                       }}

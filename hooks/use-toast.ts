@@ -12,7 +12,6 @@ type ToasterToast = ToastProps & {
   title?: React.ReactNode;
   description?: React.ReactNode;
   action?: ToastActionElement;
-  variant?: "default" | "success" | "error" | "warning" | "info" | "destructive";
 };
 
 const actionTypes = {
@@ -147,14 +146,10 @@ function toast({ ...props }: Toast) {
     });
   const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id });
 
-  // Map "destructive" variant to "error"
-  const mappedVariant = props.variant === "destructive" ? "error" : props.variant;
-
   dispatch({
     type: "ADD_TOAST",
     toast: {
       ...props,
-      variant: mappedVariant,
       id,
       open: true,
       onOpenChange: (open) => {

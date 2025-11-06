@@ -138,7 +138,7 @@ export default function PilihSekolahPage() {
       toast({
         title: "Peringatan",
         description: "Silakan pilih minimal satu sekolah binaan",
-        variant: "destructive",
+        variant: "error",
       });
       return;
     }

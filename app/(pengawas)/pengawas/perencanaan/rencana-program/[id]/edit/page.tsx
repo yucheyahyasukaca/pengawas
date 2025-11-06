@@ -101,7 +101,7 @@ export default function EditRencanaProgramPage() {
       toast({
         title: "Error",
         description: "ID tidak ditemukan di URL",
-        variant: "destructive",
+        variant: "error",
       });
       router.push("/pengawas/perencanaan/rencana-program");
       return;
@@ -115,7 +115,7 @@ export default function EditRencanaProgramPage() {
       toast({
         title: "Error",
         description: "ID rencana program tidak valid",
-        variant: "destructive",
+        variant: "error",
       });
       router.push("/pengawas/perencanaan/rencana-program");
       return;
@@ -167,7 +167,7 @@ export default function EditRencanaProgramPage() {
       toast({
         title: "Error",
         description: "Gagal memuat rencana program",
-        variant: "destructive",
+        variant: "error",
       });
       router.push("/pengawas/perencanaan/rencana-program");
     } finally {
@@ -234,7 +234,7 @@ export default function EditRencanaProgramPage() {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Gagal memperbarui rencana program",
-        variant: "destructive",
+        variant: "error",
       });
     } finally {
       setIsSubmitting(false);
@@ -281,7 +281,7 @@ export default function EditRencanaProgramPage() {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Gagal menerbitkan rencana program",
-        variant: "destructive",
+        variant: "error",
       });
     } finally {
       setIsPublishing(false);
