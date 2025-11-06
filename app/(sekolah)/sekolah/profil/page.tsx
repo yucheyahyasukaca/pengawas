@@ -180,7 +180,7 @@ export default function SekolahProfilePage() {
       toast({
         title: "Error",
         description: err instanceof Error ? err.message : 'Gagal menyimpan data',
-        variant: "destructive",
+        variant: "error",
       });
     } finally {
       setIsSaving(false);

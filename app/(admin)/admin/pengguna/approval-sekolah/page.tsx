@@ -90,7 +90,7 @@ export default function ApprovalSekolahPage() {
   const handleApproval = async (sekolahUserId: string, action: 'approve' | 'reject') => {
     if (!sekolahUserId || typeof sekolahUserId !== 'string' || sekolahUserId.trim() === '') {
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "ID Tidak Valid",
         description: "ID sekolah tidak valid",
       });
@@ -100,7 +100,7 @@ export default function ApprovalSekolahPage() {
     const validAction = action === 'approve' || action === 'reject';
     if (!validAction) {
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Aksi Tidak Valid",
         description: `Aksi harus 'approve' atau 'reject'`,
       });
@@ -125,7 +125,7 @@ export default function ApprovalSekolahPage() {
 
       if (!response.ok) {
         toast({
-          variant: "destructive",
+          variant: "error",
           title: finalAction === 'approve' ? "Gagal Menyetujui" : "Gagal Menolak",
           description: data.error || 'Gagal memproses approval',
         });
@@ -142,7 +142,7 @@ export default function ApprovalSekolahPage() {
     } catch (err) {
       console.error("Error:", err);
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Terjadi Kesalahan",
         description: err instanceof Error ? err.message : 'Terjadi kesalahan saat memproses approval',
       });
