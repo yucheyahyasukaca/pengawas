@@ -85,9 +85,16 @@ export const adminNavigation: AdminNavSection[] = [
         badge: "new",
       },
       {
+        title: "Approval Sekolah",
+        href: "/admin/pengguna/approval-sekolah",
+        icon: School,
+        description: "Review dan setujui pendaftaran sekolah baru",
+        badge: "new",
+      },
+      {
         title: "Data Sekolah Binaan",
         href: "/admin/pengguna/sekolah",
-        icon: School,
+        icon: Building2,
         description: "Kelola data sekolah binaan pengawas",
       },
       {

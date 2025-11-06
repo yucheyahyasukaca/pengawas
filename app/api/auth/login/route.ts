@@ -200,7 +200,17 @@ export async function POST(request: Request) {
           redirectTo = '/korwas-cabdin'; // TODO: Buat dashboard untuk korwas cabdin
           break;
         case 'sekolah':
-          redirectTo = '/sekolah'; // TODO: Buat dashboard untuk sekolah
+          // Check status approval
+          const sekolahStatusApproval = userData.status_approval || 'pending';
+          console.log("Login route: Sekolah status", { sekolahStatusApproval });
+          
+          if (sekolahStatusApproval === 'pending' || sekolahStatusApproval === 'rejected') {
+            redirectTo = '/sekolah/pending-approval';
+            console.log("Login route: Redirecting sekolah to pending-approval");
+          } else {
+            redirectTo = '/sekolah';
+            console.log("Login route: Redirecting to sekolah dashboard");
+          }
           break;
         default:
           redirectTo = '/pengawas'; // Default ke pengawas dashboard

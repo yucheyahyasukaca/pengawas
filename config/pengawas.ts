@@ -66,6 +66,13 @@ export const pengawasNavigation: PengawasNavSection[] = [
         description: "Nama sekolah, NPSN, jenis, alamat, status binaan",
       },
       {
+        title: "Approval Sekolah",
+        href: "/pengawas/manajemen-data/approval-sekolah",
+        icon: CheckSquare,
+        description: "Review dan setujui pendaftaran sekolah binaan",
+        badge: "new",
+      },
+      {
         title: "Analitik Data",
         href: "/pengawas/manajemen-data/statistik",
         icon: BarChart3,

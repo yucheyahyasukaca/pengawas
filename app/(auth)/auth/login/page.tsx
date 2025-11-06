@@ -302,6 +302,12 @@ export default function LoginPage() {
               >
                 Daftar sebagai Pengawas Baru
               </Link>
+              <Link
+                href="/auth/register/sekolah"
+                className="flex items-center justify-center rounded-xl border border-white/20 bg-transparent px-4 py-3 font-medium transition hover:border-white/40 hover:bg-white/10"
+              >
+                Daftar sebagai Sekolah
+              </Link>
             </div>
             <p className="text-center text-xs text-white/60">
               Dengan masuk, Anda menyetujui kebijakan privasi dan tata kelola data {siteConfig.shortName}.
