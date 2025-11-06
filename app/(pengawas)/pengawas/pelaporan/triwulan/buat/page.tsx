@@ -35,8 +35,8 @@ export default function BuatLaporanTriwulanPage() {
 
       <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
         <CardHeader>
-          <CardTitle>Formulir Laporan Triwulan</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-slate-900 font-bold">Formulir Laporan Triwulan</CardTitle>
+          <CardDescription className="text-slate-700">
             Lengkapi semua data yang diperlukan untuk laporan triwulan
           </CardDescription>
         </CardHeader>

@@ -131,11 +131,11 @@ export default function LaporanTriwulanPage() {
 
       <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="size-5 text-indigo-500" />
+          <CardTitle className="flex items-center gap-2 text-slate-900 font-bold">
+            <Calendar className="size-5 text-indigo-600" />
             Format Laporan Triwulan
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-slate-700">
             Ketentuan dan format laporan triwulan sesuai template resmi
           </CardDescription>
         </CardHeader>

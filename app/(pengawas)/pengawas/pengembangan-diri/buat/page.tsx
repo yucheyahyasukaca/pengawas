@@ -35,8 +35,8 @@ export default function BuatPengembanganDiriPage() {
 
       <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
         <CardHeader>
-          <CardTitle>Formulir Pengembangan Diri</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-slate-900 font-bold">Formulir Pengembangan Diri</CardTitle>
+          <CardDescription className="text-slate-700">
             Lengkapi semua data yang diperlukan untuk laporan pengembangan diri
           </CardDescription>
         </CardHeader>

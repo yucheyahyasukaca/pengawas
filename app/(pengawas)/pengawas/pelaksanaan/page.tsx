@@ -118,11 +118,11 @@ export default function PelaksanaanPage() {
 
       <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Activity className="size-5 text-indigo-500" />
+          <CardTitle className="flex items-center gap-2 text-slate-900 font-bold">
+            <Activity className="size-5 text-indigo-600" />
             Jenis Kegiatan
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-slate-700">
             Pilih jenis kegiatan untuk melakukan entri data
           </CardDescription>
         </CardHeader>
@@ -160,11 +160,11 @@ export default function PelaksanaanPage() {
 
       <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="size-5 text-indigo-500" />
+          <CardTitle className="flex items-center gap-2 text-slate-900 font-bold">
+            <Calendar className="size-5 text-indigo-600" />
             Kegiatan Terbaru
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-slate-700">
             Daftar kegiatan pendampingan dan supervisi yang telah dilakukan
           </CardDescription>
         </CardHeader>
@@ -217,11 +217,11 @@ export default function PelaksanaanPage() {
 
       <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Upload className="size-5 text-indigo-500" />
+          <CardTitle className="flex items-center gap-2 text-slate-900 font-bold">
+            <Upload className="size-5 text-indigo-600" />
             Fitur Entri Data
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-slate-700">
             Kemudahan dalam melakukan entri dan pengelolaan data kegiatan
           </CardDescription>
         </CardHeader>

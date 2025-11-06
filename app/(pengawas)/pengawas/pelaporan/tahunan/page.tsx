@@ -144,8 +144,8 @@ export default function LaporanTahunanPage() {
 
       <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
         <CardHeader>
-          <CardTitle>Laporan Tahunan Otomatis</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-slate-900 font-bold">Laporan Tahunan Otomatis</CardTitle>
+          <CardDescription className="text-slate-700">
             Sistem otomatis merekap seluruh kegiatan dan capaian dari laporan triwulan
           </CardDescription>
         </CardHeader>

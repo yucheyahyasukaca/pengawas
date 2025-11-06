@@ -23,11 +23,11 @@ export default function PengaturanPage() {
       <div className="grid gap-6 md:grid-cols-2">
         <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="size-5 text-indigo-500" />
+            <CardTitle className="flex items-center gap-2 text-slate-900 font-bold">
+              <User className="size-5 text-indigo-600" />
               Profil Pengguna
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-slate-700">
               Kelola informasi profil dan identitas pengawas
             </CardDescription>
           </CardHeader>
@@ -48,11 +48,11 @@ export default function PengaturanPage() {
 
         <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bell className="size-5 text-indigo-500" />
+            <CardTitle className="flex items-center gap-2 text-slate-900 font-bold">
+              <Bell className="size-5 text-indigo-600" />
               Notifikasi
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-slate-700">
               Atur preferensi notifikasi dan pengingat
             </CardDescription>
           </CardHeader>
@@ -73,11 +73,11 @@ export default function PengaturanPage() {
 
         <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="size-5 text-indigo-500" />
+            <CardTitle className="flex items-center gap-2 text-slate-900 font-bold">
+              <Shield className="size-5 text-indigo-600" />
               Keamanan
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-slate-700">
               Kelola keamanan akun dan kata sandi
             </CardDescription>
           </CardHeader>
@@ -98,11 +98,11 @@ export default function PengaturanPage() {
 
         <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Palette className="size-5 text-indigo-500" />
+            <CardTitle className="flex items-center gap-2 text-slate-900 font-bold">
+              <Palette className="size-5 text-indigo-600" />
               Tampilan
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-slate-700">
               Preferensi tema dan tampilan aplikasi
             </CardDescription>
           </CardHeader>

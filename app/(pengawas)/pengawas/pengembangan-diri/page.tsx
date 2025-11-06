@@ -121,11 +121,11 @@ export default function PengembanganDiriPage() {
 
       <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="size-5 text-indigo-500" />
+          <CardTitle className="flex items-center gap-2 text-slate-900 font-bold">
+            <FileText className="size-5 text-indigo-600" />
             Laporan Pengembangan Diri
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-slate-700">
             Laporan pengembangan diri dapat diunduh secara otomatis
           </CardDescription>
         </CardHeader>
