@@ -47,24 +47,122 @@ export async function GET(request: Request) {
       );
     }
 
-    // Transform data to match interface
-    const transformedData = (rencanaProgram || []).map((item: any) => ({
-      id: item.id,
-      periode: item.periode || `Tahun ${new Date(item.created_at).getFullYear()}`,
-      tanggal: item.created_at
-        ? new Date(item.created_at).toLocaleDateString("id-ID", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })
-        : "-",
-      status: item.status || "Draft",
-      file: item.file,
-      created_at: item.created_at,
-      updated_at: item.updated_at,
-    }));
+    // Get all sekolah_ids from rencana programs
+    const allSekolahIds: string[] = [];
+    (rencanaProgram || []).forEach((item: any) => {
+      if (item.sekolah_ids) {
+        let sekolahIds = item.sekolah_ids;
+        if (typeof sekolahIds === "string") {
+          try {
+            sekolahIds = JSON.parse(sekolahIds);
+          } catch (e) {
+            sekolahIds = [];
+          }
+        }
+        if (Array.isArray(sekolahIds)) {
+          allSekolahIds.push(...sekolahIds.map(String));
+        }
+      }
+    });
 
-    return NextResponse.json({ rencanaProgram: transformedData });
+    // Fetch sekolah details for all sekolah_ids
+    let sekolahMap: Record<string, any> = {};
+    if (allSekolahIds.length > 0) {
+      const uniqueSekolahIds = [...new Set(allSekolahIds)];
+      const { data: sekolahData, error: sekolahError } = await adminClient
+        .from("sekolah")
+        .select("id, npsn, nama_sekolah")
+        .in("id", uniqueSekolahIds);
+
+      if (!sekolahError && sekolahData) {
+        sekolahData.forEach((sekolah: any) => {
+          sekolahMap[String(sekolah.id)] = {
+            id: sekolah.id,
+            npsn: sekolah.npsn,
+            nama: sekolah.nama_sekolah,
+          };
+        });
+      }
+    }
+
+    // Get current pengawas sekolah binaan from metadata
+    const { data: userMetadata, error: userMetadataError } = await adminClient
+      .from("users")
+      .select("metadata")
+      .eq("id", user.id)
+      .single();
+
+    let sekolahBinaan: any[] = [];
+    if (!userMetadataError && userMetadata?.metadata?.sekolah_binaan) {
+      const sekolahBinaanNames = Array.isArray(userMetadata.metadata.sekolah_binaan)
+        ? userMetadata.metadata.sekolah_binaan
+        : [];
+
+      if (sekolahBinaanNames.length > 0) {
+        const { data: sekolahBinaanData, error: sekolahBinaanError } = await adminClient
+          .from("sekolah")
+          .select("id, npsn, nama_sekolah")
+          .in("nama_sekolah", sekolahBinaanNames);
+
+        if (!sekolahBinaanError && sekolahBinaanData) {
+          sekolahBinaan = sekolahBinaanData.map((s: any) => ({
+            id: s.id,
+            npsn: s.npsn,
+            nama: s.nama_sekolah,
+          }));
+        }
+      }
+    }
+
+    // Transform data to match interface
+    const transformedData = (rencanaProgram || []).map((item: any) => {
+      let sekolahIds = item.sekolah_ids;
+      if (typeof sekolahIds === "string") {
+        try {
+          sekolahIds = JSON.parse(sekolahIds);
+        } catch (e) {
+          sekolahIds = [];
+        }
+      }
+      if (!Array.isArray(sekolahIds)) {
+        sekolahIds = [];
+      }
+
+      const sekolahList = sekolahIds
+        .map(String)
+        .map((id: string) => sekolahMap[id])
+        .filter((s: any) => s !== undefined);
+
+      return {
+        id: item.id,
+        periode: item.periode || `Tahun ${new Date(item.created_at).getFullYear()}`,
+        tanggal: item.created_at
+          ? new Date(item.created_at).toLocaleDateString("id-ID", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })
+          : "-",
+        status: item.status || "Draft",
+        file: item.file,
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+        sekolah_ids: sekolahIds,
+        sekolah: sekolahList,
+      };
+    });
+
+    // Get sekolah yang belum mendapat rencana program
+    const sekolahIdsWithRencana = new Set(allSekolahIds.map(String));
+    const sekolahBelumRencana = sekolahBinaan.filter(
+      (s) => !sekolahIdsWithRencana.has(String(s.id))
+    );
+
+    return NextResponse.json({
+      rencanaProgram: transformedData,
+      sekolahBinaan: sekolahBinaan,
+      sekolahBelumRencana: sekolahBelumRencana,
+    });
   } catch (error) {
     console.error("Error in GET /api/pengawas/rencana-program:", error);
     return NextResponse.json(

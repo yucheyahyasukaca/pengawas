@@ -163,28 +163,6 @@ export default function ViewRencanaProgramPage() {
     });
   };
 
-  const stripHtml = (html: string) => {
-    if (!html || typeof html !== "string") return "";
-    try {
-      const tmp = document.createElement("DIV");
-      tmp.innerHTML = html;
-      return tmp.textContent || tmp.innerText || "";
-    } catch (error) {
-      // If browser context not available, basic regex replacement
-      return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim();
-    }
-  };
-
-  const formatContent = (content: string) => {
-    if (!content || typeof content !== "string") return [];
-    try {
-      const text = stripHtml(content);
-      // Split by paragraph markers and format
-      return text.split(/\n+/).filter((line) => line.trim().length > 0);
-    } catch (error) {
-      return [content];
-    }
-  };
 
   const id = params?.id;
   const idString = typeof id === "string" ? id : Array.isArray(id) ? id[0] : id ? String(id) : null;
@@ -385,9 +363,8 @@ export default function ViewRencanaProgramPage() {
                 <div className="space-y-6">
                   {section.fields.map((field) => {
                     const content = formData[field.key] || "";
-                    const formattedLines = formatContent(content);
 
-                    if (!content || formattedLines.length === 0) {
+                    if (!content || (typeof content === "string" && content.trim() === "")) {
                       return (
                         <div key={field.key} className="space-y-2">
                           <h3 className="text-base font-bold text-slate-900 mb-3">
@@ -403,20 +380,10 @@ export default function ViewRencanaProgramPage() {
                         <h3 className="text-base font-bold text-slate-900 mb-3 border-b border-slate-200 pb-2">
                           {field.label}
                         </h3>
-                        <div className="pl-4 space-y-3">
-                          {formattedLines.map((line, index) => (
-                            <p
-                              key={index}
-                              className="text-sm sm:text-base leading-relaxed text-slate-700 indent-4"
-                              style={{
-                                textIndent: "1.5rem",
-                                lineHeight: "1.75rem",
-                              }}
-                            >
-                              {line.trim()}
-                            </p>
-                          ))}
-                        </div>
+                        <div
+                          className="prose prose-slate max-w-none [&_p]:text-slate-700 [&_p]:leading-relaxed [&_p]:my-3 [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:text-slate-900 [&_h1]:my-4 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:text-slate-900 [&_h2]:my-3 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:text-slate-900 [&_h3]:my-2 [&_strong]:font-semibold [&_strong]:text-slate-900 [&_em]:italic [&_ul]:list-disc [&_ul]:ml-6 [&_ul]:my-3 [&_ul]:text-slate-700 [&_ol]:list-decimal [&_ol]:ml-6 [&_ol]:my-3 [&_ol]:text-slate-700 [&_li]:my-2 [&_li]:text-slate-700 [&_blockquote]:border-l-4 [&_blockquote]:border-rose-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-slate-600 [&_blockquote]:my-3"
+                          dangerouslySetInnerHTML={{ __html: content }}
+                        />
                       </div>
                     );
                   })}

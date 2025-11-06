@@ -11,8 +11,14 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardList, Plus, Eye, FileText, Calendar, Loader2, Edit, Send } from "lucide-react";
+import { ClipboardList, Plus, Eye, FileText, Calendar, Loader2, Edit, Send, School, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+interface Sekolah {
+  id: string | number;
+  npsn: string;
+  nama: string;
+}
 
 interface RencanaProgram {
   id: string;
@@ -22,11 +28,14 @@ interface RencanaProgram {
   file?: string;
   created_at?: string;
   updated_at?: string;
+  sekolah_ids?: string[];
+  sekolah?: Sekolah[];
 }
 
 export default function RencanaProgramPage() {
   const { toast } = useToast();
   const [rencanaProgram, setRencanaProgram] = useState<RencanaProgram[]>([]);
+  const [sekolahBelumRencana, setSekolahBelumRencana] = useState<Sekolah[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -46,6 +55,7 @@ export default function RencanaProgramPage() {
 
       const data = await response.json();
       setRencanaProgram(data.rencanaProgram || []);
+      setSekolahBelumRencana(data.sekolahBelumRencana || []);
     } catch (error) {
       console.error("Error loading rencana program:", error);
       toast({
@@ -54,6 +64,7 @@ export default function RencanaProgramPage() {
         variant: "destructive",
       });
       setRencanaProgram([]);
+      setSekolahBelumRencana([]);
     } finally {
       setIsLoading(false);
     }
@@ -86,6 +97,34 @@ export default function RencanaProgramPage() {
           </Link>
         </Button>
       </div>
+
+      {/* Card Sekolah Binaan yang Belum Mendapat Rencana Program */}
+      {sekolahBelumRencana.length > 0 && (
+        <Card className="border border-amber-200 bg-amber-50/50 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-semibold text-slate-900 flex items-center gap-2">
+              <AlertCircle className="size-5 text-amber-600" />
+              Sekolah Binaan yang Belum Mendapat Rencana Program
+            </CardTitle>
+            <CardDescription className="text-sm text-slate-600">
+              {sekolahBelumRencana.length} sekolah belum memiliki rencana program kepengawasan
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {sekolahBelumRencana.map((sekolah) => (
+                <Badge
+                  key={sekolah.id}
+                  className="rounded-full border-0 bg-amber-100 px-3 py-1.5 text-sm font-medium text-amber-800"
+                >
+                  <School className="size-3 mr-1.5" />
+                  {sekolah.nama}
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {rencanaProgram.length === 0 ? (
         <Card className="border border-slate-200 bg-white shadow-sm">
@@ -136,6 +175,32 @@ export default function RencanaProgramPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
+                {/* Daftar Sekolah */}
+                {rencana.sekolah && rencana.sekolah.length > 0 && (
+                  <div className="rounded-lg border border-indigo-100 bg-indigo-50/50 p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <School className="size-4 text-indigo-600" />
+                      <span className="text-xs font-semibold text-indigo-900">
+                        Sekolah ({rencana.sekolah.length})
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {rencana.sekolah.slice(0, 3).map((sekolah) => (
+                        <Badge
+                          key={sekolah.id}
+                          className="rounded-full border-0 bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700"
+                        >
+                          {sekolah.nama}
+                        </Badge>
+                      ))}
+                      {rencana.sekolah.length > 3 && (
+                        <Badge className="rounded-full border-0 bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700">
+                          +{rencana.sekolah.length - 3} lainnya
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                )}
                 {rencana.file && (
                   <div className="flex items-center gap-2 text-sm text-slate-600">
                     <FileText className="size-4 text-indigo-500" />
