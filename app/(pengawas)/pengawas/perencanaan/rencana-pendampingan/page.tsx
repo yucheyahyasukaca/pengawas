@@ -123,11 +123,11 @@ export default function RencanaPendampinganPage() {
 
       <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="size-5 text-indigo-500" />
+          <CardTitle className="flex items-center gap-2 text-slate-900">
+            <TrendingUp className="size-5 text-indigo-600" />
             Integrasi Rapor Pendidikan
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-slate-700">
             Mengaitkan hasil Rapor Pendidikan sekolah binaan untuk menetapkan prioritas masalah
           </CardDescription>
         </CardHeader>
