@@ -76,7 +76,7 @@ export function SiteHeader() {
           </div>
           <div className="flex flex-col leading-tight text-white">
             <span className="text-xs font-semibold uppercase tracking-wide text-white/80">
-              MKPS SMA &amp; SLB
+              SMA, SMK &amp; SLB
             </span>
             <span className="text-base font-bold sm:text-lg">
               {siteConfig.shortName}

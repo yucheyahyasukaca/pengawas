@@ -413,3 +413,286 @@ export async function POST(request: Request) {
   }
 }
 
+export async function PUT(request: Request) {
+  try {
+    const supabase = await createSupabaseServerClient();
+    
+    // Get current user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: "Unauthorized: Authentication required" },
+        { status: 401 }
+      );
+    }
+
+    // Use admin client to check role (bypass RLS)
+    const adminClient = createSupabaseAdminClient();
+    const { data: userData, error: userError } = await adminClient
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (userError || !userData) {
+      return NextResponse.json(
+        { error: "User data not found" },
+        { status: 404 }
+      );
+    }
+
+    if (userData.role !== "pengawas") {
+      return NextResponse.json(
+        { error: "Forbidden: Only pengawas can update rencana pendampingan" },
+        { status: 403 }
+      );
+    }
+
+    const body = await request.json();
+    const {
+      id,
+      tanggal,
+      sekolah_id,
+      indikator_utama,
+      akar_masalah,
+      kegiatan_benahi,
+      penjelasan_implementasi,
+      apakah_kegiatan,
+    } = body;
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "ID rencana pendampingan harus diisi" },
+        { status: 400 }
+      );
+    }
+
+    // Validation
+    if (!tanggal) {
+      return NextResponse.json(
+        { error: "Tanggal harus diisi" },
+        { status: 400 }
+      );
+    }
+
+    if (!sekolah_id) {
+      return NextResponse.json(
+        { error: "Sekolah harus dipilih" },
+        { status: 400 }
+      );
+    }
+
+    if (!indikator_utama) {
+      return NextResponse.json(
+        { error: "Indikator utama harus dipilih" },
+        { status: 400 }
+      );
+    }
+
+    if (!akar_masalah || !akar_masalah.trim()) {
+      return NextResponse.json(
+        { error: "Akar masalah harus diisi" },
+        { status: 400 }
+      );
+    }
+
+    if (!kegiatan_benahi || !kegiatan_benahi.trim()) {
+      return NextResponse.json(
+        { error: "Kegiatan benahi harus diisi" },
+        { status: 400 }
+      );
+    }
+
+    if (!penjelasan_implementasi || !Array.isArray(penjelasan_implementasi) || penjelasan_implementasi.length === 0) {
+      return NextResponse.json(
+        { error: "Penjelasan implementasi kegiatan harus diisi minimal satu" },
+        { status: 400 }
+      );
+    }
+
+    // Check if rencana belongs to current user
+    const { data: existingRencana, error: fetchError } = await adminClient
+      .from("rencana_pendampingan")
+      .select("pengawas_id")
+      .eq("id", id)
+      .single();
+
+    if (fetchError || !existingRencana) {
+      return NextResponse.json(
+        { error: "Rencana pendampingan tidak ditemukan" },
+        { status: 404 }
+      );
+    }
+
+    if (existingRencana.pengawas_id !== user.id) {
+      return NextResponse.json(
+        { error: "Forbidden: You can only update your own rencana pendampingan" },
+        { status: 403 }
+      );
+    }
+
+    // Update rencana pendampingan
+    const { data: updatedRencanaPendampingan, error: updateError } = await adminClient
+      .from("rencana_pendampingan")
+      .update({
+        tanggal: tanggal,
+        sekolah_id: sekolah_id,
+        indikator_utama: indikator_utama.trim(),
+        akar_masalah: akar_masalah.trim(),
+        kegiatan_benahi: kegiatan_benahi.trim(),
+        penjelasan_implementasi: penjelasan_implementasi.filter((p: string) => p.trim()),
+        apakah_kegiatan: apakah_kegiatan ?? true,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id)
+      .select("*")
+      .single();
+
+    if (updateError) {
+      console.error("Error updating rencana pendampingan:", updateError);
+      return NextResponse.json(
+        { error: "Gagal mengupdate rencana pendampingan", details: updateError.message },
+        { status: 500 }
+      );
+    }
+
+    // Fetch sekolah data
+    let sekolahNama = "";
+    try {
+      const { data: sekolahData, error: sekolahError } = await adminClient
+        .from("sekolah")
+        .select("id, nama_sekolah")
+        .eq("id", sekolah_id)
+        .single();
+
+      if (!sekolahError && sekolahData) {
+        sekolahNama = sekolahData.nama_sekolah || "";
+      }
+    } catch (sekolahErr) {
+      console.error("Error fetching sekolah data:", sekolahErr);
+      // Continue without sekolah name
+    }
+
+    return NextResponse.json({
+      success: true,
+      rencanaPendampingan: {
+        id: updatedRencanaPendampingan.id,
+        tanggal: updatedRencanaPendampingan.tanggal,
+        sekolah_id: updatedRencanaPendampingan.sekolah_id,
+        sekolah_nama: sekolahNama,
+        indikator_utama: updatedRencanaPendampingan.indikator_utama,
+        akar_masalah: updatedRencanaPendampingan.akar_masalah,
+        kegiatan_benahi: updatedRencanaPendampingan.kegiatan_benahi,
+        penjelasan_implementasi: Array.isArray(updatedRencanaPendampingan.penjelasan_implementasi)
+          ? updatedRencanaPendampingan.penjelasan_implementasi
+          : [],
+        apakah_kegiatan: updatedRencanaPendampingan.apakah_kegiatan,
+        created_at: updatedRencanaPendampingan.created_at,
+        updated_at: updatedRencanaPendampingan.updated_at,
+      },
+    });
+  } catch (error) {
+    console.error("Error in PUT /api/pengawas/rencana-pendampingan:", error);
+    return NextResponse.json(
+      { error: "Terjadi kesalahan saat mengupdate rencana pendampingan" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const supabase = await createSupabaseServerClient();
+    
+    // Get current user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: "Unauthorized: Authentication required" },
+        { status: 401 }
+      );
+    }
+
+    // Use admin client to check role (bypass RLS)
+    const adminClient = createSupabaseAdminClient();
+    const { data: userData, error: userError } = await adminClient
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (userError || !userData) {
+      return NextResponse.json(
+        { error: "User data not found" },
+        { status: 404 }
+      );
+    }
+
+    if (userData.role !== "pengawas") {
+      return NextResponse.json(
+        { error: "Forbidden: Only pengawas can delete rencana pendampingan" },
+        { status: 403 }
+      );
+    }
+
+    // Get ID from query parameters
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "ID rencana pendampingan harus diisi" },
+        { status: 400 }
+      );
+    }
+
+    // Check if rencana belongs to current user
+    const { data: existingRencana, error: fetchError } = await adminClient
+      .from("rencana_pendampingan")
+      .select("pengawas_id")
+      .eq("id", id)
+      .single();
+
+    if (fetchError || !existingRencana) {
+      return NextResponse.json(
+        { error: "Rencana pendampingan tidak ditemukan" },
+        { status: 404 }
+      );
+    }
+
+    if (existingRencana.pengawas_id !== user.id) {
+      return NextResponse.json(
+        { error: "Forbidden: You can only delete your own rencana pendampingan" },
+        { status: 403 }
+      );
+    }
+
+    // Delete rencana pendampingan
+    const { error: deleteError } = await adminClient
+      .from("rencana_pendampingan")
+      .delete()
+      .eq("id", id);
+
+    if (deleteError) {
+      console.error("Error deleting rencana pendampingan:", deleteError);
+      return NextResponse.json(
+        { error: "Gagal menghapus rencana pendampingan", details: deleteError.message },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Rencana pendampingan berhasil dihapus",
+    });
+  } catch (error) {
+    console.error("Error in DELETE /api/pengawas/rencana-pendampingan:", error);
+    return NextResponse.json(
+      { error: "Terjadi kesalahan saat menghapus rencana pendampingan" },
+      { status: 500 }
+    );
+  }
+}
+
