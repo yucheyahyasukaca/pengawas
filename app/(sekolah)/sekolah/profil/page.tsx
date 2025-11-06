@@ -26,9 +26,22 @@ import {
   FileText,
   ChevronDown,
   Save,
+  Plus,
+  Trash2,
+  Eye,
+  Edit,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type TabType = 
   | "identitas" 
@@ -211,9 +224,9 @@ export default function SekolahProfilePage() {
             variant="outline"
             size="sm"
             onClick={() => router.back()}
-            className="rounded-full border-green-200 bg-white text-green-700 hover:bg-green-50 hover:text-green-900 shadow-sm"
+            className="rounded-full border-0 bg-gradient-to-r from-green-50 via-emerald-50/80 to-teal-50/60 text-green-700 hover:from-green-100 hover:via-emerald-100/90 hover:to-teal-100/70 hover:text-green-800 shadow-md shadow-green-200/30 hover:shadow-lg hover:shadow-green-300/40 transition-all duration-300 group"
           >
-            <ArrowLeft className="size-4 mr-2" />
+            <ArrowLeft className="size-4 mr-2 group-hover:-translate-x-1 transition-transform" />
             Kembali
           </Button>
         </div>
@@ -246,9 +259,9 @@ export default function SekolahProfilePage() {
           variant="outline"
           size="sm"
           onClick={() => router.back()}
-          className="rounded-full border-green-200 bg-white text-green-700 hover:bg-green-50 hover:text-green-900 shadow-sm"
+          className="rounded-full border-0 bg-gradient-to-r from-green-50 via-emerald-50/80 to-teal-50/60 text-green-700 hover:from-green-100 hover:via-emerald-100/90 hover:to-teal-100/70 hover:text-green-800 shadow-md shadow-green-200/30 hover:shadow-lg hover:shadow-green-300/40 transition-all duration-300 group"
         >
-          <ArrowLeft className="size-4 mr-2" />
+          <ArrowLeft className="size-4 mr-2 group-hover:-translate-x-1 transition-transform" />
           Kembali
         </Button>
         <Button
@@ -641,46 +654,1939 @@ function IdentitasSekolahTab({
   );
 }
 
-// Placeholder components for other tabs - will be implemented later
+// Profil Guru Tab Component
 function ProfilGuruTab({ formData, updateFormData }: { formData: Partial<SekolahProfile>; updateFormData: (field: string, value: any) => void }) {
+  const { toast } = useToast();
+  const [guruList, setGuruList] = useState<any[]>(formData.profil_guru?.detail || []);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedGuruIndex, setSelectedGuruIndex] = useState<number | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [newGuru, setNewGuru] = useState<any>({
+    nama: '',
+    nip: '',
+    tanggal_lahir: '',
+    jenis_kelamin: '',
+    status: '',
+    pendidikan: '',
+    jurusan: '',
+    mata_pelajaran: '',
+    jumlah_jam: '',
+    tugas_tambahan: {
+      waka: false,
+      kepala_lab: false,
+      wali_kelas: false,
+      guru_wali: false,
+      ekstrakurikuler: false,
+      lainnya: false,
+    },
+    tanggal_purna_tugas: '',
+  });
+  
+  useEffect(() => {
+    if (formData.profil_guru?.detail) {
+      setGuruList(formData.profil_guru.detail);
+    }
+  }, [formData.profil_guru]);
+
+  const openAddModal = () => {
+    setNewGuru({
+      nama: '',
+      nip: '',
+      tanggal_lahir: '',
+      jenis_kelamin: '',
+      status: '',
+      pendidikan: '',
+      jurusan: '',
+      mata_pelajaran: '',
+      jumlah_jam: '',
+      tugas_tambahan: {
+        waka: false,
+        kepala_lab: false,
+        wali_kelas: false,
+        guru_wali: false,
+        ekstrakurikuler: false,
+        lainnya: false,
+      },
+      tanggal_purna_tugas: '',
+    });
+    setIsAddModalOpen(true);
+  };
+
+  const openViewModal = (index: number) => {
+    setSelectedGuruIndex(index);
+    setIsViewModalOpen(true);
+  };
+
+  const openEditModal = (index: number) => {
+    setSelectedGuruIndex(index);
+    setNewGuru({ ...guruList[index] });
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveGuru = async () => {
+    try {
+      setIsSaving(true);
+      
+      let updatedList: any[];
+      if (selectedGuruIndex !== null && isEditModalOpen) {
+        // Edit existing guru
+        updatedList = guruList.map((guru, i) => 
+          i === selectedGuruIndex ? newGuru : guru
+        );
+      } else {
+        // Add new guru
+        updatedList = [...guruList, newGuru];
+      }
+
+      setGuruList(updatedList);
+      
+      // Update formData
+      const updatedFormData = {
+        ...formData,
+        profil_guru: {
+          ...formData.profil_guru,
+          detail: updatedList,
+        },
+      };
+      updateFormData('profil_guru', updatedFormData.profil_guru);
+
+      // Save to database
+      const response = await fetch('/api/sekolah/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedFormData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Gagal menyimpan data');
+      }
+
+      const result = await response.json();
+      
+      toast({
+        title: "Berhasil",
+        description: selectedGuruIndex !== null ? "Data guru berhasil diperbarui" : "Data guru berhasil ditambahkan",
+      });
+
+      setIsAddModalOpen(false);
+      setIsEditModalOpen(false);
+      setSelectedGuruIndex(null);
+      setNewGuru({
+        nama: '',
+        nip: '',
+        tanggal_lahir: '',
+        jenis_kelamin: '',
+        status: '',
+        pendidikan: '',
+        jurusan: '',
+        mata_pelajaran: '',
+        jumlah_jam: '',
+        tugas_tambahan: {
+          waka: false,
+          kepala_lab: false,
+          wali_kelas: false,
+          guru_wali: false,
+          ekstrakurikuler: false,
+          lainnya: false,
+        },
+        tanggal_purna_tugas: '',
+      });
+    } catch (err) {
+      console.error("Error saving guru:", err);
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : 'Gagal menyimpan data',
+        variant: "error",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteGuru = async (index: number) => {
+    if (!confirm('Apakah Anda yakin ingin menghapus data guru ini?')) {
+      return;
+    }
+
+    try {
+      const updated = guruList.filter((_, i) => i !== index);
+      setGuruList(updated);
+      
+      const updatedFormData = {
+        ...formData,
+        profil_guru: {
+          ...formData.profil_guru,
+          detail: updated,
+        },
+      };
+      updateFormData('profil_guru', updatedFormData.profil_guru);
+
+      // Save to database
+      const response = await fetch('/api/sekolah/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedFormData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Gagal menghapus data');
+      }
+
+      toast({
+        title: "Berhasil",
+        description: "Data guru berhasil dihapus",
+      });
+    } catch (err) {
+      console.error("Error deleting guru:", err);
+      toast({
+        title: "Error",
+        description: 'Gagal menghapus data',
+        variant: "error",
+      });
+    }
+  };
+
+  const updateNewGuru = (field: string, value: any) => {
+    if (field.startsWith('tugas_tambahan.')) {
+      const tugasField = field.split('.')[1];
+      setNewGuru(prev => ({
+        ...prev,
+        tugas_tambahan: {
+          ...prev.tugas_tambahan,
+          [tugasField]: value,
+        },
+      }));
+    } else {
+      setNewGuru(prev => ({ ...prev, [field]: value }));
+    }
+  };
+
+  // Calculate statistics
+  const stats = {
+    jenis_kelamin: {
+      laki_laki: guruList.filter(g => g.jenis_kelamin === 'Laki-laki').length,
+      perempuan: guruList.filter(g => g.jenis_kelamin === 'Perempuan').length,
+    },
+    status: {
+      pns: guruList.filter(g => g.status === 'PNS').length,
+      pppk: guruList.filter(g => g.status === 'PPPK').length,
+      pppk_paruh_waktu: guruList.filter(g => g.status === 'PPPK paruh waktu').length,
+      guru_tamu: guruList.filter(g => g.status === 'Guru Tamu').length,
+      gty: guruList.filter(g => g.status === 'GTY').length,
+      gtt: guruList.filter(g => g.status === 'GTT').length,
+    },
+    pendidikan: {
+      sma: guruList.filter(g => g.pendidikan === 'SMA/ sederajat').length,
+      d1: guruList.filter(g => g.pendidikan === 'D1').length,
+      d2: guruList.filter(g => g.pendidikan === 'D2').length,
+      d3: guruList.filter(g => g.pendidikan === 'D3').length,
+      s1: guruList.filter(g => g.pendidikan === 'S1/D4').length,
+      s2: guruList.filter(g => g.pendidikan === 'S2').length,
+      s3: guruList.filter(g => g.pendidikan === 'S3').length,
+    },
+  };
+
   return (
-    <Card className="border border-green-200 bg-white shadow-md shadow-green-100/70">
-      <CardHeader>
-        <CardTitle className="text-lg font-bold text-slate-900">Profil Guru</CardTitle>
-        <CardDescription className="text-slate-600">Data profil guru akan tersedia segera</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-slate-600">Fitur ini sedang dalam pengembangan.</p>
-      </CardContent>
-    </Card>
+    <div className="space-y-6">
+      {/* Statistics */}
+      <Card className="border-0 bg-gradient-to-br from-green-50 via-emerald-50/80 to-teal-50/60 shadow-lg shadow-green-100/50">
+        <CardHeader>
+          <CardTitle className="text-lg font-bold text-slate-900 text-center md:text-center">Statistik Profil Guru</CardTitle>
+          <CardDescription className="text-slate-600 text-center md:text-center">Ringkasan data guru berdasarkan kategori</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full max-w-4xl mx-auto border-collapse">
+              <thead>
+                <tr className="border-b-2 border-slate-200 bg-white/80">
+                  <th className="px-6 py-4 text-left text-sm font-bold text-slate-900 w-[30%]">Kategori</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-slate-900 w-[50%]">Sub Kategori</th>
+                  <th className="px-6 py-4 text-center text-sm font-bold text-slate-900 w-[20%]">Jumlah</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white/50">
+                <tr>
+                  <td rowSpan={2} className="px-6 py-4 text-sm font-semibold text-slate-900 align-top border-r border-slate-100">Jenis Kelamin</td>
+                  <td className="px-6 py-3 text-sm text-slate-700">Laki-laki</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{stats.jenis_kelamin.laki_laki}</td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-3 text-sm text-slate-700">Perempuan</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{stats.jenis_kelamin.perempuan}</td>
+                </tr>
+                <tr>
+                  <td rowSpan={6} className="px-6 py-4 text-sm font-semibold text-slate-900 align-top border-r border-slate-100">Status Kepegawaian</td>
+                  <td className="px-6 py-3 text-sm text-slate-700">PNS</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{stats.status.pns}</td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-3 text-sm text-slate-700">PPPK</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{stats.status.pppk}</td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-3 text-sm text-slate-700">PPPK paruh waktu</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{stats.status.pppk_paruh_waktu}</td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-3 text-sm text-slate-700">Guru Tamu</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{stats.status.guru_tamu}</td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-3 text-sm text-slate-700">GTY</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{stats.status.gty}</td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-3 text-sm text-slate-700">GTT</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{stats.status.gtt}</td>
+                </tr>
+                <tr>
+                  <td rowSpan={7} className="px-6 py-4 text-sm font-semibold text-slate-900 align-top border-r border-slate-100">Pendidikan</td>
+                  <td className="px-6 py-3 text-sm text-slate-700">SMA/ sederajat</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{stats.pendidikan.sma}</td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-3 text-sm text-slate-700">D1</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{stats.pendidikan.d1}</td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-3 text-sm text-slate-700">D2</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{stats.pendidikan.d2}</td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-3 text-sm text-slate-700">D3</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{stats.pendidikan.d3}</td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-3 text-sm text-slate-700">S1/D4</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{stats.pendidikan.s1}</td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-3 text-sm text-slate-700">S2</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{stats.pendidikan.s2}</td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-3 text-sm text-slate-700">S3</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{stats.pendidikan.s3}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* List View */}
+      <Card className="border-0 bg-gradient-to-br from-green-50 via-emerald-50/80 to-teal-50/60 shadow-lg shadow-green-100/50">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <CardTitle className="text-lg font-bold text-slate-900">Daftar Profil Guru</CardTitle>
+            <CardDescription className="text-slate-600">Daftar lengkap data guru</CardDescription>
+          </div>
+          <Button
+            onClick={openAddModal}
+            className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white shadow-md hover:shadow-lg transition-all duration-300"
+          >
+            <Plus className="size-4 mr-2" />
+            Tambah Guru
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {guruList.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 px-4">
+              <div className="p-4 rounded-full bg-gradient-to-br from-green-100 to-emerald-100 mb-4">
+                <User className="size-8 text-green-600" />
+              </div>
+              <p className="text-sm font-medium text-slate-600 mb-2">Belum ada data guru</p>
+              <p className="text-xs text-slate-500 text-center max-w-md">
+                Klik tombol "Tambah Guru" di atas untuk menambahkan data guru baru
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {guruList.map((guru, index) => (
+                <Card key={index} className="border-0 bg-white shadow-md hover:shadow-lg transition-shadow duration-300">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 text-white font-bold shadow-sm">
+                          {index + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-base font-bold text-slate-900 truncate">{guru.nama || 'Nama Guru'}</p>
+                          <p className="text-xs text-slate-600 truncate">{guru.nip || 'NIP: -'}</p>
+                          <p className="text-xs text-slate-500 truncate">{guru.mata_pelajaran || 'Mata Pelajaran: -'}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openViewModal(index)}
+                          className="text-green-600 hover:bg-green-50 hover:text-green-700 h-8 w-8 p-0"
+                        >
+                          <Eye className="size-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setNewGuru({ ...guru });
+                            openEditModal(index);
+                          }}
+                          className="text-blue-600 hover:bg-blue-50 hover:text-blue-700 h-8 w-8 p-0"
+                        >
+                          <Edit className="size-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteGuru(index)}
+                          className="text-red-600 hover:bg-red-50 hover:text-red-700 h-8 w-8 p-0"
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Add/Edit Modal */}
+      <Dialog open={isAddModalOpen || isEditModalOpen} onOpenChange={(open) => {
+        if (!open) {
+          setIsAddModalOpen(false);
+          setIsEditModalOpen(false);
+          setSelectedGuruIndex(null);
+          setNewGuru({
+            nama: '',
+            nip: '',
+            tanggal_lahir: '',
+            jenis_kelamin: '',
+            status: '',
+            pendidikan: '',
+            jurusan: '',
+            mata_pelajaran: '',
+            jumlah_jam: '',
+            tugas_tambahan: {
+              waka: false,
+              kepala_lab: false,
+              wali_kelas: false,
+              guru_wali: false,
+              ekstrakurikuler: false,
+              lainnya: false,
+            },
+            tanggal_purna_tugas: '',
+          });
+        }
+      }}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-slate-900">
+              {isEditModalOpen ? 'Edit Data Guru' : 'Tambah Guru Baru'}
+            </DialogTitle>
+            <DialogDescription>
+              {isEditModalOpen ? 'Perbarui data guru yang sudah ada' : 'Isi data guru baru di bawah ini'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {/* Nama Guru */}
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-900">Nama Guru *</label>
+              <input
+                type="text"
+                value={newGuru.nama || ''}
+                onChange={(e) => updateNewGuru('nama', e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                placeholder="Masukkan nama guru"
+              />
+            </div>
+
+            {/* Row 1: NIP, Tanggal Lahir, Jenis Kelamin */}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-900">NIP</label>
+                <input
+                  type="text"
+                  value={newGuru.nip || ''}
+                  onChange={(e) => updateNewGuru('nip', e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                  placeholder="Nomor Induk Pegawai"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-900">Tanggal Lahir</label>
+                <input
+                  type="date"
+                  value={newGuru.tanggal_lahir || ''}
+                  onChange={(e) => updateNewGuru('tanggal_lahir', e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-900">Jenis Kelamin</label>
+                <select
+                  value={newGuru.jenis_kelamin || ''}
+                  onChange={(e) => updateNewGuru('jenis_kelamin', e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                >
+                  <option value="">Pilih Jenis Kelamin</option>
+                  <option value="Laki-laki">Laki-laki</option>
+                  <option value="Perempuan">Perempuan</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Row 2: Status, Pendidikan, Jurusan */}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-900">Status Kepegawaian</label>
+                <select
+                  value={newGuru.status || ''}
+                  onChange={(e) => updateNewGuru('status', e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                >
+                  <option value="">Pilih Status</option>
+                  <option value="PNS">PNS</option>
+                  <option value="PPPK">PPPK</option>
+                  <option value="PPPK paruh waktu">PPPK paruh waktu</option>
+                  <option value="Guru Tamu">Guru Tamu</option>
+                  <option value="GTY">GTY</option>
+                  <option value="GTT">GTT</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-900">Pendidikan</label>
+                <select
+                  value={newGuru.pendidikan || ''}
+                  onChange={(e) => updateNewGuru('pendidikan', e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                >
+                  <option value="">Pilih Pendidikan</option>
+                  <option value="SMA/ sederajat">SMA/ sederajat</option>
+                  <option value="D1">D1</option>
+                  <option value="D2">D2</option>
+                  <option value="D3">D3</option>
+                  <option value="S1/D4">S1/D4</option>
+                  <option value="S2">S2</option>
+                  <option value="S3">S3</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-900">Jurusan</label>
+                <input
+                  type="text"
+                  value={newGuru.jurusan || ''}
+                  onChange={(e) => updateNewGuru('jurusan', e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                  placeholder="Jurusan pendidikan"
+                />
+              </div>
+            </div>
+
+            {/* Row 3: Mata Pelajaran, Jumlah Jam */}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-900">Mata Pelajaran</label>
+                <input
+                  type="text"
+                  value={newGuru.mata_pelajaran || ''}
+                  onChange={(e) => updateNewGuru('mata_pelajaran', e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                  placeholder="Mata pelajaran yang diampu"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-900">Jumlah Jam</label>
+                <input
+                  type="number"
+                  value={newGuru.jumlah_jam || ''}
+                  onChange={(e) => updateNewGuru('jumlah_jam', e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                  placeholder="Jumlah jam mengajar"
+                />
+              </div>
+            </div>
+
+            {/* Tugas Tambahan */}
+            <div className="space-y-3 pt-2 border-t border-slate-200">
+              <label className="text-sm font-semibold text-slate-900">Tugas Tambahan</label>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <label className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-green-50 hover:border-green-300 cursor-pointer transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={newGuru.tugas_tambahan?.waka || false}
+                    onChange={(e) => updateNewGuru('tugas_tambahan.waka', e.target.checked)}
+                    className="size-5 rounded border-slate-300 text-green-600 focus:ring-green-500 focus:ring-2"
+                  />
+                  <span className="text-sm font-medium text-slate-700">Waka</span>
+                </label>
+                <label className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-green-50 hover:border-green-300 cursor-pointer transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={newGuru.tugas_tambahan?.kepala_lab || false}
+                    onChange={(e) => updateNewGuru('tugas_tambahan.kepala_lab', e.target.checked)}
+                    className="size-5 rounded border-slate-300 text-green-600 focus:ring-green-500 focus:ring-2"
+                  />
+                  <span className="text-sm font-medium text-slate-700">Kepala Lab/Perpus/Lainnya</span>
+                </label>
+                <label className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-green-50 hover:border-green-300 cursor-pointer transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={newGuru.tugas_tambahan?.wali_kelas || false}
+                    onChange={(e) => updateNewGuru('tugas_tambahan.wali_kelas', e.target.checked)}
+                    className="size-5 rounded border-slate-300 text-green-600 focus:ring-green-500 focus:ring-2"
+                  />
+                  <span className="text-sm font-medium text-slate-700">Wali Kelas</span>
+                </label>
+                <label className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-green-50 hover:border-green-300 cursor-pointer transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={newGuru.tugas_tambahan?.guru_wali || false}
+                    onChange={(e) => updateNewGuru('tugas_tambahan.guru_wali', e.target.checked)}
+                    className="size-5 rounded border-slate-300 text-green-600 focus:ring-green-500 focus:ring-2"
+                  />
+                  <span className="text-sm font-medium text-slate-700">Guru Wali</span>
+                </label>
+                <label className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-green-50 hover:border-green-300 cursor-pointer transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={newGuru.tugas_tambahan?.ekstrakurikuler || false}
+                    onChange={(e) => updateNewGuru('tugas_tambahan.ekstrakurikuler', e.target.checked)}
+                    className="size-5 rounded border-slate-300 text-green-600 focus:ring-green-500 focus:ring-2"
+                  />
+                  <span className="text-sm font-medium text-slate-700">Ekstrakurikuler</span>
+                </label>
+                <label className="flex items-center gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50 hover:bg-green-50 hover:border-green-300 cursor-pointer transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={newGuru.tugas_tambahan?.lainnya || false}
+                    onChange={(e) => updateNewGuru('tugas_tambahan.lainnya', e.target.checked)}
+                    className="size-5 rounded border-slate-300 text-green-600 focus:ring-green-500 focus:ring-2"
+                  />
+                  <span className="text-sm font-medium text-slate-700">Lainnya</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Tanggal Purna Tugas */}
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-900">Tanggal Purna Tugas</label>
+              <input
+                type="date"
+                value={newGuru.tanggal_purna_tugas || ''}
+                onChange={(e) => updateNewGuru('tanggal_purna_tugas', e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsAddModalOpen(false);
+                setIsEditModalOpen(false);
+                setSelectedGuruIndex(null);
+              }}
+              disabled={isSaving}
+            >
+              Batal
+            </Button>
+            <Button
+              onClick={handleSaveGuru}
+              disabled={isSaving || !newGuru.nama}
+              className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="size-4 mr-2 animate-spin" />
+                  Menyimpan...
+                </>
+              ) : (
+                <>
+                  <Save className="size-4 mr-2" />
+                  Simpan
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Modal */}
+      <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-slate-900">Detail Data Guru</DialogTitle>
+            <DialogDescription>Informasi lengkap data guru</DialogDescription>
+          </DialogHeader>
+          
+          {selectedGuruIndex !== null && guruList[selectedGuruIndex] && (
+            <div className="space-y-4 py-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Nama</label>
+                  <p className="text-sm font-medium text-slate-900">{guruList[selectedGuruIndex].nama || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">NIP</label>
+                  <p className="text-sm font-medium text-slate-900">{guruList[selectedGuruIndex].nip || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Tanggal Lahir</label>
+                  <p className="text-sm font-medium text-slate-900">{guruList[selectedGuruIndex].tanggal_lahir || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Jenis Kelamin</label>
+                  <p className="text-sm font-medium text-slate-900">{guruList[selectedGuruIndex].jenis_kelamin || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Status Kepegawaian</label>
+                  <p className="text-sm font-medium text-slate-900">{guruList[selectedGuruIndex].status || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Pendidikan</label>
+                  <p className="text-sm font-medium text-slate-900">{guruList[selectedGuruIndex].pendidikan || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Jurusan</label>
+                  <p className="text-sm font-medium text-slate-900">{guruList[selectedGuruIndex].jurusan || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Mata Pelajaran</label>
+                  <p className="text-sm font-medium text-slate-900">{guruList[selectedGuruIndex].mata_pelajaran || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Jumlah Jam</label>
+                  <p className="text-sm font-medium text-slate-900">{guruList[selectedGuruIndex].jumlah_jam || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Tanggal Purna Tugas</label>
+                  <p className="text-sm font-medium text-slate-900">{guruList[selectedGuruIndex].tanggal_purna_tugas || '-'}</p>
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-2 border-t border-slate-200">
+                <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Tugas Tambahan</label>
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {guruList[selectedGuruIndex].tugas_tambahan?.waka && (
+                    <Badge className="w-fit bg-green-100 text-green-700 border-green-300">Waka</Badge>
+                  )}
+                  {guruList[selectedGuruIndex].tugas_tambahan?.kepala_lab && (
+                    <Badge className="w-fit bg-green-100 text-green-700 border-green-300">Kepala Lab/Perpus/Lainnya</Badge>
+                  )}
+                  {guruList[selectedGuruIndex].tugas_tambahan?.wali_kelas && (
+                    <Badge className="w-fit bg-green-100 text-green-700 border-green-300">Wali Kelas</Badge>
+                  )}
+                  {guruList[selectedGuruIndex].tugas_tambahan?.guru_wali && (
+                    <Badge className="w-fit bg-green-100 text-green-700 border-green-300">Guru Wali</Badge>
+                  )}
+                  {guruList[selectedGuruIndex].tugas_tambahan?.ekstrakurikuler && (
+                    <Badge className="w-fit bg-green-100 text-green-700 border-green-300">Ekstrakurikuler</Badge>
+                  )}
+                  {guruList[selectedGuruIndex].tugas_tambahan?.lainnya && (
+                    <Badge className="w-fit bg-green-100 text-green-700 border-green-300">Lainnya</Badge>
+                  )}
+                  {!guruList[selectedGuruIndex].tugas_tambahan?.waka && 
+                   !guruList[selectedGuruIndex].tugas_tambahan?.kepala_lab && 
+                   !guruList[selectedGuruIndex].tugas_tambahan?.wali_kelas && 
+                   !guruList[selectedGuruIndex].tugas_tambahan?.guru_wali && 
+                   !guruList[selectedGuruIndex].tugas_tambahan?.ekstrakurikuler && 
+                   !guruList[selectedGuruIndex].tugas_tambahan?.lainnya && (
+                    <p className="text-sm text-slate-500">Tidak ada tugas tambahan</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsViewModalOpen(false)}
+            >
+              Tutup
+            </Button>
+            {selectedGuruIndex !== null && (
+              <Button
+                onClick={() => {
+                  setNewGuru({ ...guruList[selectedGuruIndex] });
+                  setIsViewModalOpen(false);
+                  openEditModal(selectedGuruIndex);
+                }}
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+              >
+                <Edit className="size-4 mr-2" />
+                Edit
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
 
 function ProfilTenagaKependidikanTab({ formData, updateFormData }: { formData: Partial<SekolahProfile>; updateFormData: (field: string, value: any) => void }) {
+  const { toast } = useToast();
+  const [tenagaList, setTenagaList] = useState<any[]>(formData.profil_tenaga_kependidikan?.detail || []);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedTenagaIndex, setSelectedTenagaIndex] = useState<number | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [newTenaga, setNewTenaga] = useState<any>({
+    nama: '',
+    nip: '',
+    tanggal_lahir: '',
+    jenis_kelamin: '',
+    status: '',
+    pendidikan: '',
+    tugas: '',
+    tanggal_purna_tugas: '',
+  });
+  
+  useEffect(() => {
+    if (formData.profil_tenaga_kependidikan?.detail) {
+      setTenagaList(formData.profil_tenaga_kependidikan.detail);
+    }
+  }, [formData.profil_tenaga_kependidikan]);
+
+  const openAddModal = () => {
+    setNewTenaga({
+      nama: '',
+      nip: '',
+      tanggal_lahir: '',
+      jenis_kelamin: '',
+      status: '',
+      pendidikan: '',
+      tugas: '',
+      tanggal_purna_tugas: '',
+    });
+    setIsAddModalOpen(true);
+  };
+
+  const openViewModal = (index: number) => {
+    setSelectedTenagaIndex(index);
+    setIsViewModalOpen(true);
+  };
+
+  const openEditModal = (index: number) => {
+    setSelectedTenagaIndex(index);
+    setNewTenaga({ ...tenagaList[index] });
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveTenaga = async () => {
+    try {
+      setIsSaving(true);
+      
+      let updatedList: any[];
+      if (selectedTenagaIndex !== null && isEditModalOpen) {
+        // Edit existing tenaga
+        updatedList = tenagaList.map((tenaga, i) => 
+          i === selectedTenagaIndex ? newTenaga : tenaga
+        );
+      } else {
+        // Add new tenaga
+        updatedList = [...tenagaList, newTenaga];
+      }
+
+      setTenagaList(updatedList);
+      
+      // Update formData
+      const updatedFormData = {
+        ...formData,
+        profil_tenaga_kependidikan: {
+          ...formData.profil_tenaga_kependidikan,
+          detail: updatedList,
+        },
+      };
+      updateFormData('profil_tenaga_kependidikan', updatedFormData.profil_tenaga_kependidikan);
+
+      // Save to database
+      const response = await fetch('/api/sekolah/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedFormData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Gagal menyimpan data');
+      }
+
+      const result = await response.json();
+      
+      toast({
+        title: "Berhasil",
+        description: selectedTenagaIndex !== null ? "Data tenaga kependidikan berhasil diperbarui" : "Data tenaga kependidikan berhasil ditambahkan",
+      });
+
+      setIsAddModalOpen(false);
+      setIsEditModalOpen(false);
+      setSelectedTenagaIndex(null);
+      setNewTenaga({
+        nama: '',
+        nip: '',
+        tanggal_lahir: '',
+        jenis_kelamin: '',
+        status: '',
+        pendidikan: '',
+        tugas: '',
+        tanggal_purna_tugas: '',
+      });
+    } catch (err) {
+      console.error("Error saving tenaga:", err);
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : 'Gagal menyimpan data',
+        variant: "error",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteTenaga = async (index: number) => {
+    if (!confirm('Apakah Anda yakin ingin menghapus data tenaga kependidikan ini?')) {
+      return;
+    }
+
+    try {
+      const updated = tenagaList.filter((_, i) => i !== index);
+      setTenagaList(updated);
+      
+      const updatedFormData = {
+        ...formData,
+        profil_tenaga_kependidikan: {
+          ...formData.profil_tenaga_kependidikan,
+          detail: updated,
+        },
+      };
+      updateFormData('profil_tenaga_kependidikan', updatedFormData.profil_tenaga_kependidikan);
+
+      // Save to database
+      const response = await fetch('/api/sekolah/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedFormData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Gagal menghapus data');
+      }
+
+      toast({
+        title: "Berhasil",
+        description: "Data tenaga kependidikan berhasil dihapus",
+      });
+    } catch (err) {
+      console.error("Error deleting tenaga:", err);
+      toast({
+        title: "Error",
+        description: 'Gagal menghapus data',
+        variant: "error",
+      });
+    }
+  };
+
+  const updateNewTenaga = (field: string, value: any) => {
+    setNewTenaga(prev => ({ ...prev, [field]: value }));
+  };
+
+  // Calculate statistics
+  const stats = {
+    jenis_kelamin: {
+      laki_laki: tenagaList.filter(t => t.jenis_kelamin === 'Laki-laki').length,
+      perempuan: tenagaList.filter(t => t.jenis_kelamin === 'Perempuan').length,
+    },
+    status: {
+      pns: tenagaList.filter(t => t.status === 'PNS').length,
+      pppk: tenagaList.filter(t => t.status === 'PPPK').length,
+      pppk_paruh_waktu: tenagaList.filter(t => t.status === 'PPPK paruh waktu').length,
+      guru_tamu: tenagaList.filter(t => t.status === 'Guru Tamu').length,
+      gty: tenagaList.filter(t => t.status === 'GTY').length,
+      gtt: tenagaList.filter(t => t.status === 'GTT').length,
+    },
+  };
+
   return (
-    <Card className="border border-green-200 bg-white shadow-md shadow-green-100/70">
-      <CardHeader>
-        <CardTitle className="text-lg font-bold text-slate-900">Profil Tenaga Kependidikan</CardTitle>
-        <CardDescription className="text-slate-600">Data tenaga kependidikan akan tersedia segera</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-slate-600">Fitur ini sedang dalam pengembangan.</p>
-      </CardContent>
-    </Card>
+    <div className="space-y-6">
+      {/* Statistics */}
+      <Card className="border-0 bg-gradient-to-br from-green-50 via-emerald-50/80 to-teal-50/60 shadow-lg shadow-green-100/50">
+        <CardHeader>
+          <CardTitle className="text-lg font-bold text-slate-900 text-center md:text-center">Statistik Tenaga Kependidikan</CardTitle>
+          <CardDescription className="text-slate-600 text-center md:text-center">Ringkasan data tenaga kependidikan berdasarkan kategori</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full max-w-4xl mx-auto border-collapse">
+              <thead>
+                <tr className="border-b-2 border-slate-200 bg-white/80">
+                  <th className="px-6 py-4 text-left text-sm font-bold text-slate-900 w-[30%]">Kategori</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-slate-900 w-[50%]">Sub Kategori</th>
+                  <th className="px-6 py-4 text-center text-sm font-bold text-slate-900 w-[20%]">Jumlah</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white/50">
+                <tr>
+                  <td rowSpan={2} className="px-6 py-4 text-sm font-semibold text-slate-900 align-top border-r border-slate-100">Jenis Kelamin</td>
+                  <td className="px-6 py-3 text-sm text-slate-700">Laki-laki</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{stats.jenis_kelamin.laki_laki}</td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-3 text-sm text-slate-700">Perempuan</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{stats.jenis_kelamin.perempuan}</td>
+                </tr>
+                <tr>
+                  <td rowSpan={6} className="px-6 py-4 text-sm font-semibold text-slate-900 align-top border-r border-slate-100">Status Kepegawaian</td>
+                  <td className="px-6 py-3 text-sm text-slate-700">PNS</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{stats.status.pns}</td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-3 text-sm text-slate-700">PPPK</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{stats.status.pppk}</td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-3 text-sm text-slate-700">PPPK paruh waktu</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{stats.status.pppk_paruh_waktu}</td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-3 text-sm text-slate-700">Guru Tamu</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{stats.status.guru_tamu}</td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-3 text-sm text-slate-700">GTY</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{stats.status.gty}</td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-3 text-sm text-slate-700">GTT</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{stats.status.gtt}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* List View */}
+      <Card className="border-0 bg-gradient-to-br from-green-50 via-emerald-50/80 to-teal-50/60 shadow-lg shadow-green-100/50">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <CardTitle className="text-lg font-bold text-slate-900">Daftar Profil Tenaga Kependidikan</CardTitle>
+            <CardDescription className="text-slate-600">Daftar lengkap data tenaga kependidikan</CardDescription>
+          </div>
+          <Button
+            onClick={openAddModal}
+            className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white shadow-md hover:shadow-lg transition-all duration-300"
+          >
+            <Plus className="size-4 mr-2" />
+            Tambah Tenaga
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {tenagaList.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 px-4">
+              <div className="p-4 rounded-full bg-gradient-to-br from-green-100 to-emerald-100 mb-4">
+                <Briefcase className="size-8 text-green-600" />
+              </div>
+              <p className="text-sm font-medium text-slate-600 mb-2">Belum ada data tenaga kependidikan</p>
+              <p className="text-xs text-slate-500 text-center max-w-md">
+                Klik tombol "Tambah Tenaga" di atas untuk menambahkan data tenaga kependidikan baru
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {tenagaList.map((tenaga, index) => (
+                <Card key={index} className="border-0 bg-white shadow-md hover:shadow-lg transition-shadow duration-300">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 text-white font-bold shadow-sm">
+                          {index + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-base font-bold text-slate-900 truncate">{tenaga.nama || 'Nama Tenaga Kependidikan'}</p>
+                          <p className="text-xs text-slate-600 truncate">{tenaga.nip || 'NIP: -'}</p>
+                          <p className="text-xs text-slate-500 truncate">{tenaga.tugas || 'Tugas: -'}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openViewModal(index)}
+                          className="text-green-600 hover:bg-green-50 hover:text-green-700 h-8 w-8 p-0"
+                        >
+                          <Eye className="size-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setNewTenaga({ ...tenaga });
+                            openEditModal(index);
+                          }}
+                          className="text-blue-600 hover:bg-blue-50 hover:text-blue-700 h-8 w-8 p-0"
+                        >
+                          <Edit className="size-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteTenaga(index)}
+                          className="text-red-600 hover:bg-red-50 hover:text-red-700 h-8 w-8 p-0"
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Add/Edit Modal */}
+      <Dialog open={isAddModalOpen || isEditModalOpen} onOpenChange={(open) => {
+        if (!open) {
+          setIsAddModalOpen(false);
+          setIsEditModalOpen(false);
+          setSelectedTenagaIndex(null);
+          setNewTenaga({
+            nama: '',
+            nip: '',
+            tanggal_lahir: '',
+            jenis_kelamin: '',
+            status: '',
+            pendidikan: '',
+            tugas: '',
+            tanggal_purna_tugas: '',
+          });
+        }
+      }}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-slate-900">
+              {isEditModalOpen ? 'Edit Data Tenaga Kependidikan' : 'Tambah Tenaga Kependidikan Baru'}
+            </DialogTitle>
+            <DialogDescription>
+              {isEditModalOpen ? 'Perbarui data tenaga kependidikan yang sudah ada' : 'Isi data tenaga kependidikan baru di bawah ini'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {/* Nama Tenaga Kependidikan */}
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-900">Nama Tenaga Kependidikan *</label>
+              <input
+                type="text"
+                value={newTenaga.nama || ''}
+                onChange={(e) => updateNewTenaga('nama', e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                placeholder="Masukkan nama tenaga kependidikan"
+              />
+            </div>
+
+            {/* Row 1: NIP, Tanggal Lahir, Jenis Kelamin */}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-900">NIP</label>
+                <input
+                  type="text"
+                  value={newTenaga.nip || ''}
+                  onChange={(e) => updateNewTenaga('nip', e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                  placeholder="Nomor Induk Pegawai"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-900">Tanggal Lahir</label>
+                <input
+                  type="date"
+                  value={newTenaga.tanggal_lahir || ''}
+                  onChange={(e) => updateNewTenaga('tanggal_lahir', e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-900">Jenis Kelamin</label>
+                <select
+                  value={newTenaga.jenis_kelamin || ''}
+                  onChange={(e) => updateNewTenaga('jenis_kelamin', e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                >
+                  <option value="">Pilih Jenis Kelamin</option>
+                  <option value="Laki-laki">Laki-laki</option>
+                  <option value="Perempuan">Perempuan</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Row 2: Status, Pendidikan, Tugas */}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-900">Status Kepegawaian</label>
+                <select
+                  value={newTenaga.status || ''}
+                  onChange={(e) => updateNewTenaga('status', e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                >
+                  <option value="">Pilih Status</option>
+                  <option value="PNS">PNS</option>
+                  <option value="PPPK">PPPK</option>
+                  <option value="PPPK paruh waktu">PPPK paruh waktu</option>
+                  <option value="Guru Tamu">Guru Tamu</option>
+                  <option value="GTY">GTY</option>
+                  <option value="GTT">GTT</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-900">Pendidikan</label>
+                <input
+                  type="text"
+                  value={newTenaga.pendidikan || ''}
+                  onChange={(e) => updateNewTenaga('pendidikan', e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                  placeholder="Tingkat pendidikan"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-900">Tugas</label>
+                <input
+                  type="text"
+                  value={newTenaga.tugas || ''}
+                  onChange={(e) => updateNewTenaga('tugas', e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                  placeholder="Tugas/jabatan"
+                />
+              </div>
+            </div>
+
+            {/* Tanggal Purna Tugas */}
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-900">Tanggal Purna Tugas</label>
+              <input
+                type="date"
+                value={newTenaga.tanggal_purna_tugas || ''}
+                onChange={(e) => updateNewTenaga('tanggal_purna_tugas', e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsAddModalOpen(false);
+                setIsEditModalOpen(false);
+                setSelectedTenagaIndex(null);
+              }}
+              disabled={isSaving}
+            >
+              Batal
+            </Button>
+            <Button
+              onClick={handleSaveTenaga}
+              disabled={isSaving || !newTenaga.nama}
+              className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="size-4 mr-2 animate-spin" />
+                  Menyimpan...
+                </>
+              ) : (
+                <>
+                  <Save className="size-4 mr-2" />
+                  Simpan
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Modal */}
+      <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-slate-900">Detail Data Tenaga Kependidikan</DialogTitle>
+            <DialogDescription>Informasi lengkap data tenaga kependidikan</DialogDescription>
+          </DialogHeader>
+          
+          {selectedTenagaIndex !== null && tenagaList[selectedTenagaIndex] && (
+            <div className="space-y-4 py-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Nama</label>
+                  <p className="text-sm font-medium text-slate-900">{tenagaList[selectedTenagaIndex].nama || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">NIP</label>
+                  <p className="text-sm font-medium text-slate-900">{tenagaList[selectedTenagaIndex].nip || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Tanggal Lahir</label>
+                  <p className="text-sm font-medium text-slate-900">{tenagaList[selectedTenagaIndex].tanggal_lahir || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Jenis Kelamin</label>
+                  <p className="text-sm font-medium text-slate-900">{tenagaList[selectedTenagaIndex].jenis_kelamin || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Status Kepegawaian</label>
+                  <p className="text-sm font-medium text-slate-900">{tenagaList[selectedTenagaIndex].status || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Pendidikan</label>
+                  <p className="text-sm font-medium text-slate-900">{tenagaList[selectedTenagaIndex].pendidikan || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Tugas</label>
+                  <p className="text-sm font-medium text-slate-900">{tenagaList[selectedTenagaIndex].tugas || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Tanggal Purna Tugas</label>
+                  <p className="text-sm font-medium text-slate-900">{tenagaList[selectedTenagaIndex].tanggal_purna_tugas || '-'}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsViewModalOpen(false)}
+            >
+              Tutup
+            </Button>
+            {selectedTenagaIndex !== null && (
+              <Button
+                onClick={() => {
+                  setNewTenaga({ ...tenagaList[selectedTenagaIndex] });
+                  setIsViewModalOpen(false);
+                  openEditModal(selectedTenagaIndex);
+                }}
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+              >
+                <Edit className="size-4 mr-2" />
+                Edit
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
 
 function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<SekolahProfile>; updateFormData: (field: string, value: any) => void }) {
+  const { toast } = useToast();
+  const [siswaList, setSiswaList] = useState<any[]>(formData.profil_siswa?.detail || []);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedSiswaIndex, setSelectedSiswaIndex] = useState<number | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [newSiswa, setNewSiswa] = useState<any>({
+    nama: '',
+    nis: '',
+    nisn: '',
+    tanggal_lahir: '',
+    jenis_kelamin: '',
+    kelas: '',
+    status: '',
+    alamat: '',
+    nama_orang_tua: '',
+    no_telepon: '',
+  });
+  
+  useEffect(() => {
+    if (formData.profil_siswa?.detail) {
+      setSiswaList(formData.profil_siswa.detail);
+    }
+  }, [formData.profil_siswa]);
+
+  const openAddModal = () => {
+    setNewSiswa({
+      nama: '',
+      nis: '',
+      nisn: '',
+      tanggal_lahir: '',
+      jenis_kelamin: '',
+      kelas: '',
+      status: '',
+      alamat: '',
+      nama_orang_tua: '',
+      no_telepon: '',
+    });
+    setIsAddModalOpen(true);
+  };
+
+  const openViewModal = (index: number) => {
+    setSelectedSiswaIndex(index);
+    setIsViewModalOpen(true);
+  };
+
+  const openEditModal = (index: number) => {
+    setSelectedSiswaIndex(index);
+    setNewSiswa({ ...siswaList[index] });
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveSiswa = async () => {
+    try {
+      setIsSaving(true);
+      
+      let updatedList: any[];
+      if (selectedSiswaIndex !== null && isEditModalOpen) {
+        // Edit existing siswa
+        updatedList = siswaList.map((siswa, i) => 
+          i === selectedSiswaIndex ? newSiswa : siswa
+        );
+      } else {
+        // Add new siswa
+        updatedList = [...siswaList, newSiswa];
+      }
+
+      setSiswaList(updatedList);
+      
+      // Update formData
+      const updatedFormData = {
+        ...formData,
+        profil_siswa: {
+          ...formData.profil_siswa,
+          detail: updatedList,
+        },
+      };
+      updateFormData('profil_siswa', updatedFormData.profil_siswa);
+
+      // Save to database
+      const response = await fetch('/api/sekolah/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedFormData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Gagal menyimpan data');
+      }
+
+      const result = await response.json();
+      
+      toast({
+        title: "Berhasil",
+        description: selectedSiswaIndex !== null ? "Data siswa berhasil diperbarui" : "Data siswa berhasil ditambahkan",
+      });
+
+      setIsAddModalOpen(false);
+      setIsEditModalOpen(false);
+      setSelectedSiswaIndex(null);
+      setNewSiswa({
+        nama: '',
+        nis: '',
+        nisn: '',
+        tanggal_lahir: '',
+        jenis_kelamin: '',
+        kelas: '',
+        status: '',
+        alamat: '',
+        nama_orang_tua: '',
+        no_telepon: '',
+      });
+    } catch (err) {
+      console.error("Error saving siswa:", err);
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : 'Gagal menyimpan data',
+        variant: "error",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteSiswa = async (index: number) => {
+    if (!confirm('Apakah Anda yakin ingin menghapus data siswa ini?')) {
+      return;
+    }
+
+    try {
+      const updated = siswaList.filter((_, i) => i !== index);
+      setSiswaList(updated);
+      
+      const updatedFormData = {
+        ...formData,
+        profil_siswa: {
+          ...formData.profil_siswa,
+          detail: updated,
+        },
+      };
+      updateFormData('profil_siswa', updatedFormData.profil_siswa);
+
+      // Save to database
+      const response = await fetch('/api/sekolah/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedFormData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Gagal menghapus data');
+      }
+
+      toast({
+        title: "Berhasil",
+        description: "Data siswa berhasil dihapus",
+      });
+    } catch (err) {
+      console.error("Error deleting siswa:", err);
+      toast({
+        title: "Error",
+        description: 'Gagal menghapus data',
+        variant: "error",
+      });
+    }
+  };
+
+  const updateNewSiswa = (field: string, value: any) => {
+    setNewSiswa(prev => ({ ...prev, [field]: value }));
+  };
+
+  // Calculate statistics
+  const stats = {
+    jenis_kelamin: {
+      laki_laki: siswaList.filter(s => s.jenis_kelamin === 'Laki-laki').length,
+      perempuan: siswaList.filter(s => s.jenis_kelamin === 'Perempuan').length,
+    },
+    status: {
+      aktif: siswaList.filter(s => s.status === 'Aktif').length,
+      lulus: siswaList.filter(s => s.status === 'Lulus').length,
+      pindah: siswaList.filter(s => s.status === 'Pindah').length,
+      drop_out: siswaList.filter(s => s.status === 'Drop Out').length,
+    },
+  };
+
   return (
-    <Card className="border border-green-200 bg-white shadow-md shadow-green-100/70">
-      <CardHeader>
-        <CardTitle className="text-lg font-bold text-slate-900">Profil Siswa</CardTitle>
-        <CardDescription className="text-slate-600">Data profil siswa akan tersedia segera</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-slate-600">Fitur ini sedang dalam pengembangan.</p>
-      </CardContent>
-    </Card>
+    <div className="space-y-6">
+      {/* Statistics */}
+      <Card className="border-0 bg-gradient-to-br from-green-50 via-emerald-50/80 to-teal-50/60 shadow-lg shadow-green-100/50">
+        <CardHeader>
+          <CardTitle className="text-lg font-bold text-slate-900 text-center md:text-center">Statistik Profil Siswa</CardTitle>
+          <CardDescription className="text-slate-600 text-center md:text-center">Ringkasan data siswa berdasarkan kategori</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full max-w-4xl mx-auto border-collapse">
+              <thead>
+                <tr className="border-b-2 border-slate-200 bg-white/80">
+                  <th className="px-6 py-4 text-left text-sm font-bold text-slate-900 w-[30%]">Kategori</th>
+                  <th className="px-6 py-4 text-left text-sm font-bold text-slate-900 w-[50%]">Sub Kategori</th>
+                  <th className="px-6 py-4 text-center text-sm font-bold text-slate-900 w-[20%]">Jumlah</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white/50">
+                <tr>
+                  <td rowSpan={2} className="px-6 py-4 text-sm font-semibold text-slate-900 align-top border-r border-slate-100">Jenis Kelamin</td>
+                  <td className="px-6 py-3 text-sm text-slate-700">Laki-laki</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{stats.jenis_kelamin.laki_laki}</td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-3 text-sm text-slate-700">Perempuan</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{stats.jenis_kelamin.perempuan}</td>
+                </tr>
+                <tr>
+                  <td rowSpan={4} className="px-6 py-4 text-sm font-semibold text-slate-900 align-top border-r border-slate-100">Status</td>
+                  <td className="px-6 py-3 text-sm text-slate-700">Aktif</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{stats.status.aktif}</td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-3 text-sm text-slate-700">Lulus</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{stats.status.lulus}</td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-3 text-sm text-slate-700">Pindah</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{stats.status.pindah}</td>
+                </tr>
+                <tr>
+                  <td className="px-6 py-3 text-sm text-slate-700">Drop Out</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{stats.status.drop_out}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* List View */}
+      <Card className="border-0 bg-gradient-to-br from-green-50 via-emerald-50/80 to-teal-50/60 shadow-lg shadow-green-100/50">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <CardTitle className="text-lg font-bold text-slate-900">Daftar Profil Siswa</CardTitle>
+            <CardDescription className="text-slate-600">Daftar lengkap data siswa</CardDescription>
+          </div>
+          <Button
+            onClick={openAddModal}
+            className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white shadow-md hover:shadow-lg transition-all duration-300"
+          >
+            <Plus className="size-4 mr-2" />
+            Tambah Siswa
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {siswaList.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 px-4">
+              <div className="p-4 rounded-full bg-gradient-to-br from-green-100 to-emerald-100 mb-4">
+                <GraduationCap className="size-8 text-green-600" />
+              </div>
+              <p className="text-sm font-medium text-slate-600 mb-2">Belum ada data siswa</p>
+              <p className="text-xs text-slate-500 text-center max-w-md">
+                Klik tombol "Tambah Siswa" di atas untuk menambahkan data siswa baru
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {siswaList.map((siswa, index) => (
+                <Card key={index} className="border-0 bg-white shadow-md hover:shadow-lg transition-shadow duration-300">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 text-white font-bold shadow-sm">
+                          {index + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-base font-bold text-slate-900 truncate">{siswa.nama || 'Nama Siswa'}</p>
+                          <p className="text-xs text-slate-600 truncate">{siswa.nis || 'NIS: -'}</p>
+                          <p className="text-xs text-slate-500 truncate">{siswa.kelas || 'Kelas: -'}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => openViewModal(index)}
+                          className="text-green-600 hover:bg-green-50 hover:text-green-700 h-8 w-8 p-0"
+                        >
+                          <Eye className="size-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setNewSiswa({ ...siswa });
+                            openEditModal(index);
+                          }}
+                          className="text-blue-600 hover:bg-blue-50 hover:text-blue-700 h-8 w-8 p-0"
+                        >
+                          <Edit className="size-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteSiswa(index)}
+                          className="text-red-600 hover:bg-red-50 hover:text-red-700 h-8 w-8 p-0"
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Add/Edit Modal */}
+      <Dialog open={isAddModalOpen || isEditModalOpen} onOpenChange={(open) => {
+        if (!open) {
+          setIsAddModalOpen(false);
+          setIsEditModalOpen(false);
+          setSelectedSiswaIndex(null);
+          setNewSiswa({
+            nama: '',
+            nis: '',
+            nisn: '',
+            tanggal_lahir: '',
+            jenis_kelamin: '',
+            kelas: '',
+            status: '',
+            alamat: '',
+            nama_orang_tua: '',
+            no_telepon: '',
+          });
+        }
+      }}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-slate-900">
+              {isEditModalOpen ? 'Edit Data Siswa' : 'Tambah Siswa Baru'}
+            </DialogTitle>
+            <DialogDescription>
+              {isEditModalOpen ? 'Perbarui data siswa yang sudah ada' : 'Isi data siswa baru di bawah ini'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            {/* Nama Siswa */}
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-900">Nama Siswa *</label>
+              <input
+                type="text"
+                value={newSiswa.nama || ''}
+                onChange={(e) => updateNewSiswa('nama', e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                placeholder="Masukkan nama siswa"
+              />
+            </div>
+
+            {/* Row 1: NIS, NISN, Tanggal Lahir */}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-900">NIS</label>
+                <input
+                  type="text"
+                  value={newSiswa.nis || ''}
+                  onChange={(e) => updateNewSiswa('nis', e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                  placeholder="Nomor Induk Siswa"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-900">NISN</label>
+                <input
+                  type="text"
+                  value={newSiswa.nisn || ''}
+                  onChange={(e) => updateNewSiswa('nisn', e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                  placeholder="Nomor Induk Siswa Nasional"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-900">Tanggal Lahir</label>
+                <input
+                  type="date"
+                  value={newSiswa.tanggal_lahir || ''}
+                  onChange={(e) => updateNewSiswa('tanggal_lahir', e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                />
+              </div>
+            </div>
+
+            {/* Row 2: Jenis Kelamin, Kelas, Status */}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-900">Jenis Kelamin</label>
+                <select
+                  value={newSiswa.jenis_kelamin || ''}
+                  onChange={(e) => updateNewSiswa('jenis_kelamin', e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                >
+                  <option value="">Pilih Jenis Kelamin</option>
+                  <option value="Laki-laki">Laki-laki</option>
+                  <option value="Perempuan">Perempuan</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-900">Kelas</label>
+                <input
+                  type="text"
+                  value={newSiswa.kelas || ''}
+                  onChange={(e) => updateNewSiswa('kelas', e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                  placeholder="Contoh: X IPA 1, XI IPS 2"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-900">Status</label>
+                <select
+                  value={newSiswa.status || ''}
+                  onChange={(e) => updateNewSiswa('status', e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                >
+                  <option value="">Pilih Status</option>
+                  <option value="Aktif">Aktif</option>
+                  <option value="Lulus">Lulus</option>
+                  <option value="Pindah">Pindah</option>
+                  <option value="Drop Out">Drop Out</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Alamat */}
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-900">Alamat</label>
+              <textarea
+                value={newSiswa.alamat || ''}
+                onChange={(e) => updateNewSiswa('alamat', e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100 min-h-[80px]"
+                placeholder="Masukkan alamat lengkap"
+              />
+            </div>
+
+            {/* Row 3: Nama Orang Tua, No. Telepon */}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-900">Nama Orang Tua/Wali</label>
+                <input
+                  type="text"
+                  value={newSiswa.nama_orang_tua || ''}
+                  onChange={(e) => updateNewSiswa('nama_orang_tua', e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                  placeholder="Nama orang tua atau wali"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-900">No. Telepon</label>
+                <input
+                  type="text"
+                  value={newSiswa.no_telepon || ''}
+                  onChange={(e) => updateNewSiswa('no_telepon', e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                  placeholder="Nomor telepon orang tua/wali"
+                />
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsAddModalOpen(false);
+                setIsEditModalOpen(false);
+                setSelectedSiswaIndex(null);
+              }}
+              disabled={isSaving}
+            >
+              Batal
+            </Button>
+            <Button
+              onClick={handleSaveSiswa}
+              disabled={isSaving || !newSiswa.nama}
+              className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="size-4 mr-2 animate-spin" />
+                  Menyimpan...
+                </>
+              ) : (
+                <>
+                  <Save className="size-4 mr-2" />
+                  Simpan
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Modal */}
+      <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-slate-900">Detail Data Siswa</DialogTitle>
+            <DialogDescription>Informasi lengkap data siswa</DialogDescription>
+          </DialogHeader>
+          
+          {selectedSiswaIndex !== null && siswaList[selectedSiswaIndex] && (
+            <div className="space-y-4 py-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Nama</label>
+                  <p className="text-sm font-medium text-slate-900">{siswaList[selectedSiswaIndex].nama || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">NIS</label>
+                  <p className="text-sm font-medium text-slate-900">{siswaList[selectedSiswaIndex].nis || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">NISN</label>
+                  <p className="text-sm font-medium text-slate-900">{siswaList[selectedSiswaIndex].nisn || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Tanggal Lahir</label>
+                  <p className="text-sm font-medium text-slate-900">{siswaList[selectedSiswaIndex].tanggal_lahir || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Jenis Kelamin</label>
+                  <p className="text-sm font-medium text-slate-900">{siswaList[selectedSiswaIndex].jenis_kelamin || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Kelas</label>
+                  <p className="text-sm font-medium text-slate-900">{siswaList[selectedSiswaIndex].kelas || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Status</label>
+                  <p className="text-sm font-medium text-slate-900">{siswaList[selectedSiswaIndex].status || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Nama Orang Tua/Wali</label>
+                  <p className="text-sm font-medium text-slate-900">{siswaList[selectedSiswaIndex].nama_orang_tua || '-'}</p>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">No. Telepon</label>
+                  <p className="text-sm font-medium text-slate-900">{siswaList[selectedSiswaIndex].no_telepon || '-'}</p>
+                </div>
+                <div className="space-y-1 sm:col-span-2">
+                  <label className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Alamat</label>
+                  <p className="text-sm font-medium text-slate-900">{siswaList[selectedSiswaIndex].alamat || '-'}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsViewModalOpen(false)}
+            >
+              Tutup
+            </Button>
+            {selectedSiswaIndex !== null && (
+              <Button
+                onClick={() => {
+                  setNewSiswa({ ...siswaList[selectedSiswaIndex] });
+                  setIsViewModalOpen(false);
+                  openEditModal(selectedSiswaIndex);
+                }}
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+              >
+                <Edit className="size-4 mr-2" />
+                Edit
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
 

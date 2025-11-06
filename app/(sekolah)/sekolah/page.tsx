@@ -95,7 +95,7 @@ export default function SekolahDashboardPage() {
       </div>
 
       {/* Quick Actions */}
-      <Card className="border border-green-200 bg-white shadow-md shadow-green-100/70">
+      <Card className="border-0 bg-gradient-to-br from-white via-green-50/30 to-emerald-50/40 shadow-lg shadow-green-100/50">
         <CardHeader>
           <CardTitle className="text-lg font-bold text-slate-900">Aksi Cepat</CardTitle>
           <CardDescription className="text-slate-600">Akses cepat ke fitur utama</CardDescription>
@@ -106,14 +106,16 @@ export default function SekolahDashboardPage() {
               <Link key={action.href} href={action.href}>
                 <Button
                   variant="outline"
-                  className="w-full h-auto flex flex-col items-start gap-2 p-4 border-green-200 bg-white hover:bg-green-50 hover:border-green-300 transition"
+                  className="w-full h-auto flex flex-col items-start gap-2 p-5 border-0 bg-gradient-to-br from-green-50 via-emerald-50/80 to-teal-50/60 hover:from-green-100 hover:via-emerald-100/90 hover:to-teal-100/70 shadow-md shadow-green-200/30 hover:shadow-lg hover:shadow-green-300/40 transition-all duration-300 group"
                 >
-                  <div className="flex items-center gap-2 w-full">
-                    <Building2 className="size-5 text-green-600" />
-                    <span className="font-semibold text-slate-900">{action.title}</span>
-                    <ArrowRight className="size-4 ml-auto text-green-600" />
+                  <div className="flex items-center gap-3 w-full">
+                    <div className="p-2 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 shadow-sm group-hover:shadow-md transition-shadow">
+                      <Building2 className="size-5 text-white" />
+                    </div>
+                    <span className="font-semibold text-slate-900 group-hover:text-green-700 transition-colors">{action.title}</span>
+                    <ArrowRight className="size-4 ml-auto text-green-600 group-hover:text-green-700 group-hover:translate-x-1 transition-all" />
                   </div>
-                  <p className="text-xs text-slate-600 text-left">{action.description}</p>
+                  <p className="text-sm text-slate-700 text-left leading-relaxed">{action.description}</p>
                 </Button>
               </Link>
             ))}
@@ -123,7 +125,7 @@ export default function SekolahDashboardPage() {
 
       {/* Status Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Card className="border border-green-200 bg-white shadow-md shadow-green-100/70">
+        <Card className="border-0 bg-gradient-to-br from-green-50 via-emerald-50/60 to-teal-50/40 shadow-lg shadow-green-100/50 hover:shadow-xl hover:shadow-green-200/60 transition-all duration-300">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold text-slate-700">Status Profil</CardTitle>
           </CardHeader>
@@ -131,7 +133,9 @@ export default function SekolahDashboardPage() {
             <div className="flex items-center gap-3">
               {sekolahData ? (
                 <>
-                  <CheckCircle2 className="size-8 text-green-600" />
+                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 shadow-md">
+                    <CheckCircle2 className="size-7 text-white" />
+                  </div>
                   <div>
                     <p className="text-lg font-bold text-slate-900">Lengkap</p>
                     <p className="text-xs text-slate-600">Profil sekolah sudah diisi</p>
@@ -139,7 +143,9 @@ export default function SekolahDashboardPage() {
                 </>
               ) : (
                 <>
-                  <AlertCircle className="size-8 text-amber-600" />
+                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-md">
+                    <AlertCircle className="size-7 text-white" />
+                  </div>
                   <div>
                     <p className="text-lg font-bold text-slate-900">Belum Lengkap</p>
                     <p className="text-xs text-slate-600">Lengkapi profil sekolah Anda</p>
@@ -150,13 +156,15 @@ export default function SekolahDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border border-green-200 bg-white shadow-md shadow-green-100/70">
+        <Card className="border-0 bg-gradient-to-br from-blue-50 via-cyan-50/60 to-sky-50/40 shadow-lg shadow-blue-100/50 hover:shadow-xl hover:shadow-blue-200/60 transition-all duration-300">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold text-slate-700">Akses Data</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-3">
-              <FileText className="size-8 text-green-600" />
+              <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 shadow-md">
+                <FileText className="size-7 text-white" />
+              </div>
               <div>
                 <p className="text-lg font-bold text-slate-900">Tersedia</p>
                 <p className="text-xs text-slate-600">Data dapat diakses pengawas</p>
@@ -165,7 +173,7 @@ export default function SekolahDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border border-green-200 bg-white shadow-md shadow-green-100/70">
+        <Card className="border-0 bg-gradient-to-br from-purple-50 via-violet-50/60 to-fuchsia-50/40 shadow-lg shadow-purple-100/50 hover:shadow-xl hover:shadow-purple-200/60 transition-all duration-300">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold text-slate-700">Pengaturan</CardTitle>
           </CardHeader>
@@ -173,7 +181,7 @@ export default function SekolahDashboardPage() {
             <Link href="/sekolah/pengaturan">
               <Button
                 variant="outline"
-                className="w-full border-green-200 bg-white hover:bg-green-50 hover:border-green-300"
+                className="w-full border-0 bg-gradient-to-r from-purple-500 to-violet-600 hover:from-purple-600 hover:to-violet-700 text-white shadow-md hover:shadow-lg transition-all duration-300"
               >
                 <Settings className="size-4 mr-2" />
                 Kelola Pengaturan
@@ -184,21 +192,23 @@ export default function SekolahDashboardPage() {
       </div>
 
       {/* Info Card */}
-      <Card className="border border-green-200 bg-gradient-to-br from-green-50 via-white to-emerald-50 shadow-md shadow-green-100/70">
+      <Card className="border-0 bg-gradient-to-br from-green-50 via-emerald-50/80 to-teal-50/60 shadow-lg shadow-green-100/50">
         <CardHeader>
           <CardTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
-            <School className="size-5 text-green-600" />
+            <div className="p-2 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 shadow-sm">
+              <School className="size-5 text-white" />
+            </div>
             Informasi Penting
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <p className="text-sm text-slate-700">
+        <CardContent className="space-y-4">
+          <p className="text-sm text-slate-700 leading-relaxed">
             Pastikan data profil sekolah Anda selalu terbarui. Data yang Anda isi akan dapat diakses oleh pengawas sekolah binaan dan admin.
           </p>
           <Link href="/sekolah/profil">
-            <Button className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white">
+            <Button className="w-full sm:w-auto bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white shadow-md hover:shadow-lg transition-all duration-300 group">
               Lengkapi Profil Sekolah
-              <ArrowRight className="size-4 ml-2" />
+              <ArrowRight className="size-4 ml-2 group-hover:translate-x-1 transition-transform" />
             </Button>
           </Link>
         </CardContent>

@@ -10,6 +10,9 @@ import {
   Activity,
   FileText,
   Settings,
+  Sparkles,
+  UserCheck,
+  Heart,
 } from "lucide-react";
 
 export type SekolahNavItem = {
@@ -49,55 +52,25 @@ export const sekolahNavigation: SekolahNavSection[] = [
     ],
   },
   {
-    title: "Data Sekolah",
+    title: "Supervisi Sekolah",
     items: [
       {
-        title: "Identitas Sekolah",
-        href: "/sekolah/profil#identitas",
-        icon: Building2,
-        description: "Data identitas sekolah",
+        title: "7 Kebiasaan Hebat",
+        href: "/sekolah/supervisi/7-kebiasaan-hebat",
+        icon: Sparkles,
+        description: "7 Kebiasaan Hebat",
       },
       {
-        title: "Profil Guru",
-        href: "/sekolah/profil#profil-guru",
-        icon: User,
-        description: "Data profil guru",
+        title: "8 Profil Lulusan",
+        href: "/sekolah/supervisi/8-profil-lulusan",
+        icon: UserCheck,
+        description: "8 Profil Lulusan",
       },
       {
-        title: "Profil Tenaga Kependidikan",
-        href: "/sekolah/profil#profil-tenaga-kependidikan",
-        icon: Briefcase,
-        description: "Data tenaga kependidikan",
-      },
-      {
-        title: "Profil Siswa",
-        href: "/sekolah/profil#profil-siswa",
-        icon: GraduationCap,
-        description: "Data profil siswa",
-      },
-      {
-        title: "Branding Sekolah",
-        href: "/sekolah/profil#branding",
-        icon: Award,
-        description: "Branding yang diterapkan",
-      },
-      {
-        title: "Kokurikuler",
-        href: "/sekolah/profil#kokurikuler",
-        icon: BookOpen,
-        description: "Kegiatan kokurikuler",
-      },
-      {
-        title: "Ekstrakurikuler",
-        href: "/sekolah/profil#ekstrakurikuler",
-        icon: Activity,
-        description: "Kegiatan ekstrakurikuler",
-      },
-      {
-        title: "Laporan Rapor Pendidikan",
-        href: "/sekolah/profil#rapor-pendidikan",
-        icon: FileText,
-        description: "Laporan rapor pendidikan",
+        title: "Penguatan Karakter",
+        href: "/sekolah/supervisi/penguatan-karakter",
+        icon: Heart,
+        description: "Penguatan Karakter",
       },
     ],
   },
