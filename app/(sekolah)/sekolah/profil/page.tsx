@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Card,
@@ -25,12 +25,18 @@ import {
   Activity,
   FileText,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Save,
   Plus,
   Trash2,
   Eye,
   Edit,
   X,
+  Download,
+  UploadCloud,
+  FileSpreadsheet,
+  Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -42,6 +48,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import * as XLSX from "xlsx";
+import type { ChangeEvent } from "react";
 
 type TabType = 
   | "identitas" 
@@ -686,6 +694,10 @@ function ProfilGuruTab({ formData, updateFormData }: { formData: Partial<Sekolah
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedGuruIndex, setSelectedGuruIndex] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importSummary, setImportSummary] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
   const [newGuru, setNewGuru] = useState<any>({
     nama: '',
     nip: '',
@@ -706,12 +718,250 @@ function ProfilGuruTab({ formData, updateFormData }: { formData: Partial<Sekolah
     },
     tanggal_purna_tugas: '',
   });
-  
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const PAGE_SIZE = 6;
+
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+  const filteredGuruList = normalizedSearch
+    ? guruList.filter(guru => {
+        const combined = [guru?.nama, guru?.nip, guru?.mata_pelajaran, guru?.jurusan, guru?.status]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        return combined.includes(normalizedSearch);
+      })
+    : guruList;
+
+  const TEMPLATE_HEADERS = [
+    "Nama",
+    "NIP",
+    "Tanggal Lahir (YYYY-MM-DD)",
+    "Jenis Kelamin (Laki-laki/Perempuan)",
+    "Status Kepegawaian",
+    "Pendidikan",
+    "Jurusan",
+    "Mata Pelajaran",
+    "Jumlah Jam",
+    "Tugas Tambahan (pisahkan dengan koma: waka, kepala_lab, wali_kelas, guru_wali, ekstrakurikuler, lainnya)",
+    "Tanggal Purna Tugas (YYYY-MM-DD)",
+  ] as const;
+
+  const tugasHeader = TEMPLATE_HEADERS[9];
+
+  const handleDownloadTemplate = () => {
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.aoa_to_sheet([Array.from(TEMPLATE_HEADERS)]);
+
+    const exampleRow = [{
+      Nama: "Siti Rahmawati",
+      NIP: "198765432100001",
+      "Tanggal Lahir (YYYY-MM-DD)": "1985-04-12",
+      "Jenis Kelamin (Laki-laki/Perempuan)": "Perempuan",
+      "Status Kepegawaian": "PNS",
+      Pendidikan: "S1/D4",
+      Jurusan: "Pendidikan Bahasa Indonesia",
+      "Mata Pelajaran": "Bahasa Indonesia",
+      "Jumlah Jam": 24,
+      [tugasHeader]: "waka, wali_kelas",
+      "Tanggal Purna Tugas (YYYY-MM-DD)": "",
+    }];
+
+    XLSX.utils.sheet_add_json(worksheet, exampleRow, { origin: "A2", skipHeader: true });
+    worksheet["!cols"] = TEMPLATE_HEADERS.map(() => ({ wch: 28 }));
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Template Guru");
+    XLSX.writeFile(workbook, "Template-Data-Guru.xlsx");
+  };
+
+  const normalizeDateValue = (value: any) => {
+    if (!value) return "";
+    if (value instanceof Date) {
+      return value.toISOString().slice(0, 10);
+    }
+    if (typeof value === "number") {
+      return XLSX.SSF.format("yyyy-mm-dd", value as number);
+    }
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (!trimmed) return "";
+      const parsed = new Date(trimmed);
+      if (!Number.isNaN(parsed.getTime())) {
+        return parsed.toISOString().slice(0, 10);
+      }
+      if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+        return trimmed;
+      }
+      return trimmed;
+    }
+    return "";
+  };
+
+  const parseTugasTambahan = (value: any) => {
+    if (!value) {
+      return {
+        waka: false,
+        kepala_lab: false,
+        wali_kelas: false,
+        guru_wali: false,
+        ekstrakurikuler: false,
+        lainnya: false,
+      };
+    }
+
+    const tokens = String(value)
+      .split(",")
+      .map(token => token.trim().toLowerCase().replace(/\s+/g, "_"));
+
+    const normalized = tokens.map(token => token.replace(/[^a-z_]/g, ""));
+    const hasToken = (...aliases: string[]) => normalized.some(token => aliases.includes(token));
+
+    return {
+      waka: hasToken("waka"),
+      kepala_lab: hasToken("kepala_lab", "kepalalab", "kepala_labperpus", "kepala_lab_lainnya"),
+      wali_kelas: hasToken("wali_kelas", "walikelas"),
+      guru_wali: hasToken("guru_wali", "guruwali"),
+      ekstrakurikuler: hasToken("ekstrakurikuler", "ekstra"),
+      lainnya: hasToken("lainnya", "lain"),
+    };
+  };
+
+  const handleImportGuru = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setImportSummary(null);
+
+    try {
+      setIsImporting(true);
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: "array", cellDates: true });
+
+      if (workbook.SheetNames.length === 0) {
+        throw new Error("File tidak memiliki data");
+      }
+
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows: Record<string, any>[] = XLSX.utils.sheet_to_json(firstSheet, {
+        defval: "",
+        raw: false,
+      });
+
+      if (rows.length === 0) {
+        throw new Error("Tidak ada baris data yang ditemukan dalam file");
+      }
+
+      const mapped = rows
+        .map((row, index) => {
+          const nama = String(row["Nama"] || "").trim();
+          if (!nama) {
+            return null;
+          }
+
+          const nip = String(row["NIP"] || "").trim();
+          const tanggalLahir = normalizeDateValue(row["Tanggal Lahir (YYYY-MM-DD)"]);
+          const jenisKelamin = String(row["Jenis Kelamin (Laki-laki/Perempuan)"] || "").trim();
+          const statusKepegawaian = String(row["Status Kepegawaian"] || "").trim();
+          const pendidikan = String(row["Pendidikan"] || "").trim();
+          const jurusan = String(row["Jurusan"] || "").trim();
+          const mataPelajaran = String(row["Mata Pelajaran"] || "").trim();
+          const jumlahJamRaw = row["Jumlah Jam"];
+          const jumlahJam = jumlahJamRaw !== null && jumlahJamRaw !== undefined && String(jumlahJamRaw).trim() !== ""
+            ? String(jumlahJamRaw).trim()
+            : "";
+          const tanggalPurna = normalizeDateValue(row["Tanggal Purna Tugas (YYYY-MM-DD)"]);
+          const tugasTambahan = parseTugasTambahan(row[tugasHeader]);
+
+          return {
+            nama,
+            nip,
+            tanggal_lahir: tanggalLahir,
+            jenis_kelamin: jenisKelamin,
+            status: statusKepegawaian,
+            pendidikan,
+            jurusan,
+            mata_pelajaran: mataPelajaran,
+            jumlah_jam: jumlahJam,
+            tugas_tambahan: tugasTambahan,
+            tanggal_purna_tugas: tanggalPurna,
+          };
+        })
+        .filter((item): item is NonNullable<typeof item> => Boolean(item));
+
+      if (mapped.length === 0) {
+        throw new Error("Tidak ada data guru valid yang bisa diimpor. Pastikan kolom Nama terisi.");
+      }
+
+      const mergedList = [...guruList, ...mapped];
+
+      setGuruList(mergedList);
+
+      const updatedFormData = {
+        ...formData,
+        profil_guru: {
+          ...formData.profil_guru,
+          detail: mergedList,
+        },
+      };
+
+      updateFormData('profil_guru', updatedFormData.profil_guru);
+
+      const response = await fetch('/api/sekolah/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedFormData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Gagal menyimpan hasil impor');
+      }
+
+      setImportSummary(`${mapped.length} data guru berhasil ditambahkan dari file ${file.name}`);
+
+      toast({
+        title: "Berhasil",
+        description: `${mapped.length} data guru berhasil diimpor`,
+      });
+    } catch (err) {
+      console.error('Error importing guru:', err);
+      toast({
+        title: "Gagal mengimpor",
+        description: err instanceof Error ? err.message : 'Terjadi kesalahan saat membaca file',
+        variant: "error",
+      });
+    } finally {
+      setIsImporting(false);
+      event.target.value = "";
+    }
+  };
+
+  const handleOpenFileDialog = () => {
+    fileInputRef.current?.click();
+  };
+
   useEffect(() => {
     if (formData.profil_guru?.detail) {
       setGuruList(formData.profil_guru.detail);
+      setCurrentPage(1);
     }
   }, [formData.profil_guru]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredGuruList.length / PAGE_SIZE));
+  const paginatedGuruList = filteredGuruList.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const showingFrom = filteredGuruList.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const showingTo = Math.min(currentPage * PAGE_SIZE, filteredGuruList.length);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   const openAddModal = () => {
     setNewGuru({
@@ -819,6 +1069,11 @@ function ProfilGuruTab({ formData, updateFormData }: { formData: Partial<Sekolah
         },
         tanggal_purna_tugas: '',
       });
+
+      const nextPage = selectedGuruIndex !== null && isEditModalOpen
+        ? currentPage
+        : Math.max(1, Math.ceil(updatedList.length / PAGE_SIZE));
+      setCurrentPage(nextPage);
     } catch (err) {
       console.error("Error saving guru:", err);
       toast({
@@ -866,6 +1121,9 @@ function ProfilGuruTab({ formData, updateFormData }: { formData: Partial<Sekolah
         title: "Berhasil",
         description: "Data guru berhasil dihapus",
       });
+
+      const newTotalPages = Math.max(1, Math.ceil(updated.length / PAGE_SIZE));
+      setCurrentPage(prev => Math.min(prev, newTotalPages));
     } catch (err) {
       console.error("Error deleting guru:", err);
       toast({
@@ -1011,13 +1269,25 @@ function ProfilGuruTab({ formData, updateFormData }: { formData: Partial<Sekolah
             <CardTitle className="text-lg font-bold text-slate-900">Daftar Profil Guru</CardTitle>
             <CardDescription className="text-slate-600">Daftar lengkap data guru</CardDescription>
           </div>
-          <Button
-            onClick={openAddModal}
-            className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white shadow-md hover:shadow-lg transition-all duration-300"
-          >
-            <Plus className="size-4 mr-2" />
-            Tambah Guru
-          </Button>
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Cari nama, NIP, atau mata pelajaran"
+                className="w-full rounded-full border border-slate-200 bg-white py-2 pl-9 pr-4 text-sm text-slate-600 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+              />
+            </div>
+            <Button
+              onClick={openAddModal}
+              className="w-full rounded-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white shadow-md hover:shadow-lg transition-all duration-300 sm:w-auto"
+            >
+              <Plus className="size-4 mr-2" />
+              Tambah Guru
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {guruList.length === 0 ? (
@@ -1030,56 +1300,108 @@ function ProfilGuruTab({ formData, updateFormData }: { formData: Partial<Sekolah
                 Klik tombol "Tambah Guru" di atas untuk menambahkan data guru baru
               </p>
             </div>
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {guruList.map((guru, index) => (
-                <Card key={index} className="border-0 bg-white shadow-md hover:shadow-lg transition-shadow duration-300">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 text-white font-bold shadow-sm">
-                          {index + 1}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-base font-bold text-slate-900 truncate">{guru.nama || 'Nama Guru'}</p>
-                          <p className="text-xs text-slate-600 truncate">{guru.nip || 'NIP: -'}</p>
-                          <p className="text-xs text-slate-500 truncate">{guru.mata_pelajaran || 'Mata Pelajaran: -'}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openViewModal(index)}
-                          className="text-green-600 hover:bg-green-50 hover:text-green-700 h-8 w-8 p-0"
-                        >
-                          <Eye className="size-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setNewGuru({ ...guru });
-                            openEditModal(index);
-                          }}
-                          className="text-blue-600 hover:bg-blue-50 hover:text-blue-700 h-8 w-8 p-0"
-                        >
-                          <Edit className="size-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteGuru(index)}
-                          className="text-red-600 hover:bg-red-50 hover:text-red-700 h-8 w-8 p-0"
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+          ) : filteredGuruList.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 px-4">
+              <div className="p-4 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 mb-4">
+                <Search className="size-6 text-slate-500" />
+              </div>
+              <p className="text-sm font-semibold text-slate-700 mb-2 text-center">Tidak ditemukan data guru dengan kata kunci "{searchQuery}"</p>
+              <p className="text-xs text-slate-500 text-center max-w-md">Periksa kembali ejaan atau gunakan kata kunci lain.</p>
             </div>
+          ) : (
+            <>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {paginatedGuruList
+                  .map((guru, indexInPage) => {
+                    const overallIndex = (currentPage - 1) * PAGE_SIZE + indexInPage;
+                    return (
+                      <Card key={overallIndex} className="border-0 bg-white shadow-md hover:shadow-lg transition-shadow duration-300">
+                        <CardContent className="p-4">
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 text-white font-bold shadow-sm">
+                                {overallIndex + 1}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-base font-bold text-slate-900 truncate">{guru.nama || 'Nama Guru'}</p>
+                                <p className="text-xs text-slate-600 truncate">{guru.nip || 'NIP: -'}</p>
+                                <p className="text-xs text-slate-500 truncate">{guru.mata_pelajaran || 'Mata Pelajaran: -'}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0 sm:gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openViewModal(overallIndex)}
+                                className="h-9 w-9 rounded-full border border-green-100 bg-green-50 text-green-600 shadow-sm transition hover:bg-green-100 hover:text-green-700 sm:h-8 sm:w-8 sm:border-0 sm:bg-transparent sm:shadow-none"
+                              >
+                                <Eye className="size-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setNewGuru({ ...guru });
+                                  openEditModal(overallIndex);
+                                }}
+                                className="h-9 w-9 rounded-full border border-blue-100 bg-blue-50 text-blue-600 shadow-sm transition hover:bg-blue-100 hover:text-blue-700 sm:h-8 sm:w-8 sm:border-0 sm:bg-transparent sm:shadow-none"
+                              >
+                                <Edit className="size-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteGuru(overallIndex)}
+                                className="h-9 w-9 rounded-full border border-red-100 bg-red-50 text-red-600 shadow-sm transition hover:bg-red-100 hover:text-red-700 sm:h-8 sm:w-8 sm:border-0 sm:bg-transparent sm:shadow-none"
+                              >
+                                <Trash2 className="size-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+              </div>
+
+              {filteredGuruList.length > PAGE_SIZE && (
+                <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-xs font-medium text-slate-500">
+                    Menampilkan {showingFrom} - {showingTo} dari {filteredGuruList.length} guru
+                    {filteredGuruList.length !== guruList.length && (
+                      <span className="ml-1 text-[11px] text-slate-400">(total {guruList.length} guru)</span>
+                    )}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                      className="h-10 rounded-full border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-600 shadow-sm transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <ChevronLeft className="mr-1 size-4" />
+                      Sebelumnya
+                    </Button>
+                    <span className="text-xs font-semibold text-slate-600">
+                      Halaman {currentPage} dari {totalPages}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                      className="h-10 rounded-full border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-600 shadow-sm transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      Berikutnya
+                      <ChevronRight className="ml-1 size-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
@@ -1435,10 +1757,11 @@ function ProfilGuruTab({ formData, updateFormData }: { formData: Partial<Sekolah
             </div>
           )}
 
-          <DialogFooter>
+          <DialogFooter className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end sm:space-x-2">
             <Button
               variant="outline"
               onClick={() => setIsViewModalOpen(false)}
+              className="w-full rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-100 sm:w-auto"
             >
               Tutup
             </Button>
@@ -1449,7 +1772,7 @@ function ProfilGuruTab({ formData, updateFormData }: { formData: Partial<Sekolah
                   setIsViewModalOpen(false);
                   openEditModal(selectedGuruIndex);
                 }}
-                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+                className="w-full rounded-full border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:from-blue-700 hover:via-indigo-700 hover:to-blue-800 hover:shadow-lg sm:w-auto"
               >
                 <Edit className="size-4 mr-2" />
                 Edit
@@ -1458,6 +1781,75 @@ function ProfilGuruTab({ formData, updateFormData }: { formData: Partial<Sekolah
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Card className="border-0 bg-white/90 shadow-xl shadow-green-100/40">
+        <CardHeader className="space-y-2">
+          <CardTitle className="flex flex-wrap items-center gap-2 text-lg font-bold text-slate-900">
+            <FileSpreadsheet className="size-5 text-green-600" />
+            Import Cepat Data Guru
+          </CardTitle>
+          <CardDescription className="text-slate-600">
+            Unduh template Excel resmi, isi data guru sesuai kolom yang disediakan, lalu unggah kembali untuk menambahkan banyak guru sekaligus.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                type="button"
+                onClick={handleDownloadTemplate}
+                className="rounded-full bg-gradient-to-r from-emerald-600 via-teal-600 to-green-600 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:from-emerald-700 hover:via-teal-700 hover:to-green-700 hover:shadow-lg"
+              >
+                <Download className="mr-2 size-4" />
+                Unduh Template Excel
+              </Button>
+              <Button
+                type="button"
+                onClick={handleOpenFileDialog}
+                disabled={isImporting}
+                className="rounded-full border border-emerald-100 bg-emerald-50 px-5 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isImporting ? (
+                  <>
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                    Mengunggah...
+                  </>
+                ) : (
+                  <>
+                    <UploadCloud className="mr-2 size-4" />
+                    Upload Data Guru
+                  </>
+                )}
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls"
+                className="hidden"
+                onChange={handleImportGuru}
+              />
+            </div>
+            {importSummary && (
+              <p className="text-sm font-semibold text-emerald-700">
+                {importSummary}
+              </p>
+            )}
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 text-sm text-slate-600">
+            <p className="mb-2 flex items-center gap-2 font-semibold text-slate-900">
+              <FileSpreadsheet className="size-4 text-emerald-600" />
+              Panduan singkat pengisian
+            </p>
+            <ol className="list-decimal space-y-1 pl-5">
+              <li>Unduh template, lalu buka menggunakan Microsoft Excel, WPS Office, atau Google Sheets.</li>
+              <li>Isi setiap kolom sesuai contoh. Gunakan pilihan seperti "PNS", "PPPK", "GTT" pada kolom status.</li>
+              <li>Tulis tanggal dengan format <span className="font-semibold text-slate-900">YYYY-MM-DD</span> (contoh: 2024-01-15).</li>
+              <li>Pada kolom tugas tambahan, pisahkan dengan koma. Contoh: <span className="font-semibold text-slate-900">waka, wali_kelas</span>.</li>
+              <li>Simpan file lalu unggah kembali menggunakan tombol "Upload Data Guru".</li>
+            </ol>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -1470,6 +1862,10 @@ function ProfilTenagaKependidikanTab({ formData, updateFormData }: { formData: P
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedTenagaIndex, setSelectedTenagaIndex] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importSummary, setImportSummary] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
   const [newTenaga, setNewTenaga] = useState<any>({
     nama: '',
     nip: '',
@@ -1480,12 +1876,202 @@ function ProfilTenagaKependidikanTab({ formData, updateFormData }: { formData: P
     tugas: '',
     tanggal_purna_tugas: '',
   });
-  
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const PAGE_SIZE = 6;
+
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+  const filteredTenagaList = normalizedSearch
+    ? tenagaList.filter(tenaga => {
+        const combined = [tenaga?.nama, tenaga?.nip, tenaga?.tugas, tenaga?.status, tenaga?.pendidikan]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        return combined.includes(normalizedSearch);
+      })
+    : tenagaList;
+
+  const TEMPLATE_HEADERS = [
+    "Nama",
+    "NIP",
+    "Tanggal Lahir (YYYY-MM-DD)",
+    "Jenis Kelamin (Laki-laki/Perempuan)",
+    "Status Kepegawaian",
+    "Pendidikan",
+    "Tugas",
+    "Tanggal Purna Tugas (YYYY-MM-DD)",
+  ] as const;
+
+  const totalPages = Math.max(1, Math.ceil(filteredTenagaList.length / PAGE_SIZE));
+  const paginatedTenagaList = filteredTenagaList.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const showingFrom = filteredTenagaList.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const showingTo = Math.min(currentPage * PAGE_SIZE, filteredTenagaList.length);
+
   useEffect(() => {
     if (formData.profil_tenaga_kependidikan?.detail) {
       setTenagaList(formData.profil_tenaga_kependidikan.detail);
+      setCurrentPage(1);
     }
   }, [formData.profil_tenaga_kependidikan]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  const handleDownloadTemplate = () => {
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.aoa_to_sheet([Array.from(TEMPLATE_HEADERS)]);
+
+    const exampleRow = [{
+      Nama: "Rina Setyawati",
+      NIP: "199012312022012001",
+      "Tanggal Lahir (YYYY-MM-DD)": "1990-12-31",
+      "Jenis Kelamin (Laki-laki/Perempuan)": "Perempuan",
+      "Status Kepegawaian": "PNS",
+      Pendidikan: "S1/D4",
+      Tugas: "Staf Administrasi",
+      "Tanggal Purna Tugas (YYYY-MM-DD)": "",
+    }];
+
+    XLSX.utils.sheet_add_json(worksheet, exampleRow, { origin: "A2", skipHeader: true });
+    worksheet["!cols"] = TEMPLATE_HEADERS.map(() => ({ wch: 30 }));
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Template Tenaga");
+    XLSX.writeFile(workbook, "Template-Data-Tenaga-Kependidikan.xlsx");
+  };
+
+  const normalizeDateValue = (value: any) => {
+    if (!value) return "";
+    if (value instanceof Date) {
+      return value.toISOString().slice(0, 10);
+    }
+    if (typeof value === "number") {
+      return XLSX.SSF.format("yyyy-mm-dd", value as number);
+    }
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (!trimmed) return "";
+      const parsed = new Date(trimmed);
+      if (!Number.isNaN(parsed.getTime())) {
+        return parsed.toISOString().slice(0, 10);
+      }
+      if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+        return trimmed;
+      }
+      return trimmed;
+    }
+    return "";
+  };
+
+  const handleImportTenaga = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setImportSummary(null);
+
+    try {
+      setIsImporting(true);
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: "array", cellDates: true });
+
+      if (workbook.SheetNames.length === 0) {
+        throw new Error("File tidak memiliki data");
+      }
+
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows: Record<string, any>[] = XLSX.utils.sheet_to_json(firstSheet, {
+        defval: "",
+        raw: false,
+      });
+
+      if (rows.length === 0) {
+        throw new Error("Tidak ada baris data yang ditemukan dalam file");
+      }
+
+      const mapped = rows
+        .map(row => {
+          const nama = String(row["Nama"] || "").trim();
+          if (!nama) return null;
+
+          const nip = String(row["NIP"] || "").trim();
+          const tanggalLahir = normalizeDateValue(row["Tanggal Lahir (YYYY-MM-DD)"]);
+          const jenisKelamin = String(row["Jenis Kelamin (Laki-laki/Perempuan)"] || "").trim();
+          const statusKepegawaian = String(row["Status Kepegawaian"] || "").trim();
+          const pendidikan = String(row["Pendidikan"] || "").trim();
+          const tugas = String(row["Tugas"] || "").trim();
+          const tanggalPurna = normalizeDateValue(row["Tanggal Purna Tugas (YYYY-MM-DD)"]);
+
+          return {
+            nama,
+            nip,
+            tanggal_lahir: tanggalLahir,
+            jenis_kelamin: jenisKelamin,
+            status: statusKepegawaian,
+            pendidikan,
+            tugas,
+            tanggal_purna_tugas: tanggalPurna,
+          };
+        })
+        .filter((item): item is NonNullable<typeof item> => Boolean(item));
+
+      if (mapped.length === 0) {
+        throw new Error("Tidak ada data tenaga kependidikan valid yang bisa diimpor. Pastikan kolom Nama terisi.");
+      }
+
+      const mergedList = [...tenagaList, ...mapped];
+      setTenagaList(mergedList);
+
+      const updatedFormData = {
+        ...formData,
+        profil_tenaga_kependidikan: {
+          ...formData.profil_tenaga_kependidikan,
+          detail: mergedList,
+        },
+      };
+
+      updateFormData('profil_tenaga_kependidikan', updatedFormData.profil_tenaga_kependidikan);
+
+      const response = await fetch('/api/sekolah/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedFormData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Gagal menyimpan hasil impor');
+      }
+
+      setCurrentPage(Math.max(1, Math.ceil(mergedList.length / PAGE_SIZE)));
+      setImportSummary(`${mapped.length} data tenaga kependidikan berhasil ditambahkan dari file ${file.name}`);
+
+      toast({
+        title: "Berhasil",
+        description: `${mapped.length} data tenaga kependidikan berhasil diimpor`,
+      });
+    } catch (err) {
+      console.error('Error importing tenaga:', err);
+      toast({
+        title: "Gagal mengimpor",
+        description: err instanceof Error ? err.message : 'Terjadi kesalahan saat membaca file',
+        variant: "error",
+      });
+    } finally {
+      setIsImporting(false);
+      event.target.value = "";
+    }
+  };
+
+  const handleOpenFileDialog = () => {
+    fileInputRef.current?.click();
+  };
 
   const openAddModal = () => {
     setNewTenaga({
@@ -1573,6 +2159,11 @@ function ProfilTenagaKependidikanTab({ formData, updateFormData }: { formData: P
         tugas: '',
         tanggal_purna_tugas: '',
       });
+
+      const nextPage = selectedTenagaIndex !== null && isEditModalOpen
+        ? currentPage
+        : Math.max(1, Math.ceil(updatedList.length / PAGE_SIZE));
+      setCurrentPage(nextPage);
     } catch (err) {
       console.error("Error saving tenaga:", err);
       toast({
@@ -1620,6 +2211,9 @@ function ProfilTenagaKependidikanTab({ formData, updateFormData }: { formData: P
         title: "Berhasil",
         description: "Data tenaga kependidikan berhasil dihapus",
       });
+
+      const newTotalPages = Math.max(1, Math.ceil(updated.length / PAGE_SIZE));
+      setCurrentPage(prev => Math.min(prev, newTotalPages));
     } catch (err) {
       console.error("Error deleting tenaga:", err);
       toast({
@@ -1716,13 +2310,25 @@ function ProfilTenagaKependidikanTab({ formData, updateFormData }: { formData: P
             <CardTitle className="text-lg font-bold text-slate-900">Daftar Profil Tenaga Kependidikan</CardTitle>
             <CardDescription className="text-slate-600">Daftar lengkap data tenaga kependidikan</CardDescription>
           </div>
-          <Button
-            onClick={openAddModal}
-            className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white shadow-md hover:shadow-lg transition-all duration-300"
-          >
-            <Plus className="size-4 mr-2" />
-            Tambah Tenaga
-          </Button>
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Cari nama, NIP, atau tugas"
+                className="w-full rounded-full border border-slate-200 bg-white py-2 pl-9 pr-4 text-sm text-slate-600 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+              />
+            </div>
+            <Button
+              onClick={openAddModal}
+              className="w-full rounded-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white shadow-md hover:shadow-lg transition-all duration-300 sm:w-auto"
+            >
+              <Plus className="size-4 mr-2" />
+              Tambah Tenaga
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {tenagaList.length === 0 ? (
@@ -1735,56 +2341,107 @@ function ProfilTenagaKependidikanTab({ formData, updateFormData }: { formData: P
                 Klik tombol "Tambah Tenaga" di atas untuk menambahkan data tenaga kependidikan baru
               </p>
             </div>
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {tenagaList.map((tenaga, index) => (
-                <Card key={index} className="border-0 bg-white shadow-md hover:shadow-lg transition-shadow duration-300">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 text-white font-bold shadow-sm">
-                          {index + 1}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-base font-bold text-slate-900 truncate">{tenaga.nama || 'Nama Tenaga Kependidikan'}</p>
-                          <p className="text-xs text-slate-600 truncate">{tenaga.nip || 'NIP: -'}</p>
-                          <p className="text-xs text-slate-500 truncate">{tenaga.tugas || 'Tugas: -'}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openViewModal(index)}
-                          className="text-green-600 hover:bg-green-50 hover:text-green-700 h-8 w-8 p-0"
-                        >
-                          <Eye className="size-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setNewTenaga({ ...tenaga });
-                            openEditModal(index);
-                          }}
-                          className="text-blue-600 hover:bg-blue-50 hover:text-blue-700 h-8 w-8 p-0"
-                        >
-                          <Edit className="size-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteTenaga(index)}
-                          className="text-red-600 hover:bg-red-50 hover:text-red-700 h-8 w-8 p-0"
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+          ) : filteredTenagaList.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 px-4">
+              <div className="p-4 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 mb-4">
+                <Search className="size-6 text-slate-500" />
+              </div>
+              <p className="text-sm font-semibold text-slate-700 mb-2 text-center">Tidak ditemukan data tenaga kependidikan dengan kata kunci "{searchQuery}"</p>
+              <p className="text-xs text-slate-500 text-center max-w-md">Coba gunakan kata kunci lain atau periksa kembali ejaan Anda.</p>
             </div>
+          ) : (
+            <>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {paginatedTenagaList.map((tenaga, indexInPage) => {
+                  const overallIndex = (currentPage - 1) * PAGE_SIZE + indexInPage;
+                  return (
+                    <Card key={overallIndex} className="border-0 bg-white shadow-md hover:shadow-lg transition-shadow duration-300">
+                      <CardContent className="p-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 text-white font-bold shadow-sm">
+                              {overallIndex + 1}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-base font-bold text-slate-900 truncate">{tenaga.nama || 'Nama Tenaga Kependidikan'}</p>
+                              <p className="text-xs text-slate-600 truncate">{tenaga.nip || 'NIP: -'}</p>
+                              <p className="text-xs text-slate-500 truncate">{tenaga.tugas || 'Tugas: -'}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0 sm:gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openViewModal(overallIndex)}
+                              className="h-9 w-9 rounded-full border border-green-100 bg-green-50 text-green-600 shadow-sm transition hover:bg-green-100 hover:text-green-700 sm:h-8 sm:w-8 sm:border-0 sm:bg-transparent sm:shadow-none"
+                            >
+                              <Eye className="size-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setNewTenaga({ ...tenaga });
+                                openEditModal(overallIndex);
+                              }}
+                              className="h-9 w-9 rounded-full border border-blue-100 bg-blue-50 text-blue-600 shadow-sm transition hover:bg-blue-100 hover:text-blue-700 sm:h-8 sm:w-8 sm:border-0 sm:bg-transparent sm:shadow-none"
+                            >
+                              <Edit className="size-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteTenaga(overallIndex)}
+                              className="h-9 w-9 rounded-full border border-red-100 bg-red-50 text-red-600 shadow-sm transition hover:bg-red-100 hover:text-red-700 sm:h-8 sm:w-8 sm:border-0 sm:bg-transparent sm:shadow-none"
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+
+              {filteredTenagaList.length > PAGE_SIZE && (
+                <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-xs font-medium text-slate-500">
+                    Menampilkan {showingFrom} - {showingTo} dari {filteredTenagaList.length} tenaga kependidikan
+                    {filteredTenagaList.length !== tenagaList.length && (
+                      <span className="ml-1 text-[11px] text-slate-400">(total {tenagaList.length} tenaga)</span>
+                    )}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                      className="h-10 rounded-full border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-600 shadow-sm transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <ChevronLeft className="mr-1 size-4" />
+                      Sebelumnya
+                    </Button>
+                    <span className="text-xs font-semibold text-slate-600">
+                      Halaman {currentPage} dari {totalPages}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                      className="h-10 rounded-full border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-600 shadow-sm transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      Berikutnya
+                      <ChevronRight className="ml-1 size-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
@@ -1998,10 +2655,11 @@ function ProfilTenagaKependidikanTab({ formData, updateFormData }: { formData: P
             </div>
           )}
 
-          <DialogFooter>
+          <DialogFooter className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end sm:space-x-2">
             <Button
               variant="outline"
               onClick={() => setIsViewModalOpen(false)}
+              className="w-full rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-100 sm:w-auto"
             >
               Tutup
             </Button>
@@ -2012,7 +2670,7 @@ function ProfilTenagaKependidikanTab({ formData, updateFormData }: { formData: P
                   setIsViewModalOpen(false);
                   openEditModal(selectedTenagaIndex);
                 }}
-                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+                className="w-full rounded-full border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:from-blue-700 hover:via-indigo-700 hover:to-blue-800 hover:shadow-lg sm:w-auto"
               >
                 <Edit className="size-4 mr-2" />
                 Edit
@@ -2021,6 +2679,75 @@ function ProfilTenagaKependidikanTab({ formData, updateFormData }: { formData: P
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Card className="border-0 bg-white/90 shadow-xl shadow-green-100/40">
+        <CardHeader className="space-y-2">
+          <CardTitle className="flex flex-wrap items-center gap-2 text-lg font-bold text-slate-900">
+            <FileSpreadsheet className="size-5 text-green-600" />
+            Import Cepat Tenaga Kependidikan
+          </CardTitle>
+          <CardDescription className="text-slate-600">
+            Gunakan template Excel untuk menambahkan banyak tenaga kependidikan sekaligus secara rapi dan konsisten.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                type="button"
+                onClick={handleDownloadTemplate}
+                className="rounded-full bg-gradient-to-r from-emerald-600 via-teal-600 to-green-600 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:from-emerald-700 hover:via-teal-700 hover:to-green-700 hover:shadow-lg"
+              >
+                <Download className="mr-2 size-4" />
+                Unduh Template Excel
+              </Button>
+              <Button
+                type="button"
+                onClick={handleOpenFileDialog}
+                disabled={isImporting}
+                className="rounded-full border border-emerald-100 bg-emerald-50 px-5 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isImporting ? (
+                  <>
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                    Mengunggah...
+                  </>
+                ) : (
+                  <>
+                    <UploadCloud className="mr-2 size-4" />
+                    Upload Data Tenaga
+                  </>
+                )}
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls"
+                className="hidden"
+                onChange={handleImportTenaga}
+              />
+            </div>
+            {importSummary && (
+              <p className="text-sm font-semibold text-emerald-700">
+                {importSummary}
+              </p>
+            )}
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 text-sm text-slate-600">
+            <p className="mb-2 flex items-center gap-2 font-semibold text-slate-900">
+              <FileSpreadsheet className="size-4 text-emerald-600" />
+              Panduan pengisian cepat
+            </p>
+            <ol className="list-decimal space-y-1 pl-5">
+              <li>Unduh template dan buka dengan Excel, WPS Office, atau Google Sheets.</li>
+              <li>Isi setiap kolom sesuai contoh. Gunakan pilihan seperti "PNS", "PPPK", "GTT" pada kolom status.</li>
+              <li>Tulis tanggal dengan format <span className="font-semibold text-slate-900">YYYY-MM-DD</span> (contoh: 2024-01-15).</li>
+              <li>Pada kolom tugas tambahan, pisahkan dengan koma. Contoh: <span className="font-semibold text-slate-900">waka, wali_kelas</span>.</li>
+              <li>Simpan file lalu unggah kembali menggunakan tombol "Upload Data Tenaga" di atas.</li>
+            </ol>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -2033,6 +2760,10 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedSiswaIndex, setSelectedSiswaIndex] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importSummary, setImportSummary] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
   const [newSiswa, setNewSiswa] = useState<any>({
     nama: '',
     nis: '',
@@ -2045,12 +2776,216 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
     nama_orang_tua: '',
     no_telepon: '',
   });
-  
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const PAGE_SIZE = 6;
+
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+  const filteredSiswaList = normalizedSearch
+    ? siswaList.filter(siswa => {
+        const combined = [
+          siswa?.nama,
+          siswa?.nis,
+          siswa?.nisn,
+          siswa?.kelas,
+          siswa?.status,
+          siswa?.nama_orang_tua,
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        return combined.includes(normalizedSearch);
+      })
+    : siswaList;
+
+  const TEMPLATE_HEADERS = [
+    "Nama",
+    "NIS",
+    "NISN",
+    "Tanggal Lahir (YYYY-MM-DD)",
+    "Jenis Kelamin (Laki-laki/Perempuan)",
+    "Kelas",
+    "Status",
+    "Alamat",
+    "Nama Orang Tua/Wali",
+    "Nomor Telepon",
+  ] as const;
+
+  const totalPages = Math.max(1, Math.ceil(filteredSiswaList.length / PAGE_SIZE));
+  const paginatedSiswaList = filteredSiswaList.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const showingFrom = filteredSiswaList.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const showingTo = Math.min(currentPage * PAGE_SIZE, filteredSiswaList.length);
+
   useEffect(() => {
     if (formData.profil_siswa?.detail) {
       setSiswaList(formData.profil_siswa.detail);
+      setCurrentPage(1);
     }
   }, [formData.profil_siswa]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  const handleDownloadTemplate = () => {
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.aoa_to_sheet([Array.from(TEMPLATE_HEADERS)]);
+
+    const exampleRow = [{
+      Nama: "Ahmad Rahman",
+      NIS: "11223344",
+      NISN: "0045678910",
+      "Tanggal Lahir (YYYY-MM-DD)": "2008-03-15",
+      "Jenis Kelamin (Laki-laki/Perempuan)": "Laki-laki",
+      "Kelas": "XI IPA 2",
+      "Status": "Aktif",
+      "Alamat": "Jl. Melati No. 10",
+      "Nama Orang Tua/Wali": "Budi Rahman",
+      "Nomor Telepon": "081234567890",
+    }];
+
+    XLSX.utils.sheet_add_json(worksheet, exampleRow, { origin: "A2", skipHeader: true });
+    worksheet["!cols"] = TEMPLATE_HEADERS.map(() => ({ wch: 28 }));
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Template Siswa");
+    XLSX.writeFile(workbook, "Template-Data-Siswa.xlsx");
+  };
+
+  const normalizeDateValue = (value: any) => {
+    if (!value) return "";
+    if (value instanceof Date) {
+      return value.toISOString().slice(0, 10);
+    }
+    if (typeof value === "number") {
+      return XLSX.SSF.format("yyyy-mm-dd", value as number);
+    }
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (!trimmed) return "";
+      const parsed = new Date(trimmed);
+      if (!Number.isNaN(parsed.getTime())) {
+        return parsed.toISOString().slice(0, 10);
+      }
+      if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+        return trimmed;
+      }
+      return trimmed;
+    }
+    return "";
+  };
+
+  const handleImportSiswa = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setImportSummary(null);
+
+    try {
+      setIsImporting(true);
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: "array", cellDates: true });
+
+      if (workbook.SheetNames.length === 0) {
+        throw new Error("File tidak memiliki data");
+      }
+
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows: Record<string, any>[] = XLSX.utils.sheet_to_json(firstSheet, {
+        defval: "",
+        raw: false,
+      });
+
+      if (rows.length === 0) {
+        throw new Error("Tidak ada baris data yang ditemukan dalam file");
+      }
+
+      const mapped = rows
+        .map(row => {
+          const nama = String(row["Nama"] || "").trim();
+          if (!nama) return null;
+
+          const nis = String(row["NIS"] || "").trim();
+          const nisn = String(row["NISN"] || "").trim();
+          const tanggalLahir = normalizeDateValue(row["Tanggal Lahir (YYYY-MM-DD)"]);
+          const jenisKelamin = String(row["Jenis Kelamin (Laki-laki/Perempuan)"] || "").trim();
+          const kelas = String(row["Kelas"] || "").trim();
+          const status = String(row["Status"] || "").trim();
+          const alamat = String(row["Alamat"] || "").trim();
+          const namaOrangTua = String(row["Nama Orang Tua/Wali"] || "").trim();
+          const nomorTelepon = String(row["Nomor Telepon"] || "").trim();
+
+          return {
+            nama,
+            nis,
+            nisn,
+            tanggal_lahir: tanggalLahir,
+            jenis_kelamin: jenisKelamin,
+            kelas,
+            status,
+            alamat,
+            nama_orang_tua: namaOrangTua,
+            no_telepon: nomorTelepon,
+          };
+        })
+        .filter((item): item is NonNullable<typeof item> => Boolean(item));
+
+      if (mapped.length === 0) {
+        throw new Error("Tidak ada data siswa valid yang bisa diimpor. Pastikan kolom Nama terisi.");
+      }
+
+      const mergedList = [...siswaList, ...mapped];
+      setSiswaList(mergedList);
+
+      const updatedFormData = {
+        ...formData,
+        profil_siswa: {
+          ...formData.profil_siswa,
+          detail: mergedList,
+        },
+      };
+
+      updateFormData('profil_siswa', updatedFormData.profil_siswa);
+
+      const response = await fetch('/api/sekolah/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedFormData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Gagal menyimpan hasil impor');
+      }
+
+      setCurrentPage(Math.max(1, Math.ceil(mergedList.length / PAGE_SIZE)));
+      setImportSummary(`${mapped.length} data siswa berhasil ditambahkan dari file ${file.name}`);
+
+      toast({
+        title: "Berhasil",
+        description: `${mapped.length} data siswa berhasil diimpor`,
+      });
+    } catch (err) {
+      console.error('Error importing siswa:', err);
+      toast({
+        title: "Gagal mengimpor",
+        description: err instanceof Error ? err.message : 'Terjadi kesalahan saat membaca file',
+        variant: "error",
+      });
+    } finally {
+      setIsImporting(false);
+      event.target.value = "";
+    }
+  };
+
+  const handleOpenFileDialog = () => {
+    fileInputRef.current?.click();
+  };
 
   const openAddModal = () => {
     setNewSiswa({
@@ -2142,6 +3077,11 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
         nama_orang_tua: '',
         no_telepon: '',
       });
+
+      const nextPage = selectedSiswaIndex !== null && isEditModalOpen
+        ? currentPage
+        : Math.max(1, Math.ceil(updatedList.length / PAGE_SIZE));
+      setCurrentPage(nextPage);
     } catch (err) {
       console.error("Error saving siswa:", err);
       toast({
@@ -2189,6 +3129,9 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
         title: "Berhasil",
         description: "Data siswa berhasil dihapus",
       });
+
+      const newTotalPages = Math.max(1, Math.ceil(updated.length / PAGE_SIZE));
+      setCurrentPage(prev => Math.min(prev, newTotalPages));
     } catch (err) {
       console.error("Error deleting siswa:", err);
       toast({
@@ -2275,13 +3218,25 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
             <CardTitle className="text-lg font-bold text-slate-900">Daftar Profil Siswa</CardTitle>
             <CardDescription className="text-slate-600">Daftar lengkap data siswa</CardDescription>
           </div>
-          <Button
-            onClick={openAddModal}
-            className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white shadow-md hover:shadow-lg transition-all duration-300"
-          >
-            <Plus className="size-4 mr-2" />
-            Tambah Siswa
-          </Button>
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+            <div className="relative w-full sm:w-72">
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Cari nama, NIS, NISN, atau kelas"
+                className="w-full rounded-full border border-slate-200 bg-white py-2 pl-9 pr-4 text-sm text-slate-600 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+              />
+            </div>
+            <Button
+              onClick={openAddModal}
+              className="w-full rounded-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white shadow-md hover:shadow-lg transition-all duration-300 sm:w-auto"
+            >
+              <Plus className="size-4 mr-2" />
+              Tambah Siswa
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {siswaList.length === 0 ? (
@@ -2294,56 +3249,107 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
                 Klik tombol "Tambah Siswa" di atas untuk menambahkan data siswa baru
               </p>
             </div>
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {siswaList.map((siswa, index) => (
-                <Card key={index} className="border-0 bg-white shadow-md hover:shadow-lg transition-shadow duration-300">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 text-white font-bold shadow-sm">
-                          {index + 1}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-base font-bold text-slate-900 truncate">{siswa.nama || 'Nama Siswa'}</p>
-                          <p className="text-xs text-slate-600 truncate">{siswa.nis || 'NIS: -'}</p>
-                          <p className="text-xs text-slate-500 truncate">{siswa.kelas || 'Kelas: -'}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openViewModal(index)}
-                          className="text-green-600 hover:bg-green-50 hover:text-green-700 h-8 w-8 p-0"
-                        >
-                          <Eye className="size-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setNewSiswa({ ...siswa });
-                            openEditModal(index);
-                          }}
-                          className="text-blue-600 hover:bg-blue-50 hover:text-blue-700 h-8 w-8 p-0"
-                        >
-                          <Edit className="size-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteSiswa(index)}
-                          className="text-red-600 hover:bg-red-50 hover:text-red-700 h-8 w-8 p-0"
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+          ) : filteredSiswaList.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 px-4">
+              <div className="p-4 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 mb-4">
+                <Search className="size-6 text-slate-500" />
+              </div>
+              <p className="text-sm font-semibold text-slate-700 mb-2 text-center">Tidak ditemukan data siswa dengan kata kunci "{searchQuery}"</p>
+              <p className="text-xs text-slate-500 text-center max-w-md">Silakan periksa kembali kata kunci atau gunakan istilah lain.</p>
             </div>
+          ) : (
+            <>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {paginatedSiswaList.map((siswa, indexInPage) => {
+                  const overallIndex = (currentPage - 1) * PAGE_SIZE + indexInPage;
+                  return (
+                    <Card key={overallIndex} className="border-0 bg-white shadow-md hover:shadow-lg transition-shadow duration-300">
+                      <CardContent className="p-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 text-white font-bold shadow-sm">
+                              {overallIndex + 1}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-base font-bold text-slate-900 truncate">{siswa.nama || 'Nama Siswa'}</p>
+                              <p className="text-xs text-slate-600 truncate">{siswa.nis || 'NIS: -'}</p>
+                              <p className="text-xs text-slate-500 truncate">{siswa.kelas || 'Kelas: -'}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0 sm:gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => openViewModal(overallIndex)}
+                              className="h-9 w-9 rounded-full border border-green-100 bg-green-50 text-green-600 shadow-sm transition hover:bg-green-100 hover:text-green-700 sm:h-8 sm:w-8 sm:border-0 sm:bg-transparent sm:shadow-none"
+                            >
+                              <Eye className="size-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setNewSiswa({ ...siswa });
+                                openEditModal(overallIndex);
+                              }}
+                              className="h-9 w-9 rounded-full border border-blue-100 bg-blue-50 text-blue-600 shadow-sm transition hover:bg-blue-100 hover:text-blue-700 sm:h-8 sm:w-8 sm:border-0 sm:bg-transparent sm:shadow-none"
+                            >
+                              <Edit className="size-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteSiswa(overallIndex)}
+                              className="h-9 w-9 rounded-full border border-red-100 bg-red-50 text-red-600 shadow-sm transition hover:bg-red-100 hover:text-red-700 sm:h-8 sm:w-8 sm:border-0 sm:bg-transparent sm:shadow-none"
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+
+              {filteredSiswaList.length > PAGE_SIZE && (
+                <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-xs font-medium text-slate-500">
+                    Menampilkan {showingFrom} - {showingTo} dari {filteredSiswaList.length} siswa
+                    {filteredSiswaList.length !== siswaList.length && (
+                      <span className="ml-1 text-[11px] text-slate-400">(total {siswaList.length} siswa)</span>
+                    )}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                      className="h-10 rounded-full border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-600 shadow-sm transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <ChevronLeft className="mr-1 size-4" />
+                      Sebelumnya
+                    </Button>
+                    <span className="text-xs font-semibold text-slate-600">
+                      Halaman {currentPage} dari {totalPages}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                      className="h-10 rounded-full border border-slate-200 bg-white px-4 text-xs font-semibold text-slate-600 shadow-sm transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      Berikutnya
+                      <ChevronRight className="ml-1 size-4" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
@@ -2589,10 +3595,11 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
             </div>
           )}
 
-          <DialogFooter>
+          <DialogFooter className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end sm:space-x-2">
             <Button
               variant="outline"
               onClick={() => setIsViewModalOpen(false)}
+              className="w-full rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-100 sm:w-auto"
             >
               Tutup
             </Button>
@@ -2603,7 +3610,7 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
                   setIsViewModalOpen(false);
                   openEditModal(selectedSiswaIndex);
                 }}
-                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+                className="w-full rounded-full border-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:from-blue-700 hover:via-indigo-700 hover:to-blue-800 hover:shadow-lg sm:w-auto"
               >
                 <Edit className="size-4 mr-2" />
                 Edit
@@ -2612,6 +3619,75 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Card className="border-0 bg-white/90 shadow-xl shadow-green-100/40">
+        <CardHeader className="space-y-2">
+          <CardTitle className="flex flex-wrap items-center gap-2 text-lg font-bold text-slate-900">
+            <FileSpreadsheet className="size-5 text-green-600" />
+            Import Cepat Data Siswa
+          </CardTitle>
+          <CardDescription className="text-slate-600">
+            Unduh template Excel, isi data siswa secara massal, lalu unggah kembali untuk mempercepat pengisian.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                type="button"
+                onClick={handleDownloadTemplate}
+                className="rounded-full bg-gradient-to-r from-emerald-600 via-teal-600 to-green-600 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:from-emerald-700 hover:via-teal-700 hover:to-green-700 hover:shadow-lg"
+              >
+                <Download className="mr-2 size-4" />
+                Unduh Template Excel
+              </Button>
+              <Button
+                type="button"
+                onClick={handleOpenFileDialog}
+                disabled={isImporting}
+                className="rounded-full border border-emerald-100 bg-emerald-50 px-5 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isImporting ? (
+                  <>
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                    Mengunggah...
+                  </>
+                ) : (
+                  <>
+                    <UploadCloud className="mr-2 size-4" />
+                    Upload Data Siswa
+                  </>
+                )}
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls"
+                className="hidden"
+                onChange={handleImportSiswa}
+              />
+            </div>
+            {importSummary && (
+              <p className="text-sm font-semibold text-emerald-700">
+                {importSummary}
+              </p>
+            )}
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 text-sm text-slate-600">
+            <p className="mb-2 flex items-center gap-2 font-semibold text-slate-900">
+              <FileSpreadsheet className="size-4 text-emerald-600" />
+              Panduan singkat pengisian
+            </p>
+            <ol className="list-decimal space-y-1 pl-5">
+              <li>Unduh template dan isi kolom sesuai contoh yang tersedia.</li>
+              <li>Gunakan format tanggal <span className="font-semibold text-slate-900">YYYY-MM-DD</span> agar sistem membaca dengan benar.</li>
+              <li>Pilih status siswa seperti "Aktif", "Lulus", "Pindah", atau "Drop Out".</li>
+              <li>Pastikan kolom NIS dan NISN hanya berisi angka tanpa spasi.</li>
+              <li>Simpan file dan unggah melalui tombol "Upload Data Siswa" di atas.</li>
+            </ol>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
