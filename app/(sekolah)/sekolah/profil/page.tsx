@@ -395,6 +395,8 @@ export default function SekolahProfilePage() {
             sekolah={sekolah} 
             formData={formData}
             updateFormData={updateFormData}
+            onSave={handleSave}
+            isSaving={isSaving}
           />
         )}
         {activeTab === "profil-guru" && (
@@ -448,11 +450,15 @@ export default function SekolahProfilePage() {
 function IdentitasSekolahTab({ 
   sekolah, 
   formData, 
-  updateFormData 
+  updateFormData,
+  onSave,
+  isSaving,
 }: { 
   sekolah: SekolahProfile; 
   formData: Partial<SekolahProfile>;
   updateFormData: (field: string, value: any) => void;
+  onSave?: () => void;
+  isSaving?: boolean;
 }) {
   return (
     <Card className="border border-green-200 bg-white shadow-md shadow-green-100/70">
@@ -648,6 +654,23 @@ function IdentitasSekolahTab({
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="sm:hidden pt-2">
+          <Button
+            onClick={onSave}
+            disabled={isSaving}
+            className="w-full rounded-full border-0 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-5 py-2 font-semibold text-white shadow-md transition hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 hover:shadow-lg"
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="size-4 animate-spin" />
+                <span className="ml-2">Menyimpan...</span>
+              </>
+            ) : (
+              "Simpan Identitas"
+            )}
+          </Button>
         </div>
       </CardContent>
     </Card>
@@ -1291,7 +1314,7 @@ function ProfilGuruTab({ formData, updateFormData }: { formData: Partial<Sekolah
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end sm:space-x-2">
             <Button
               variant="outline"
               onClick={() => {
@@ -1300,13 +1323,14 @@ function ProfilGuruTab({ formData, updateFormData }: { formData: Partial<Sekolah
                 setSelectedGuruIndex(null);
               }}
               disabled={isSaving}
+              className="w-full rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-100 sm:w-auto"
             >
               Batal
             </Button>
             <Button
               onClick={handleSaveGuru}
               disabled={isSaving || !newGuru.nama}
-              className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white"
+              className="w-full rounded-full border-0 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 hover:shadow-lg sm:w-auto"
             >
               {isSaving ? (
                 <>
@@ -1893,7 +1917,7 @@ function ProfilTenagaKependidikanTab({ formData, updateFormData }: { formData: P
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end sm:space-x-2">
             <Button
               variant="outline"
               onClick={() => {
@@ -1902,13 +1926,14 @@ function ProfilTenagaKependidikanTab({ formData, updateFormData }: { formData: P
                 setSelectedTenagaIndex(null);
               }}
               disabled={isSaving}
+              className="w-full rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-100 sm:w-auto"
             >
               Batal
             </Button>
             <Button
               onClick={handleSaveTenaga}
               disabled={isSaving || !newTenaga.nama}
-              className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white"
+              className="w-full rounded-full border-0 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 hover:shadow-lg sm:w-auto"
             >
               {isSaving ? (
                 <>
@@ -2475,7 +2500,7 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end sm:space-x-2">
             <Button
               variant="outline"
               onClick={() => {
@@ -2484,13 +2509,14 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
                 setSelectedSiswaIndex(null);
               }}
               disabled={isSaving}
+              className="w-full rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-100 sm:w-auto"
             >
               Batal
             </Button>
             <Button
               onClick={handleSaveSiswa}
               disabled={isSaving || !newSiswa.nama}
-              className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white"
+              className="w-full rounded-full border-0 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 hover:shadow-lg sm:w-auto"
             >
               {isSaving ? (
                 <>
