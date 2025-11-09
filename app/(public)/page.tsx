@@ -265,10 +265,10 @@ export default function HomePage() {
             </div>
 
             {/* Bottom Section - CTA Buttons */}
-            <div className="mx-auto flex w-full max-w-xs flex-col gap-2.5 sm:max-w-none sm:flex-row sm:items-center sm:justify-center sm:gap-3 lg:justify-center lg:-mt-2 xl:-mt-1">
+            <div className="mx-auto flex w-full max-w-xs flex-col gap-2.5 sm:max-w-none sm:flex-row sm:flex-wrap sm:items-center sm:justify-center sm:gap-3 lg:justify-center lg:-mt-2 xl:-mt-1">
               <Button
                 size="lg"
-                className="w-full whitespace-normal rounded-full bg-white px-5 py-5 text-sm text-[#371314] shadow-lg shadow-black/50 transition-all hover:bg-white/90 hover:shadow-xl hover:shadow-black/60 sm:px-6 sm:py-6 sm:text-base lg:w-auto"
+                className="w-full whitespace-normal rounded-full bg-white px-5 py-5 text-sm text-[#371314] shadow-lg shadow-black/50 transition-all hover:bg-white/90 hover:shadow-xl hover:shadow-black/60 sm:w-auto sm:px-6 sm:py-6 sm:text-base lg:w-auto"
                 asChild
               >
                 <Link href="/auth/login">Masuk ke Portal Pengawas</Link>
@@ -276,7 +276,7 @@ export default function HomePage() {
               <Button
                 size="lg"
                 variant="outline"
-                className="w-full whitespace-normal rounded-full border-2 border-white/50 bg-white/5 px-5 py-5 text-sm text-white backdrop-blur-sm transition-all hover:border-white/70 hover:bg-white/8 sm:border-white/60 sm:px-6 sm:py-6 sm:text-base sm:hover:border-white/80 sm:hover:bg-white/10 lg:w-auto"
+                className="w-full whitespace-normal rounded-full border-2 border-white/50 bg-white/5 px-5 py-5 text-sm text-white backdrop-blur-sm transition-all hover:border-white/70 hover:bg-white/8 sm:w-auto sm:border-white/60 sm:px-6 sm:py-6 sm:text-base sm:hover:border-white/80 sm:hover:bg-white/10 lg:w-auto"
                 asChild
               >
                 <Link href="/profil-mkps">Jelajahi Lebih Lanjut</Link>

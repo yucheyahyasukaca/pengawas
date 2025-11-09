@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Card,
@@ -2591,58 +2591,1033 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
 }
 
 function BrandingSekolahTab({ formData, updateFormData }: { formData: Partial<SekolahProfile>; updateFormData: (field: string, value: any) => void }) {
+  const { toast } = useToast();
+
+  const brandingOptions = [
+    { id: "integritas", label: "Sekolah Berintegritas" },
+    { id: "adiwiyata", label: "Sekolah Adiwiyata" },
+    { id: "sadar-bencana", label: "Sekolah Sadar Bencana" },
+    { id: "ramah-anak", label: "Sekolah Ramah Anak" },
+    { id: "riset", label: "Sekolah Riset" },
+    { id: "lifeskill", label: "Sekolah Lifeskill" },
+    { id: "berkarakter", label: "Sekolah Berkarakter" },
+    { id: "penghafal-quran", label: "Sekolah Penghafal Al Qur'an" },
+    { id: "sehat", label: "Sekolah Sehat" },
+    { id: "olahraga", label: "Sekolah Olah Raga" },
+    { id: "leadership", label: "Sekolah Leadership" },
+  ];
+
+  const createDefaultBranding = () =>
+    brandingOptions.map((option) => ({
+      id: option.id,
+      nama: option.label,
+      status: false,
+    }));
+
+  const [brandingList, setBrandingList] = useState<any[]>(createDefaultBranding());
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (formData.branding_sekolah?.detail) {
+      const existing = Array.isArray(formData.branding_sekolah.detail) ? formData.branding_sekolah.detail : [];
+      const merged = brandingOptions.map((option) => {
+        const found = existing.find(
+          (item: any) => item.id === option.id || item.nama === option.label,
+        );
+        return {
+          id: option.id,
+          nama: option.label,
+          status: found ? Boolean(found.status ?? found.ada ?? found.value ?? found.ya) : false,
+        };
+      });
+      setBrandingList(merged);
+    } else {
+      setBrandingList(createDefaultBranding());
+    }
+  }, [formData.branding_sekolah]);
+
+  const toggleBranding = (id: string) => {
+    setBrandingList((prev) =>
+      prev.map((item: any) =>
+        item.id === id ? { ...item, status: !item.status } : item,
+      ),
+    );
+  };
+
+  const handleSaveBranding = async () => {
+    try {
+      setIsSaving(true);
+
+      updateFormData("branding_sekolah", {
+        detail: brandingList,
+      });
+
+      const response = await fetch("/api/sekolah/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          branding_sekolah: {
+            detail: brandingList,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Gagal menyimpan branding sekolah");
+      }
+
+      toast({
+        title: "Berhasil",
+        description: "Data branding sekolah berhasil disimpan",
+      });
+    } catch (err) {
+      console.error("Error saving branding sekolah:", err);
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Gagal menyimpan data",
+        variant: "error",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const totalAktif = brandingList.filter((item) => item.status).length;
+
   return (
-    <Card className="border border-green-200 bg-white shadow-md shadow-green-100/70">
-      <CardHeader>
-        <CardTitle className="text-lg font-bold text-slate-900">Branding Sekolah</CardTitle>
-        <CardDescription className="text-slate-600">Data branding sekolah akan tersedia segera</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-slate-600">Fitur ini sedang dalam pengembangan.</p>
-      </CardContent>
-    </Card>
+    <div className="space-y-6">
+      <Card className="border-0 bg-gradient-to-br from-green-50 via-emerald-50/80 to-teal-50/60 shadow-lg shadow-green-100/50">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <CardTitle className="text-lg font-bold text-slate-900">Branding Sekolah</CardTitle>
+            <CardDescription className="text-slate-600">
+              Pilih branding yang telah diterapkan di sekolah Anda
+            </CardDescription>
+          </div>
+          <Badge className="rounded-full bg-white/80 text-green-700 border border-green-200 px-4 py-2 font-semibold">
+            {totalAktif} Branding Aktif
+          </Badge>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {brandingList.map((branding) => (
+              <div
+                key={branding.id}
+                className={cn(
+                  "flex items-center justify-between gap-3 rounded-xl border px-4 py-3 shadow-sm transition",
+                  branding.status
+                    ? "border-green-300 bg-white"
+                    : "border-slate-200 bg-white/80 hover:border-green-200",
+                )}
+              >
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold text-slate-900">{branding.nama}</span>
+                  <span className="text-xs text-slate-500">
+                    Tandai jika branding ini sudah berjalan di sekolah
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => toggleBranding(branding.id)}
+                  className={cn(
+                    "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold transition",
+                    branding.status
+                      ? "bg-green-600 text-white shadow-md shadow-green-200/60 hover:bg-green-700"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200",
+                  )}
+                >
+                  {branding.status ? "Ya" : "Tidak"}
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-end">
+            <Button
+              onClick={handleSaveBranding}
+              disabled={isSaving}
+              className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="size-4 mr-2 animate-spin" />
+                  Menyimpan...
+                </>
+              ) : (
+                <>
+                  <Save className="size-4 mr-2" />
+                  Simpan Branding
+                </>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
 function KokurikulerTab({ formData, updateFormData }: { formData: Partial<SekolahProfile>; updateFormData: (field: string, value: any) => void }) {
+  const { toast } = useToast();
+
+  const kegiatanOptions = [
+    { id: "7-kebiasaan", nama: "7 Kebiasaan Anak Indonesia Hebat" },
+    { id: "projek-kolaboratif", nama: "Projek Kolaboratif Antar Mapel" },
+    { id: "budaya-sekolah", nama: "Penguatan Budaya Sekolah" },
+  ];
+  const kelasList = ["X", "XI", "XII"];
+
+  const createDefaultKokurikuler = () =>
+    kegiatanOptions.map((item) => ({
+      id: item.id,
+      nama: item.nama,
+      kelas: kelasList.reduce(
+        (acc, kelas) => ({
+          ...acc,
+          [kelas]: false,
+        }),
+        {} as Record<string, boolean>,
+      ),
+    }));
+
+  const [kokurikulerData, setKokurikulerData] = useState<any[]>(createDefaultKokurikuler());
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (formData.kokurikuler?.detail) {
+      const existing = Array.isArray(formData.kokurikuler.detail) ? formData.kokurikuler.detail : [];
+      const merged = kegiatanOptions.map((item) => {
+        const found = existing.find(
+          (detail: any) => detail.id === item.id || detail.nama === item.nama,
+        );
+        const kelasData = kelasList.reduce(
+          (acc, kelas) => ({
+            ...acc,
+            [kelas]: found ? Boolean(found.kelas?.[kelas]) : false,
+          }),
+          {} as Record<string, boolean>,
+        );
+        return {
+          id: item.id,
+          nama: item.nama,
+          kelas: kelasData,
+        };
+      });
+      setKokurikulerData(merged);
+    } else {
+      setKokurikulerData(createDefaultKokurikuler());
+    }
+  }, [formData.kokurikuler]);
+
+  const toggleKelas = (kegiatanId: string, kelas: string) => {
+    setKokurikulerData((prev) =>
+      prev.map((item: any) => {
+        if (item.id === kegiatanId) {
+          return {
+            ...item,
+            kelas: {
+              ...item.kelas,
+              [kelas]: !item.kelas[kelas],
+            },
+          };
+        }
+        return item;
+      }),
+    );
+  };
+
+  const handleSaveKokurikuler = async () => {
+    try {
+      setIsSaving(true);
+
+      const payload = {
+        kokurikuler: {
+          detail: kokurikulerData,
+        },
+      };
+
+      updateFormData("kokurikuler", payload.kokurikuler);
+
+      const response = await fetch("/api/sekolah/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Gagal menyimpan data kokurikuler");
+      }
+
+      toast({
+        title: "Berhasil",
+        description: "Data kokurikuler berhasil disimpan",
+      });
+    } catch (err) {
+      console.error("Error saving kokurikuler:", err);
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Gagal menyimpan data",
+        variant: "error",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const totalAktif = kokurikulerData.reduce(
+    (count, item) =>
+      count +
+      Object.values(item.kelas || {}).filter((value) => Boolean(value)).length,
+    0,
+  );
+
+  const getToggleClasses = (isActive: boolean, extra?: string) =>
+    cn(
+      "flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold transition",
+      isActive
+        ? "bg-green-600 text-white shadow-md shadow-green-200/60 hover:bg-green-700"
+        : "bg-slate-100 text-slate-600 hover:bg-slate-200",
+      extra,
+    );
+
   return (
-    <Card className="border border-green-200 bg-white shadow-md shadow-green-100/70">
-      <CardHeader>
-        <CardTitle className="text-lg font-bold text-slate-900">Kokurikuler</CardTitle>
-        <CardDescription className="text-slate-600">Data kokurikuler akan tersedia segera</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-slate-600">Fitur ini sedang dalam pengembangan.</p>
-      </CardContent>
-    </Card>
+    <div className="space-y-6">
+      <Card className="border-0 bg-gradient-to-br from-green-50 via-emerald-50/80 to-teal-50/60 shadow-lg shadow-green-100/50">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <CardTitle className="text-lg font-bold text-slate-900">Kokurikuler</CardTitle>
+            <CardDescription className="text-slate-600">
+              Tandai penyelenggaraan kegiatan kokurikuler di setiap tingkat kelas
+            </CardDescription>
+          </div>
+          <Badge className="rounded-full bg-white/80 text-green-700 border border-green-200 px-4 py-2 font-semibold">
+            {totalAktif} Kegiatan Aktif
+          </Badge>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Mobile Cards */}
+          <div className="space-y-3 md:hidden">
+            {kokurikulerData.map((kegiatan) => (
+              <div
+                key={kegiatan.id}
+                className="rounded-2xl border border-white bg-white/90 p-4 shadow-sm"
+              >
+                <div className="mb-3 flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">{kegiatan.nama}</p>
+                    <p className="text-xs text-slate-500">
+                      Pilih kelas yang menjalankan kegiatan ini
+                    </p>
+                  </div>
+                  <Badge className="rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 px-3 py-1 text-xs font-semibold">
+                    {
+                      Object.values(kegiatan.kelas || {}).filter(Boolean)
+                        .length
+                    }{" "}
+                    kelas
+                  </Badge>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {kelasList.map((kelas) => (
+                    <button
+                      key={kelas}
+                      type="button"
+                      onClick={() => toggleKelas(kegiatan.id, kelas)}
+                      className={getToggleClasses(Boolean(kegiatan.kelas?.[kelas]), "w-full")}
+                    >
+                      Kelas {kelas} • {kegiatan.kelas?.[kelas] ? "Ya" : "Tidak"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table */}
+          <div className="hidden overflow-x-auto md:block">
+            <table className="w-full border-collapse min-w-[720px]">
+              <thead>
+                <tr className="border-b-2 border-slate-200 bg-white/80">
+                  <th className="px-4 py-4 text-left text-sm font-bold text-slate-900">Jenis Kokurikuler</th>
+                  {kelasList.map((kelas) => (
+                    <th
+                      key={kelas}
+                      className="px-4 py-4 text-center text-sm font-bold text-slate-900"
+                    >
+                      Kelas {kelas}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white/70">
+                {kokurikulerData.map((kegiatan) => (
+                  <tr key={kegiatan.id}>
+                    <td className="px-4 py-3 text-sm font-medium text-slate-900">
+                      {kegiatan.nama}
+                    </td>
+                    {kelasList.map((kelas) => (
+                      <td key={kelas} className="px-4 py-3">
+                        <button
+                          type="button"
+                          onClick={() => toggleKelas(kegiatan.id, kelas)}
+                          className={getToggleClasses(Boolean(kegiatan.kelas?.[kelas]), "mx-auto w-20")}
+                        >
+                          {kegiatan.kelas?.[kelas] ? "Ya" : "Tidak"}
+                        </button>
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="flex justify-end">
+            <Button
+              onClick={handleSaveKokurikuler}
+              disabled={isSaving}
+              className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="size-4 mr-2 animate-spin" />
+                  Menyimpan...
+                </>
+              ) : (
+                <>
+                  <Save className="size-4 mr-2" />
+                  Simpan Kokurikuler
+                </>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
 function EkstrakurikulerTab({ formData, updateFormData }: { formData: Partial<SekolahProfile>; updateFormData: (field: string, value: any) => void }) {
+  const { toast } = useToast();
+
+  const ekstrakurikulerOptions = [
+    "Pramuka",
+    "Paskibra",
+    "PKS",
+    "Kesehatan Sekolah (UKS)",
+    "Leadership",
+    "Teater",
+    "Kerawitan",
+    "Paduan suara",
+    "Band",
+    "Seni Tari tradisional",
+    "Seni Lukis",
+    "Ketoprak",
+    "Seni Pedalangan (Wayang)",
+    "Wayang Orang",
+    "Fotografi",
+    "Perfilman",
+    "Tari Modern (dance)",
+    "Pencak Silat",
+    "Taekwondo",
+    "Karate",
+    "Yudho",
+    "Kempo",
+    "Tinju",
+    "Sepak Bola",
+    "Bola Voley",
+    "Tenis Meja",
+    "Tenis Lapangan",
+  ];
+
+  const createDefaultEkstrakurikuler = () =>
+    ekstrakurikulerOptions.map((nama, index) => ({
+      id: `ekstra-${index}`,
+      nama,
+      ada: false,
+      sifat: "",
+      jumlah_peserta: "",
+    }));
+
+  const [ekstraData, setEkstraData] = useState<any[]>(createDefaultEkstrakurikuler());
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (formData.ekstrakurikuler?.detail) {
+      const existing = Array.isArray(formData.ekstrakurikuler.detail)
+        ? formData.ekstrakurikuler.detail
+        : [];
+
+      const base = ekstrakurikulerOptions.map((nama, index) => {
+        const optionId = `ekstra-${index}`;
+        const found = existing.find(
+          (item: any) => item.id === optionId || item.nama === nama,
+        );
+
+        return {
+          id: found?.id || optionId,
+          nama,
+          ada: found
+            ? Boolean(
+                found.ada ??
+                  found.keberadaan ??
+                  (typeof found.status === "string"
+                    ? found.status.toLowerCase() === "ada"
+                    : found.status),
+              )
+            : false,
+          sifat: found?.sifat || found?.kategori || "",
+          jumlah_peserta: found?.jumlah_peserta ?? found?.jumlah ?? "",
+        };
+      });
+
+      // Include custom activities that may have been added previously
+      const customItems = existing.filter(
+        (item: any) => !ekstrakurikulerOptions.includes(item.nama),
+      );
+
+      const merged = [...base, ...customItems];
+      setEkstraData(merged);
+    } else {
+      setEkstraData(createDefaultEkstrakurikuler());
+    }
+  }, [formData.ekstrakurikuler]);
+
+  const updateEkstra = (id: string, field: string, value: any) => {
+    setEkstraData((prev) =>
+      prev.map((item: any) =>
+        item.id === id
+          ? {
+              ...item,
+              [field]: value,
+            }
+          : item,
+      ),
+    );
+  };
+
+  const handleSaveEkstrakurikuler = async () => {
+    try {
+      setIsSaving(true);
+
+      const payload = {
+        ekstrakurikuler: {
+          detail: ekstraData,
+        },
+      };
+
+      updateFormData("ekstrakurikuler", payload.ekstrakurikuler);
+
+      const response = await fetch("/api/sekolah/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Gagal menyimpan data ekstrakurikuler");
+      }
+
+      toast({
+        title: "Berhasil",
+        description: "Data ekstrakurikuler berhasil disimpan",
+      });
+    } catch (err) {
+      console.error("Error saving ekstrakurikuler:", err);
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Gagal menyimpan data",
+        variant: "error",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const totalAda = ekstraData.filter((item) => Boolean(item.ada)).length;
+
+  const getChipClass = (isActive: boolean, extra?: string) =>
+    cn(
+      "inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold transition",
+      isActive
+        ? "bg-green-600 text-white shadow-md shadow-green-200/60 hover:bg-green-700"
+        : "bg-slate-100 text-slate-600 hover:bg-slate-200",
+      extra,
+    );
+
   return (
-    <Card className="border border-green-200 bg-white shadow-md shadow-green-100/70">
-      <CardHeader>
-        <CardTitle className="text-lg font-bold text-slate-900">Ekstrakurikuler</CardTitle>
-        <CardDescription className="text-slate-600">Data ekstrakurikuler akan tersedia segera</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-slate-600">Fitur ini sedang dalam pengembangan.</p>
-      </CardContent>
-    </Card>
+    <div className="space-y-6">
+      <Card className="border-0 bg-gradient-to-br from-green-50 via-emerald-50/80 to-teal-50/60 shadow-lg shadow-green-100/50">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <CardTitle className="text-lg font-bold text-slate-900">Ekstrakurikuler</CardTitle>
+            <CardDescription className="text-slate-600">
+              Kelola ketersediaan, sifat, dan jumlah peserta kegiatan ekstrakurikuler
+            </CardDescription>
+          </div>
+          <Badge className="rounded-full bg-white/80 text-green-700 border border-green-200 px-4 py-2 font-semibold">
+            {totalAda} Kegiatan Tersedia
+          </Badge>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Mobile cards */}
+          <div className="space-y-3 md:hidden">
+            {ekstraData.map((item, index) => (
+              <div key={item.id || `${item.nama}-${index}`} className="rounded-2xl border border-white bg-white/90 p-4 shadow-sm space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">{item.nama}</p>
+                    <p className="text-xs text-slate-500">
+                      Atur keberadaan, sifat, dan jumlah peserta kegiatan ini
+                    </p>
+                  </div>
+                  <Badge className="rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 px-3 py-1 text-xs font-semibold">
+                    #{index + 1}
+                  </Badge>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => updateEkstra(item.id, "ada", !item.ada)}
+                    className={getChipClass(Boolean(item.ada), "col-span-2")}
+                  >
+                    {item.ada ? "Ada" : "Tidak Ada"}
+                  </button>
+                  <label className="col-span-2 text-xs font-semibold text-slate-700">
+                    Sifat
+                  </label>
+                  <select
+                    value={item.sifat || ""}
+                    onChange={(e) => updateEkstra(item.id, "sifat", e.target.value)}
+                    className="col-span-2 w-full rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                  >
+                    <option value="">Pilih</option>
+                    <option value="Wajib">Wajib</option>
+                    <option value="Pilihan">Pilihan</option>
+                  </select>
+                  <label className="col-span-2 text-xs font-semibold text-slate-700 mt-1">
+                    Jumlah Peserta
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={item.jumlah_peserta ?? ""}
+                    onChange={(e) => updateEkstra(item.id, "jumlah_peserta", e.target.value)}
+                    className="col-span-2 w-full rounded-full border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden overflow-x-auto md:block">
+            <table className="w-full border-collapse min-w-[820px]">
+              <thead>
+                <tr className="border-b-2 border-slate-200 bg-white/80">
+                  <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wide text-slate-900">
+                    No.
+                  </th>
+                  <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wide text-slate-900">
+                    Jenis Ekstrakurikuler
+                  </th>
+                  <th className="px-4 py-4 text-center text-xs font-bold uppercase tracking-wide text-slate-900">
+                    Keberadaan
+                  </th>
+                  <th className="px-4 py-4 text-center text-xs font-bold uppercase tracking-wide text-slate-900">
+                    Sifat
+                  </th>
+                  <th className="px-4 py-4 text-center text-xs font-bold uppercase tracking-wide text-slate-900">
+                    Jumlah Peserta
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white/70">
+                {ekstraData.map((item, index) => (
+                  <tr key={item.id || `${item.nama}-${index}`}>
+                    <td className="px-4 py-3 text-sm text-slate-700 text-center">{index + 1}</td>
+                    <td className="px-4 py-3 text-sm font-medium text-slate-900">{item.nama}</td>
+                    <td className="px-4 py-3 text-sm text-slate-700">
+                      <div className="flex justify-center">
+                        <button
+                          type="button"
+                          onClick={() => updateEkstra(item.id, "ada", !item.ada)}
+                          className={getChipClass(Boolean(item.ada))}
+                        >
+                          {item.ada ? "Ada" : "Tidak"}
+                        </button>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-700">
+                      <select
+                        value={item.sifat || ""}
+                        onChange={(e) => updateEkstra(item.id, "sifat", e.target.value)}
+                        className="w-full rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                      >
+                        <option value="">Pilih</option>
+                        <option value="Wajib">Wajib</option>
+                        <option value="Pilihan">Pilihan</option>
+                      </select>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-700">
+                      <input
+                        type="number"
+                        min={0}
+                        value={item.jumlah_peserta ?? ""}
+                        onChange={(e) => updateEkstra(item.id, "jumlah_peserta", e.target.value)}
+                        className="w-full rounded-full border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                        placeholder="0"
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="flex justify-end">
+            <Button
+              onClick={handleSaveEkstrakurikuler}
+              disabled={isSaving}
+              className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="size-4 mr-2 animate-spin" />
+                  Menyimpan...
+                </>
+              ) : (
+                <>
+                  <Save className="size-4 mr-2" />
+                  Simpan Ekstrakurikuler
+                </>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
 function RaporPendidikanTab({ formData, updateFormData }: { formData: Partial<SekolahProfile>; updateFormData: (field: string, value: any) => void }) {
+  const { toast } = useToast();
+
+  const indikatorList = [
+    { id: "A.1", indikator: "Kemampuan Literasi" },
+    { id: "A.2", indikator: "Kemampuan Numerasi" },
+    { id: "A.3", indikator: "Karakter" },
+    { id: "C.3", indikator: "Pengalaman Pelatihan PTK" },
+    { id: "D.1", indikator: "Kualitas Pembelajaran" },
+    { id: "D.2", indikator: "Refleksi dan perbaikan pembelajaran oleh guru" },
+    { id: "D.3", indikator: "Kepemimpinan instruksional" },
+    { id: "D.4", indikator: "Iklim keamanan satuan pendidikan" },
+    { id: "D.6", indikator: "Iklim Kesetaraan Gender" },
+    { id: "D.8", indikator: "Iklim Kebinekaan" },
+    { id: "D.10", indikator: "Iklim Inklusivitas" },
+    { id: "E.1", indikator: "Partisipasi warga satuan pendidikan" },
+    { id: "E.2", indikator: "Proporsi pemanfaatan sumber daya sekolah untuk peningkatan mutu" },
+    { id: "E.3", indikator: "Pemanfaatan TIK untuk pengelolaan anggaran" },
+    { id: "E.5", indikator: "Program dan kebijakan satuan pendidikan" },
+  ];
+
+  const capaianOptions = ["Baik", "Sedang", "Kurang"];
+
+  const createDefaultRapor = () =>
+    indikatorList.map((item) => ({
+      id: item.id,
+      indikator: item.indikator,
+      capaian: "",
+      skor: "",
+      catatan: "",
+    }));
+
+  const [raporData, setRaporData] = useState<any[]>(createDefaultRapor());
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (formData.rapor_pendidikan?.detail) {
+      const existing = Array.isArray(formData.rapor_pendidikan.detail)
+        ? formData.rapor_pendidikan.detail
+        : [];
+
+      const merged = indikatorList.map((indikator) => {
+        const found = existing.find(
+          (item: any) => item.id === indikator.id || item.indikator === indikator.indikator,
+        );
+
+        return {
+          id: indikator.id,
+          indikator: indikator.indikator,
+          capaian: found?.capaian || found?.hasil_capaian || "",
+          skor: found?.skor ?? found?.skor_tahun_ini ?? "",
+          catatan: found?.catatan || "",
+        };
+      });
+
+      // include custom indikator if any
+      const customItems = existing.filter(
+        (item: any) =>
+          !indikatorList.some(
+            (indikator) => indikator.id === item.id || indikator.indikator === item.indikator,
+          ),
+      );
+
+      setRaporData([...merged, ...customItems]);
+    } else {
+      setRaporData(createDefaultRapor());
+    }
+  }, [formData.rapor_pendidikan]);
+
+  const updateRapor = (id: string, field: string, value: any) => {
+    setRaporData((prev) =>
+      prev.map((item: any) =>
+        item.id === id
+          ? {
+              ...item,
+              [field]: value,
+            }
+          : item,
+      ),
+    );
+  };
+
+  const handleSaveRapor = async () => {
+    try {
+      setIsSaving(true);
+
+      const payload = {
+        rapor_pendidikan: {
+          detail: raporData,
+        },
+      };
+
+      updateFormData("rapor_pendidikan", payload.rapor_pendidikan);
+
+      const response = await fetch("/api/sekolah/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Gagal menyimpan rapor pendidikan");
+      }
+
+      toast({
+        title: "Berhasil",
+        description: "Data rapor pendidikan berhasil disimpan",
+      });
+    } catch (err) {
+      console.error("Error saving rapor pendidikan:", err);
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Gagal menyimpan data",
+        variant: "error",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const capaianSummary = capaianOptions.map((status) => ({
+    status,
+    jumlah: raporData.filter((item) => item.capaian === status).length,
+  }));
+
+  const getCapaianClass = (status: string, isActive: boolean) => {
+    const base = "inline-flex items-center justify-center rounded-full px-3 py-1 text-xs font-semibold transition";
+    if (!isActive)
+      return cn(base, "bg-slate-100 text-slate-600");
+
+    switch (status) {
+      case "Baik":
+        return cn(base, "bg-emerald-600 text-white shadow-md shadow-emerald-200/60");
+      case "Sedang":
+        return cn(base, "bg-amber-500 text-white shadow-md shadow-amber-200/60");
+      case "Kurang":
+        return cn(base, "bg-rose-500 text-white shadow-md shadow-rose-200/60");
+      default:
+        return cn(base, "bg-green-600 text-white");
+    }
+  };
+
   return (
-    <Card className="border border-green-200 bg-white shadow-md shadow-green-100/70">
-      <CardHeader>
-        <CardTitle className="text-lg font-bold text-slate-900">Laporan Rapor Pendidikan</CardTitle>
-        <CardDescription className="text-slate-600">Data rapor pendidikan akan tersedia segera</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-slate-600">Fitur ini sedang dalam pengembangan.</p>
-      </CardContent>
-    </Card>
+    <div className="space-y-6">
+      <Card className="border-0 bg-gradient-to-br from-green-50 via-emerald-50/80 to-teal-50/60 shadow-lg shadow-green-100/50">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <CardTitle className="text-lg font-bold text-slate-900">Laporan Rapor Pendidikan</CardTitle>
+            <CardDescription className="text-slate-600">
+              Isi capaian dan skor indikator rapor pendidikan terbaru
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            {capaianSummary.map((item) => (
+              <Badge
+                key={item.status}
+                className="rounded-full bg-white/80 text-green-700 border border-green-200 px-3 py-1 text-xs font-semibold"
+              >
+                {item.status}: {item.jumlah}
+              </Badge>
+            ))}
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Mobile cards */}
+          <div className="space-y-3 md:hidden">
+            {raporData.map((item) => (
+              <div key={item.id} className="space-y-3 rounded-2xl border border-white bg-white/90 p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold text-emerald-700">Indikator {item.id}</p>
+                    <p className="text-sm font-semibold text-slate-900">{item.indikator}</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {capaianOptions.map((status) => (
+                    <button
+                      key={status}
+                      type="button"
+                      onClick={() => updateRapor(item.id, "capaian", status)}
+                      className={getCapaianClass(status, item.capaian === status)}
+                    >
+                      {status}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-slate-700">Skor Tahun Ini</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={item.skor ?? ""}
+                    onChange={(e) => updateRapor(item.id, "skor", e.target.value)}
+                    className="w-full rounded-full border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                    placeholder="0"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-slate-700">Catatan (Opsional)</label>
+                  <textarea
+                    value={item.catatan || ""}
+                    onChange={(e) => updateRapor(item.id, "catatan", e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                    rows={3}
+                    placeholder="Tambahkan catatan jika diperlukan"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden overflow-x-auto md:block">
+            <table className="w-full border-collapse min-w-[900px]">
+              <thead>
+                <tr className="border-b-2 border-slate-200 bg-white/80">
+                  <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wide text-slate-900">
+                    No
+                  </th>
+                  <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wide text-slate-900">
+                    Indikator Utama
+                  </th>
+                  <th className="px-4 py-4 text-center text-xs font-bold uppercase tracking-wide text-slate-900">
+                    Hasil Capaian
+                  </th>
+                  <th className="px-4 py-4 text-center text-xs font-bold uppercase tracking-wide text-slate-900">
+                    Skor Tahun Ini
+                  </th>
+                  <th className="px-4 py-4 text-left text-xs font-bold uppercase tracking-wide text-slate-900">
+                    Catatan (Opsional)
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white/70">
+                {raporData.map((item) => (
+                  <tr key={item.id}>
+                    <td className="px-4 py-3 text-sm font-semibold text-slate-900">{item.id}</td>
+                    <td className="px-4 py-3 text-sm text-slate-800">{item.indikator}</td>
+                    <td className="px-4 py-3 text-sm text-slate-700">
+                      <select
+                        value={item.capaian || ""}
+                        onChange={(e) => updateRapor(item.id, "capaian", e.target.value)}
+                        className="w-full rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                      >
+                        <option value="">Pilih capaian</option>
+                        {capaianOptions.map((status) => (
+                          <option key={status} value={status}>
+                            {status}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-700">
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={item.skor ?? ""}
+                        onChange={(e) => updateRapor(item.id, "skor", e.target.value)}
+                        className="w-full rounded-full border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                        placeholder="0"
+                      />
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-700">
+                      <textarea
+                        value={item.catatan || ""}
+                        onChange={(e) => updateRapor(item.id, "catatan", e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                        rows={2}
+                        placeholder="Tambahkan catatan jika diperlukan"
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="flex justify-end">
+            <Button
+              onClick={handleSaveRapor}
+              disabled={isSaving}
+              className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="size-4 mr-2 animate-spin" />
+                  Menyimpan...
+                </>
+              ) : (
+                <>
+                  <Save className="size-4 mr-2" />
+                  Simpan Rapor Pendidikan
+                </>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
