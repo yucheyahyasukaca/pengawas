@@ -686,6 +686,50 @@ function IdentitasSekolahTab({
 }
 
 // Profil Guru Tab Component
+type GuruAdditionalDuties = {
+  waka: boolean;
+  kepala_lab: boolean;
+  wali_kelas: boolean;
+  guru_wali: boolean;
+  ekstrakurikuler: boolean;
+  lainnya: boolean;
+};
+
+type GuruForm = {
+  nama: string;
+  nip: string;
+  tanggal_lahir: string;
+  jenis_kelamin: string;
+  status: string;
+  pendidikan: string;
+  jurusan: string;
+  mata_pelajaran: string;
+  jumlah_jam: string;
+  tugas_tambahan: GuruAdditionalDuties;
+  tanggal_purna_tugas: string;
+};
+
+const createEmptyGuru = (): GuruForm => ({
+  nama: '',
+  nip: '',
+  tanggal_lahir: '',
+  jenis_kelamin: '',
+  status: '',
+  pendidikan: '',
+  jurusan: '',
+  mata_pelajaran: '',
+  jumlah_jam: '',
+  tugas_tambahan: {
+    waka: false,
+    kepala_lab: false,
+    wali_kelas: false,
+    guru_wali: false,
+    ekstrakurikuler: false,
+    lainnya: false,
+  },
+  tanggal_purna_tugas: '',
+});
+
 function ProfilGuruTab({ formData, updateFormData }: { formData: Partial<SekolahProfile>; updateFormData: (field: string, value: any) => void }) {
   const { toast } = useToast();
   const [guruList, setGuruList] = useState<any[]>(formData.profil_guru?.detail || []);
@@ -698,26 +742,7 @@ function ProfilGuruTab({ formData, updateFormData }: { formData: Partial<Sekolah
   const [importSummary, setImportSummary] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
-  const [newGuru, setNewGuru] = useState<any>({
-    nama: '',
-    nip: '',
-    tanggal_lahir: '',
-    jenis_kelamin: '',
-    status: '',
-    pendidikan: '',
-    jurusan: '',
-    mata_pelajaran: '',
-    jumlah_jam: '',
-    tugas_tambahan: {
-      waka: false,
-      kepala_lab: false,
-      wali_kelas: false,
-      guru_wali: false,
-      ekstrakurikuler: false,
-      lainnya: false,
-    },
-    tanggal_purna_tugas: '',
-  });
+  const [newGuru, setNewGuru] = useState<GuruForm>(createEmptyGuru());
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const PAGE_SIZE = 6;
 
@@ -964,26 +989,7 @@ function ProfilGuruTab({ formData, updateFormData }: { formData: Partial<Sekolah
   }, [searchQuery]);
 
   const openAddModal = () => {
-    setNewGuru({
-      nama: '',
-      nip: '',
-      tanggal_lahir: '',
-      jenis_kelamin: '',
-      status: '',
-      pendidikan: '',
-      jurusan: '',
-      mata_pelajaran: '',
-      jumlah_jam: '',
-      tugas_tambahan: {
-        waka: false,
-        kepala_lab: false,
-        wali_kelas: false,
-        guru_wali: false,
-        ekstrakurikuler: false,
-        lainnya: false,
-      },
-      tanggal_purna_tugas: '',
-    });
+    setNewGuru(createEmptyGuru());
     setIsAddModalOpen(true);
   };
 
@@ -1412,26 +1418,7 @@ function ProfilGuruTab({ formData, updateFormData }: { formData: Partial<Sekolah
           setIsAddModalOpen(false);
           setIsEditModalOpen(false);
           setSelectedGuruIndex(null);
-          setNewGuru({
-            nama: '',
-            nip: '',
-            tanggal_lahir: '',
-            jenis_kelamin: '',
-            status: '',
-            pendidikan: '',
-            jurusan: '',
-            mata_pelajaran: '',
-            jumlah_jam: '',
-            tugas_tambahan: {
-              waka: false,
-              kepala_lab: false,
-              wali_kelas: false,
-              guru_wali: false,
-              ekstrakurikuler: false,
-              lainnya: false,
-            },
-            tanggal_purna_tugas: '',
-          });
+          setNewGuru(createEmptyGuru());
         }
       }}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -1854,6 +1841,28 @@ function ProfilGuruTab({ formData, updateFormData }: { formData: Partial<Sekolah
   );
 }
 
+type TenagaForm = {
+  nama: string;
+  nip: string;
+  tanggal_lahir: string;
+  jenis_kelamin: string;
+  status: string;
+  pendidikan: string;
+  tugas: string;
+  tanggal_purna_tugas: string;
+};
+
+const createEmptyTenaga = (): TenagaForm => ({
+  nama: '',
+  nip: '',
+  tanggal_lahir: '',
+  jenis_kelamin: '',
+  status: '',
+  pendidikan: '',
+  tugas: '',
+  tanggal_purna_tugas: '',
+});
+
 function ProfilTenagaKependidikanTab({ formData, updateFormData }: { formData: Partial<SekolahProfile>; updateFormData: (field: string, value: any) => void }) {
   const { toast } = useToast();
   const [tenagaList, setTenagaList] = useState<any[]>(formData.profil_tenaga_kependidikan?.detail || []);
@@ -1866,16 +1875,7 @@ function ProfilTenagaKependidikanTab({ formData, updateFormData }: { formData: P
   const [importSummary, setImportSummary] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
-  const [newTenaga, setNewTenaga] = useState<any>({
-    nama: '',
-    nip: '',
-    tanggal_lahir: '',
-    jenis_kelamin: '',
-    status: '',
-    pendidikan: '',
-    tugas: '',
-    tanggal_purna_tugas: '',
-  });
+  const [newTenaga, setNewTenaga] = useState<TenagaForm>(createEmptyTenaga());
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const PAGE_SIZE = 6;
 
@@ -2074,16 +2074,7 @@ function ProfilTenagaKependidikanTab({ formData, updateFormData }: { formData: P
   };
 
   const openAddModal = () => {
-    setNewTenaga({
-      nama: '',
-      nip: '',
-      tanggal_lahir: '',
-      jenis_kelamin: '',
-      status: '',
-      pendidikan: '',
-      tugas: '',
-      tanggal_purna_tugas: '',
-    });
+    setNewTenaga(createEmptyTenaga());
     setIsAddModalOpen(true);
   };
 
@@ -2149,16 +2140,7 @@ function ProfilTenagaKependidikanTab({ formData, updateFormData }: { formData: P
       setIsAddModalOpen(false);
       setIsEditModalOpen(false);
       setSelectedTenagaIndex(null);
-      setNewTenaga({
-        nama: '',
-        nip: '',
-        tanggal_lahir: '',
-        jenis_kelamin: '',
-        status: '',
-        pendidikan: '',
-        tugas: '',
-        tanggal_purna_tugas: '',
-      });
+      setNewTenaga(createEmptyTenaga());
 
       const nextPage = selectedTenagaIndex !== null && isEditModalOpen
         ? currentPage
@@ -2452,16 +2434,7 @@ function ProfilTenagaKependidikanTab({ formData, updateFormData }: { formData: P
           setIsAddModalOpen(false);
           setIsEditModalOpen(false);
           setSelectedTenagaIndex(null);
-          setNewTenaga({
-            nama: '',
-            nip: '',
-            tanggal_lahir: '',
-            jenis_kelamin: '',
-            status: '',
-            pendidikan: '',
-            tugas: '',
-            tanggal_purna_tugas: '',
-          });
+          setNewTenaga(createEmptyTenaga());
         }
       }}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -2752,6 +2725,32 @@ function ProfilTenagaKependidikanTab({ formData, updateFormData }: { formData: P
   );
 }
 
+type SiswaForm = {
+  nama: string;
+  nis: string;
+  nisn: string;
+  tanggal_lahir: string;
+  jenis_kelamin: string;
+  kelas: string;
+  status: string;
+  alamat: string;
+  nama_orang_tua: string;
+  no_telepon: string;
+};
+
+const createEmptySiswa = (): SiswaForm => ({
+  nama: '',
+  nis: '',
+  nisn: '',
+  tanggal_lahir: '',
+  jenis_kelamin: '',
+  kelas: '',
+  status: '',
+  alamat: '',
+  nama_orang_tua: '',
+  no_telepon: '',
+});
+
 function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<SekolahProfile>; updateFormData: (field: string, value: any) => void }) {
   const { toast } = useToast();
   const [siswaList, setSiswaList] = useState<any[]>(formData.profil_siswa?.detail || []);
@@ -2764,18 +2763,7 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
   const [importSummary, setImportSummary] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
-  const [newSiswa, setNewSiswa] = useState<any>({
-    nama: '',
-    nis: '',
-    nisn: '',
-    tanggal_lahir: '',
-    jenis_kelamin: '',
-    kelas: '',
-    status: '',
-    alamat: '',
-    nama_orang_tua: '',
-    no_telepon: '',
-  });
+  const [newSiswa, setNewSiswa] = useState<SiswaForm>(createEmptySiswa());
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const PAGE_SIZE = 6;
 
@@ -2988,18 +2976,7 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
   };
 
   const openAddModal = () => {
-    setNewSiswa({
-      nama: '',
-      nis: '',
-      nisn: '',
-      tanggal_lahir: '',
-      jenis_kelamin: '',
-      kelas: '',
-      status: '',
-      alamat: '',
-      nama_orang_tua: '',
-      no_telepon: '',
-    });
+    setNewSiswa(createEmptySiswa());
     setIsAddModalOpen(true);
   };
 
@@ -3065,18 +3042,7 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
       setIsAddModalOpen(false);
       setIsEditModalOpen(false);
       setSelectedSiswaIndex(null);
-      setNewSiswa({
-        nama: '',
-        nis: '',
-        nisn: '',
-        tanggal_lahir: '',
-        jenis_kelamin: '',
-        kelas: '',
-        status: '',
-        alamat: '',
-        nama_orang_tua: '',
-        no_telepon: '',
-      });
+      setNewSiswa(createEmptySiswa());
 
       const nextPage = selectedSiswaIndex !== null && isEditModalOpen
         ? currentPage
@@ -3360,18 +3326,7 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
           setIsAddModalOpen(false);
           setIsEditModalOpen(false);
           setSelectedSiswaIndex(null);
-          setNewSiswa({
-            nama: '',
-            nis: '',
-            nisn: '',
-            tanggal_lahir: '',
-            jenis_kelamin: '',
-            kelas: '',
-            status: '',
-            alamat: '',
-            nama_orang_tua: '',
-            no_telepon: '',
-          });
+          setNewSiswa(createEmptySiswa());
         }
       }}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
