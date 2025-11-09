@@ -12,6 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  Bug,
   CalendarCheck,
   CheckCircle2,
   Megaphone,
@@ -281,6 +282,30 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
       </section>
+
+      <Card className="border-0 bg-gradient-to-br from-rose-50 via-white to-amber-50 shadow-lg shadow-rose-100/70">
+        <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between p-6">
+          <div>
+            <CardTitle className="flex items-center gap-2 text-base font-semibold text-slate-900">
+              <span className="flex size-9 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-500 via-rose-400 to-amber-400 text-white shadow-md">
+                <Bug className="size-4" />
+              </span>
+              Laporkan Bug atau Kendala
+            </CardTitle>
+            <CardDescription className="mt-1 text-sm text-slate-600">
+              Temukan hal yang tidak berfungsi? Laporkan agar tim kami bisa segera menindaklanjuti.
+            </CardDescription>
+          </div>
+          <Button
+            asChild
+            className="w-full rounded-full border-0 bg-rose-600 px-5 py-2 font-semibold text-white shadow-md transition hover:bg-rose-700 hover:shadow-lg sm:w-auto"
+          >
+            <Link href="https://forms.gle/6L4u5n59M9qKbdDz5" target="_blank" rel="noopener noreferrer">
+              Kirim Bug Report
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }

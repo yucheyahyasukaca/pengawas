@@ -12,15 +12,16 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  School,
-  FileCheck,
-  Calendar,
-  Bell,
-  TrendingUp,
-  CheckCircle2,
   AlertTriangle,
+  Bell,
+  Bug,
+  Calendar,
+  CheckCircle2,
   Clock,
+  FileCheck,
   Loader2,
+  School,
+  TrendingUp,
 } from "lucide-react";
 
 interface DashboardData {
@@ -459,6 +460,30 @@ export default function PengawasDashboardPage() {
           </CardContent>
         </Card>
       </section>
+
+      <Card className="border-0 bg-gradient-to-br from-indigo-50 via-white to-blue-50 shadow-lg shadow-indigo-100/70">
+        <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between p-6">
+          <div>
+            <CardTitle className="flex items-center gap-2 text-base font-semibold text-slate-900">
+              <span className="flex size-9 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-400 to-blue-400 text-white shadow-md">
+                <Bug className="size-4" />
+              </span>
+              Laporkan Bug di Portal Pengawas
+            </CardTitle>
+            <CardDescription className="mt-1 text-sm text-slate-600">
+              Sampaikan kendala teknis agar kami dapat memperbaiki dan meningkatkan pengalaman Anda.
+            </CardDescription>
+          </div>
+          <Button
+            asChild
+            className="w-full rounded-full border-0 bg-indigo-600 px-5 py-2 font-semibold text-white shadow-md transition hover:bg-indigo-700 hover:shadow-lg sm:w-auto"
+          >
+            <Link href="https://forms.gle/6L4u5n59M9qKbdDz5" target="_blank" rel="noopener noreferrer">
+              Kirim Bug Report
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }

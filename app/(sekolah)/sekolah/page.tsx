@@ -6,15 +6,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { 
-  Building2, 
-  User, 
-  FileText, 
-  Settings, 
+  AlertCircle,
   ArrowRight,
+  Bug,
+  Building2, 
+  CheckCircle2,
+  FileText, 
   Loader2,
   School,
-  CheckCircle2,
-  AlertCircle,
+  Settings, 
+  User, 
 } from "lucide-react";
 import Link from "next/link";
 import { sekolahQuickActions } from "@/config/sekolah";
@@ -211,6 +212,30 @@ export default function SekolahDashboardPage() {
               <ArrowRight className="size-4 ml-2 group-hover:translate-x-1 transition-transform" />
             </Button>
           </Link>
+        </CardContent>
+      </Card>
+
+      <Card className="border-0 bg-gradient-to-br from-green-50 via-white to-emerald-50 shadow-lg shadow-green-100/70">
+        <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between p-6">
+          <div>
+            <CardTitle className="flex items-center gap-2 text-base font-semibold text-slate-900">
+              <span className="flex size-9 items-center justify-center rounded-2xl bg-gradient-to-br from-green-500 via-emerald-500 to-teal-500 text-white shadow-md">
+                <Bug className="size-4" />
+              </span>
+              Laporkan Bug di Panel Sekolah
+            </CardTitle>
+            <CardDescription className="mt-1 text-sm text-slate-600">
+              Jika menemukan kendala saat mengisi data, laporkan agar tim kami dapat segera membantu.
+            </CardDescription>
+          </div>
+          <Button
+            asChild
+            className="w-full rounded-full border-0 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-5 py-2 font-semibold text-white shadow-md transition hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 hover:shadow-lg sm:w-auto"
+          >
+            <Link href="https://forms.gle/6L4u5n59M9qKbdDz5" target="_blank" rel="noopener noreferrer">
+              Kirim Bug Report
+            </Link>
+          </Button>
         </CardContent>
       </Card>
     </div>
