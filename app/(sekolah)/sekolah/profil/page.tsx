@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Card,
@@ -988,232 +988,6 @@ function ProfilGuruTab({ formData, updateFormData }: { formData: Partial<Sekolah
     setCurrentPage(1);
   }, [searchQuery]);
 
-  const updateJumlahSiswaRow = (rowId: string, field: keyof JumlahSiswaRow, value: string) => {
-    setJumlahSiswaRows((prev) =>
-      prev.map((row) =>
-        row.id === rowId
-          ? {
-              ...row,
-              [field]: field === "kelas" ? value : toNumericValue(value),
-            }
-          : row,
-      ),
-    );
-  };
-
-  const jumlahSiswaSummary = computeJumlahSiswaSummary(jumlahSiswaRows);
-
-  const persistProfilSiswa = async (
-    payload: Record<string, any>,
-    successMessage: string,
-    onFinally?: () => void,
-  ) => {
-    try {
-      const response = await fetch("/api/sekolah/profile", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ profil_siswa: payload }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Gagal menyimpan data profil siswa");
-      }
-
-      toast({
-        title: "Berhasil",
-        description: successMessage,
-      });
-    } catch (err) {
-      console.error("Error persisting profil siswa:", err);
-      toast({
-        title: "Gagal",
-        description: err instanceof Error ? err.message : "Terjadi kesalahan saat menyimpan data",
-        variant: "error",
-      });
-      throw err;
-    } finally {
-      onFinally?.();
-    }
-  };
-
-  const onSaveJumlahSiswa = useCallback(async () => {
-    const sanitizedRows = jumlahSiswaRows.map((row) => {
-      const kelas = row.kelas?.trim() || "";
-      const laki = row.laki_laki ?? 0;
-      const perempuan = row.perempuan ?? 0;
-      const abkLaki = row.abk_laki ?? 0;
-      const abkPerempuan = row.abk_perempuan ?? 0;
-
-      return {
-        kelas,
-        jumlah_rombel: row.jumlah_rombel,
-        laki_laki: row.laki_laki,
-        perempuan: row.perempuan,
-        jumlah: laki + perempuan,
-        abk_laki: row.abk_laki,
-        abk_perempuan: row.abk_perempuan,
-        abk_jumlah: abkLaki + abkPerempuan,
-      };
-    });
-
-    const summary = computeJumlahSiswaSummary(jumlahSiswaRows);
-
-    const updatedProfilSiswa = {
-      ...(formData.profil_siswa || {}),
-      jumlah_siswa: {
-        per_kelas: sanitizedRows,
-        total: {
-          jumlah_rombel: summary.total_rombel,
-          laki_laki: summary.total_laki_laki,
-          perempuan: summary.total_perempuan,
-          jumlah: summary.total_siswa,
-          abk_laki: summary.total_abk_laki,
-          abk_perempuan: summary.total_abk_perempuan,
-          abk_jumlah: summary.total_abk,
-        },
-      },
-    };
-
-    setIsSavingJumlahSiswa(true);
-    updateFormData("profil_siswa", updatedProfilSiswa);
-
-    try {
-      await persistProfilSiswa(updatedProfilSiswa, "Data jumlah siswa berhasil disimpan");
-    } finally {
-      setIsSavingJumlahSiswa(false);
-    }
-  }, [formData, jumlahSiswaRows, persistProfilSiswa, updateFormData]);
-
-  const updateEkonomiRow = (rowId: string, field: keyof EkonomiOrangTuaRow, value: string) => {
-    setEkonomiRows((prev) =>
-      prev.map((row) =>
-        row.id === rowId
-          ? {
-              ...row,
-              [field]: field === "kelas" ? value : toNumericValue(value),
-            }
-          : row,
-      ),
-    );
-  };
-
-  const onSaveEkonomi = useCallback(async () => {
-    const sanitizedRows = ekonomiRows.map((row) => ({
-      kelas: row.kelas?.trim() || "",
-      p1: row.p1,
-      p2: row.p2,
-      p3: row.p3,
-      lebih_p3: row.lebih_p3,
-    }));
-
-    const updatedProfilSiswa = {
-      ...(formData.profil_siswa || {}),
-      ekonomi_orang_tua: {
-        per_kelas: sanitizedRows,
-      },
-    };
-
-    setIsSavingEkonomi(true);
-    updateFormData("profil_siswa", updatedProfilSiswa);
-
-    try {
-      await persistProfilSiswa(updatedProfilSiswa, "Data ekonomi orang tua berhasil disimpan");
-    } finally {
-      setIsSavingEkonomi(false);
-    }
-  }, [ekonomiRows, formData, persistProfilSiswa, updateFormData]);
-
-  const updatePekerjaanRow = (rowId: string, field: keyof PekerjaanOrangTuaRow, value: string) => {
-    setPekerjaanRows((prev) =>
-      prev.map((row) =>
-        row.id === rowId
-          ? {
-              ...row,
-              [field]: field === "jenis" ? value : toNumericValue(value),
-            }
-          : row,
-      ),
-    );
-  };
-
-  const onSavePekerjaan = useCallback(async () => {
-    const sanitizedRows = pekerjaanRows
-      .map((row) => ({
-        jenis: row.jenis?.trim() || "",
-        jumlah: row.jumlah,
-      }))
-      .filter((row) => row.jenis);
-
-    const updatedProfilSiswa = {
-      ...(formData.profil_siswa || {}),
-      pekerjaan_orang_tua: {
-        detail: sanitizedRows,
-      },
-    };
-
-    setIsSavingPekerjaan(true);
-    updateFormData("profil_siswa", updatedProfilSiswa);
-
-    try {
-      await persistProfilSiswa(updatedProfilSiswa, "Data pekerjaan orang tua berhasil disimpan");
-    } finally {
-      setIsSavingPekerjaan(false);
-    }
-  }, [formData, pekerjaanRows, persistProfilSiswa, updateFormData]);
-
-  const updateProfilLulusanRow = (rowId: string, field: keyof ProfilLulusanRow, value: string) => {
-    setProfilLulusanRows((prev) =>
-      prev.map((row) =>
-        row.id === rowId
-          ? {
-              ...row,
-              [field]: field === "tahun" ? value : toNumericValue(value),
-            }
-          : row,
-      ),
-    );
-  };
-
-  const onSaveProfilLulusan = useCallback(async () => {
-    const sanitizedRows = profilLulusanRows
-      .map((row) => ({
-        tahun: row.tahun?.trim() || "",
-        ptn_snbp: row.ptn_snbp,
-        ptn_snbt: row.ptn_snbt,
-        ptn_um: row.ptn_um,
-        uin: row.uin,
-        pts: row.pts,
-        kedinasan_akmil: row.kedinasan_akmil,
-        kedinasan_akpol: row.kedinasan_akpol,
-        kedinasan_stan: row.kedinasan_stan,
-        kedinasan_stpdn: row.kedinasan_stpdn,
-        kedinasan_sttd: row.kedinasan_sttd,
-        kedinasan_stis: row.kedinasan_stis,
-        kedinasan_lainnya: row.kedinasan_lainnya,
-        bekerja: row.bekerja,
-        belum_bekerja: row.belum_bekerja,
-      }))
-      .filter((row) => row.tahun);
-
-    const updatedProfilSiswa = {
-      ...(formData.profil_siswa || {}),
-      profil_lulusan: {
-        per_tahun: sanitizedRows,
-      },
-    };
-
-    setIsSavingProfilLulusan(true);
-    updateFormData("profil_siswa", updatedProfilSiswa);
-
-    try {
-      await persistProfilSiswa(updatedProfilSiswa, "Data profil lulusan berhasil disimpan");
-    } finally {
-      setIsSavingProfilLulusan(false);
-    }
-  }, [formData, persistProfilSiswa, profilLulusanRows, updateFormData]);
 
   const openAddModal = () => {
     setNewGuru(createEmptyGuru());
@@ -3244,6 +3018,243 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
   const [isSavingProfilLulusan, setIsSavingProfilLulusan] = useState(false);
   const PAGE_SIZE = 6;
 
+  const jumlahSiswaSummary = computeJumlahSiswaSummary(jumlahSiswaRows);
+
+  const updateJumlahSiswaRow = (rowId: string, field: keyof JumlahSiswaRow, value: string) => {
+    setJumlahSiswaRows((prev) =>
+      prev.map((row) =>
+        row.id === rowId
+          ? {
+              ...row,
+              [field]: field === "kelas" ? value : toNumericValue(value),
+            }
+          : row,
+      ),
+    );
+  };
+
+  const updateEkonomiRow = (rowId: string, field: keyof EkonomiOrangTuaRow, value: string) => {
+    setEkonomiRows((prev) =>
+      prev.map((row) =>
+        row.id === rowId
+          ? {
+              ...row,
+              [field]: field === "kelas" ? value : toNumericValue(value),
+            }
+          : row,
+      ),
+    );
+  };
+
+  const updatePekerjaanRow = (rowId: string, field: keyof PekerjaanOrangTuaRow, value: string) => {
+    setPekerjaanRows((prev) =>
+      prev.map((row) =>
+        row.id === rowId
+          ? {
+              ...row,
+              [field]: field === "jenis" ? value : toNumericValue(value),
+            }
+          : row,
+      ),
+    );
+  };
+
+  const updateProfilLulusanRow = (rowId: string, field: keyof ProfilLulusanRow, value: string) => {
+    setProfilLulusanRows((prev) =>
+      prev.map((row) =>
+        row.id === rowId
+          ? {
+              ...row,
+              [field]: field === "tahun" ? value : toNumericValue(value),
+            }
+          : row,
+      ),
+    );
+  };
+
+  const persistProfilSiswa = async (payload: Record<string, any>, successMessage: string) => {
+    const response = await fetch("/api/sekolah/profile", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ profil_siswa: payload }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || "Gagal menyimpan data profil siswa");
+    }
+
+    toast({
+      title: "Berhasil",
+      description: successMessage,
+    });
+  };
+
+  async function handleJumlahSiswaSave() {
+    const sanitizedRows = jumlahSiswaRows.map((row) => {
+      const kelas = row.kelas?.trim() || "";
+      const laki = row.laki_laki ?? 0;
+      const perempuan = row.perempuan ?? 0;
+      const abkLaki = row.abk_laki ?? 0;
+      const abkPerempuan = row.abk_perempuan ?? 0;
+
+      return {
+        kelas,
+        jumlah_rombel: row.jumlah_rombel,
+        laki_laki: row.laki_laki,
+        perempuan: row.perempuan,
+        jumlah: laki + perempuan,
+        abk_laki: row.abk_laki,
+        abk_perempuan: row.abk_perempuan,
+        abk_jumlah: abkLaki + abkPerempuan,
+      };
+    });
+
+    const updatedProfilSiswa = {
+      ...(formData.profil_siswa || {}),
+      jumlah_siswa: {
+        per_kelas: sanitizedRows,
+        total: {
+          jumlah_rombel: jumlahSiswaSummary.total_rombel,
+          laki_laki: jumlahSiswaSummary.total_laki_laki,
+          perempuan: jumlahSiswaSummary.total_perempuan,
+          jumlah: jumlahSiswaSummary.total_siswa,
+          abk_laki: jumlahSiswaSummary.total_abk_laki,
+          abk_perempuan: jumlahSiswaSummary.total_abk_perempuan,
+          abk_jumlah: jumlahSiswaSummary.total_abk,
+        },
+      },
+    };
+
+    setIsSavingJumlahSiswa(true);
+    updateFormData("profil_siswa", updatedProfilSiswa);
+
+    try {
+      await persistProfilSiswa(updatedProfilSiswa, "Data jumlah siswa berhasil disimpan");
+    } catch (err) {
+      console.error("Error saving jumlah siswa:", err);
+      toast({
+        title: "Gagal",
+        description: err instanceof Error ? err.message : "Terjadi kesalahan saat menyimpan data",
+        variant: "error",
+      });
+    } finally {
+      setIsSavingJumlahSiswa(false);
+    }
+  }
+
+  async function handleEkonomiSave() {
+    const sanitizedRows = ekonomiRows.map((row) => ({
+      kelas: row.kelas?.trim() || "",
+      p1: row.p1,
+      p2: row.p2,
+      p3: row.p3,
+      lebih_p3: row.lebih_p3,
+    }));
+
+    const updatedProfilSiswa = {
+      ...(formData.profil_siswa || {}),
+      ekonomi_orang_tua: {
+        per_kelas: sanitizedRows,
+      },
+    };
+
+    setIsSavingEkonomi(true);
+    updateFormData("profil_siswa", updatedProfilSiswa);
+
+    try {
+      await persistProfilSiswa(updatedProfilSiswa, "Data ekonomi orang tua berhasil disimpan");
+    } catch (err) {
+      console.error("Error saving ekonomi orang tua:", err);
+      toast({
+        title: "Gagal",
+        description: err instanceof Error ? err.message : "Terjadi kesalahan saat menyimpan data",
+        variant: "error",
+      });
+    } finally {
+      setIsSavingEkonomi(false);
+    }
+  }
+
+  async function handlePekerjaanSave() {
+    const sanitizedRows = pekerjaanRows
+      .map((row) => ({
+        jenis: row.jenis?.trim() || "",
+        jumlah: row.jumlah,
+      }))
+      .filter((row) => row.jenis);
+
+    const updatedProfilSiswa = {
+      ...(formData.profil_siswa || {}),
+      pekerjaan_orang_tua: {
+        detail: sanitizedRows,
+      },
+    };
+
+    setIsSavingPekerjaan(true);
+    updateFormData("profil_siswa", updatedProfilSiswa);
+
+    try {
+      await persistProfilSiswa(updatedProfilSiswa, "Data pekerjaan orang tua berhasil disimpan");
+    } catch (err) {
+      console.error("Error saving pekerjaan orang tua:", err);
+      toast({
+        title: "Gagal",
+        description: err instanceof Error ? err.message : "Terjadi kesalahan saat menyimpan data",
+        variant: "error",
+      });
+    } finally {
+      setIsSavingPekerjaan(false);
+    }
+  }
+
+  async function handleProfilLulusanSave() {
+    const sanitizedRows = profilLulusanRows
+      .map((row) => ({
+        tahun: row.tahun?.trim() || "",
+        ptn_snbp: row.ptn_snbp,
+        ptn_snbt: row.ptn_snbt,
+        ptn_um: row.ptn_um,
+        uin: row.uin,
+        pts: row.pts,
+        kedinasan_akmil: row.kedinasan_akmil,
+        kedinasan_akpol: row.kedinasan_akpol,
+        kedinasan_stan: row.kedinasan_stan,
+        kedinasan_stpdn: row.kedinasan_stpdn,
+        kedinasan_sttd: row.kedinasan_sttd,
+        kedinasan_stis: row.kedinasan_stis,
+        kedinasan_lainnya: row.kedinasan_lainnya,
+        bekerja: row.bekerja,
+        belum_bekerja: row.belum_bekerja,
+      }))
+      .filter((row) => row.tahun);
+
+    const updatedProfilSiswa = {
+      ...(formData.profil_siswa || {}),
+      profil_lulusan: {
+        per_tahun: sanitizedRows,
+      },
+    };
+
+    setIsSavingProfilLulusan(true);
+    updateFormData("profil_siswa", updatedProfilSiswa);
+
+    try {
+      await persistProfilSiswa(updatedProfilSiswa, "Data profil lulusan berhasil disimpan");
+    } catch (err) {
+      console.error("Error saving profil lulusan:", err);
+      toast({
+        title: "Gagal",
+        description: err instanceof Error ? err.message : "Terjadi kesalahan saat menyimpan data",
+        variant: "error",
+      });
+    } finally {
+      setIsSavingProfilLulusan(false);
+    }
+  }
+
   const normalizedSearch = searchQuery.trim().toLowerCase();
   const filteredSiswaList = normalizedSearch
     ? siswaList.filter(siswa => {
@@ -3694,7 +3705,7 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
             Tambah Kelas
           </Button>
           <Button
-            onClick={onSaveJumlahSiswa}
+            onClick={handleJumlahSiswaSave}
             disabled={isSavingJumlahSiswa}
             className="rounded-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
           >
@@ -3869,7 +3880,7 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
             Tambah Kelas
           </Button>
           <Button
-            onClick={onSaveEkonomi}
+            onClick={handleEkonomiSave}
             disabled={isSavingEkonomi}
             className="rounded-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
           >
@@ -3993,7 +4004,7 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
             Tambah Jenis Pekerjaan
           </Button>
           <Button
-            onClick={onSavePekerjaan}
+            onClick={handlePekerjaanSave}
             disabled={isSavingPekerjaan}
             className="rounded-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
           >
@@ -4087,7 +4098,7 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
             Tambah Tahun
           </Button>
           <Button
-            onClick={onSaveProfilLulusan}
+            onClick={handleProfilLulusanSave}
             disabled={isSavingProfilLulusan}
             className="rounded-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
           >
