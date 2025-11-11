@@ -38,6 +38,27 @@ import {
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
+const toNumber = (value: any): number | null => {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const formatNumber = (value: number | null | undefined) => {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return "-";
+  }
+  return new Intl.NumberFormat("id-ID").format(value);
+};
+
+const sumNumbers = (values: Array<number | null | undefined>) =>
+  values.reduce((acc, val) => acc + (val ?? 0), 0);
+
 interface Sekolah {
   id: string | number;
   nama: string;
@@ -47,6 +68,7 @@ interface Sekolah {
   kabupaten: string;
   cabangDinas: string;
   status: string;
+  profil_siswa?: any;
 }
 
 type TabType = 
@@ -65,6 +87,7 @@ export default function SekolahProfilePage() {
   const sekolahId = params.id as string;
   
   const [sekolah, setSekolah] = useState<Sekolah | null>(null);
+  const [sekolahProfile, setSekolahProfile] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>("identitas");
@@ -89,6 +112,7 @@ export default function SekolahProfilePage() {
     try {
       setIsLoading(true);
       setError(null);
+      setSekolahProfile(null);
 
       const userResponse = await fetch('/api/auth/get-current-user');
       
@@ -151,6 +175,7 @@ export default function SekolahProfilePage() {
           cabangDinas: `KCD Wilayah ${filteredSekolah.kcd_wilayah || '-'}`,
           status: filteredSekolah.status || 'Aktif',
         });
+        await fetchSekolahProfile(filteredSekolah.id);
       } else {
         if (!sekolahBinaanNames.includes(foundSekolah.nama_sekolah)) {
           setError('Sekolah ini tidak termasuk sekolah binaan Anda');
@@ -168,12 +193,33 @@ export default function SekolahProfilePage() {
           cabangDinas: `KCD Wilayah ${foundSekolah.kcd_wilayah || '-'}`,
           status: foundSekolah.status || 'Aktif',
         });
+        await fetchSekolahProfile(foundSekolah.id);
       }
     } catch (err) {
       console.error("Error loading sekolah detail:", err);
       setError(err instanceof Error ? err.message : 'Terjadi kesalahan saat memuat data');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchSekolahProfile = async (id: string | number) => {
+    try {
+      const response = await fetch(`/api/pengawas/sekolah/${id}`);
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error('Profil sekolah tidak ditemukan');
+        }
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Gagal memuat profil sekolah');
+      }
+
+      const result = await response.json();
+      setSekolahProfile(result.data);
+    } catch (err) {
+      console.error("Error fetching sekolah profile:", err);
+      throw err;
     }
   };
 
@@ -353,7 +399,9 @@ export default function SekolahProfilePage() {
         {activeTab === "identitas" && <IdentitasSekolahTab sekolah={sekolah} />}
         {activeTab === "profil-guru" && <ProfilGuruTab />}
         {activeTab === "profil-tenaga-kependidikan" && <ProfilTenagaKependidikanTab />}
-        {activeTab === "profil-siswa" && <ProfilSiswaTab />}
+        {activeTab === "profil-siswa" && (
+          <ProfilSiswaTab profilData={sekolahProfile?.profil_siswa} />
+        )}
         {activeTab === "branding" && <BrandingSekolahTab />}
         {activeTab === "kokurikuler" && <KokurikulerTab />}
         {activeTab === "ekstrakurikuler" && <EkstrakurikulerTab />}
@@ -721,58 +769,172 @@ function ProfilTenagaKependidikanTab() {
 }
 
 // Profil Siswa Tab
-function ProfilSiswaTab() {
+function ProfilSiswaTab({ profilData }: { profilData?: any }) {
+  const jumlahSiswaRows = Array.isArray(profilData?.jumlah_siswa?.per_kelas)
+    ? profilData.jumlah_siswa.per_kelas.map((row: any) => {
+        const laki = toNumber(row?.laki_laki ?? row?.jumlah_laki ?? row?.laki);
+        const perempuan = toNumber(row?.perempuan ?? row?.jumlah_perempuan ?? row?.perempuan);
+        const jumlah = toNumber(row?.jumlah) ?? sumNumbers([laki, perempuan]);
+        const abkLaki = toNumber(row?.abk_laki ?? row?.abkLaki ?? row?.abk?.laki_laki);
+        const abkPerempuan = toNumber(row?.abk_perempuan ?? row?.abkPerempuan ?? row?.abk?.perempuan);
+        const abkJumlah = toNumber(row?.abk_jumlah) ?? sumNumbers([abkLaki, abkPerempuan]);
+
+        return {
+          kelas: row?.kelas ?? "-",
+          jumlah_rombel: toNumber(row?.jumlah_rombel ?? row?.rombel),
+          laki_laki: laki,
+          perempuan,
+          jumlah,
+          abk_laki: abkLaki,
+          abk_perempuan: abkPerempuan,
+          abk_jumlah: abkJumlah,
+        };
+      })
+    : [];
+
+  const jumlahSiswaSummary =
+    jumlahSiswaRows.length > 0
+      ? {
+          jumlah_rombel: sumNumbers(jumlahSiswaRows.map((row) => row.jumlah_rombel)),
+          laki_laki: sumNumbers(jumlahSiswaRows.map((row) => row.laki_laki)),
+          perempuan: sumNumbers(jumlahSiswaRows.map((row) => row.perempuan)),
+          jumlah: sumNumbers(jumlahSiswaRows.map((row) => row.jumlah)),
+          abk_laki: sumNumbers(jumlahSiswaRows.map((row) => row.abk_laki)),
+          abk_perempuan: sumNumbers(jumlahSiswaRows.map((row) => row.abk_perempuan)),
+          abk_jumlah: sumNumbers(jumlahSiswaRows.map((row) => row.abk_jumlah)),
+        }
+      : null;
+
+  const ekonomiRows = Array.isArray(profilData?.ekonomi_orang_tua?.per_kelas)
+    ? profilData.ekonomi_orang_tua.per_kelas.map((row: any) => ({
+        kelas: row?.kelas ?? "-",
+        p1: toNumber(row?.p1 ?? row?.P1),
+        p2: toNumber(row?.p2 ?? row?.P2),
+        p3: toNumber(row?.p3 ?? row?.P3),
+        lebih_p3: toNumber(row?.lebih_p3 ?? row?.lebihP3 ?? row?.diatas_p3),
+      }))
+    : [];
+
+  const pekerjaanRows = Array.isArray(profilData?.pekerjaan_orang_tua?.detail ?? profilData?.pekerjaan_orang_tua)
+    ? (profilData.pekerjaan_orang_tua.detail ?? profilData.pekerjaan_orang_tua).map((row: any) => ({
+        jenis: row?.jenis ?? row?.nama ?? "-",
+        jumlah: toNumber(row?.jumlah ?? row?.total ?? row?.value),
+      }))
+    : [];
+
+  const profilLulusanRows = Array.isArray(profilData?.profil_lulusan?.per_tahun ?? profilData?.profil_lulusan)
+    ? (profilData.profil_lulusan?.per_tahun ?? profilData.profil_lulusan).map((row: any) => ({
+        tahun: row?.tahun ?? "-",
+        ptn_snbp: toNumber(row?.ptn_snbp ?? row?.snbp),
+        ptn_snbt: toNumber(row?.ptn_snbt ?? row?.snbt),
+        ptn_um: toNumber(row?.ptn_um ?? row?.um),
+        uin: toNumber(row?.uin),
+        pts: toNumber(row?.pts),
+        kedinasan_akmil: toNumber(row?.kedinasan_akmil ?? row?.akmil),
+        kedinasan_akpol: toNumber(row?.kedinasan_akpol ?? row?.akpol),
+        kedinasan_stan: toNumber(row?.kedinasan_stan ?? row?.stan),
+        kedinasan_stpdn: toNumber(row?.kedinasan_stpdn ?? row?.stpdn),
+        kedinasan_sttd: toNumber(row?.kedinasan_sttd ?? row?.sttd),
+        kedinasan_stis: toNumber(row?.kedinasan_stis ?? row?.stis),
+        kedinasan_lainnya: toNumber(row?.kedinasan_lainnya ?? row?.kedinasanLainnya),
+        bekerja: toNumber(row?.bekerja),
+        belum_bekerja: toNumber(row?.belum_bekerja ?? row?.belum_bekerja_melanjutkan ?? row?.belum),
+      }))
+    : [];
+
   return (
     <div className="space-y-6">
       {/* Jumlah Siswa */}
       <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
         <CardHeader>
           <CardTitle className="text-lg font-bold text-slate-900">Jumlah Siswa</CardTitle>
-          <CardDescription className="text-slate-600">Data jumlah siswa per kelas dan siswa berkebutuhan khusus</CardDescription>
+          <CardDescription className="text-slate-600">
+            Data jumlah siswa per kelas dan siswa berkebutuhan khusus
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse min-w-[600px]">
               <thead>
                 <tr className="border-b-2 border-slate-200 bg-slate-50">
-                  <th rowSpan={2} className="px-4 py-3 text-left text-xs font-bold text-slate-900 border-r border-slate-200">Kelas</th>
-                  <th rowSpan={2} className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">Jumlah Rombel</th>
-                  <th colSpan={3} className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">Jumlah Siswa</th>
-                  <th colSpan={3} className="px-4 py-3 text-center text-xs font-bold text-slate-900">Siswa Berkebutuhan Khusus</th>
+                  <th rowSpan={2} className="px-4 py-3 text-left text-xs font-bold text-slate-900 border-r border-slate-200">
+                    Kelas
+                  </th>
+                  <th rowSpan={2} className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
+                    Jumlah Rombel
+                  </th>
+                  <th colSpan={3} className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
+                    Jumlah Siswa
+                  </th>
+                  <th colSpan={3} className="px-4 py-3 text-center text-xs font-bold text-slate-900">
+                    Siswa Berkebutuhan Khusus
+                  </th>
                 </tr>
                 <tr className="border-b border-slate-200 bg-slate-50">
                   <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">Laki-laki</th>
                   <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">Perempuan</th>
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">Jumlah</th>
+                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">
+                    Jumlah
+                  </th>
                   <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">Laki-laki</th>
                   <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">Perempuan</th>
                   <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">Jumlah</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {["X", "XI", "XII"].map((kelas) => (
-                  <tr key={kelas}>
-                    <td className="px-4 py-3 text-sm font-semibold text-slate-900">{kelas}</td>
-                    <td className="px-4 py-3 text-sm text-slate-700 text-center">-</td>
-                    <td className="px-4 py-3 text-sm text-slate-700 text-center">-</td>
-                    <td className="px-4 py-3 text-sm text-slate-700 text-center">-</td>
-                    <td className="px-4 py-3 text-sm text-slate-700 text-center border-r border-slate-200">-</td>
-                    <td className="px-4 py-3 text-sm text-slate-700 text-center">-</td>
-                    <td className="px-4 py-3 text-sm text-slate-700 text-center">-</td>
-                    <td className="px-4 py-3 text-sm text-slate-700 text-center">-</td>
+                {jumlahSiswaRows.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="px-4 py-8 text-center text-sm text-slate-500">
+                      Belum ada data jumlah siswa yang diinput oleh sekolah.
+                    </td>
                   </tr>
-                ))}
-                <tr className="bg-slate-50 font-semibold">
-                  <td className="px-4 py-3 text-sm text-slate-900">Jumlah Siswa</td>
-                  <td className="px-4 py-3 text-sm text-slate-700 text-center">-</td>
-                  <td className="px-4 py-3 text-sm text-slate-700 text-center">-</td>
-                  <td className="px-4 py-3 text-sm text-slate-700 text-center">-</td>
-                  <td className="px-4 py-3 text-sm text-slate-700 text-center border-r border-slate-200">-</td>
-                  <td className="px-4 py-3 text-sm text-slate-700 text-center">-</td>
-                  <td className="px-4 py-3 text-sm text-slate-700 text-center">-</td>
-                  <td className="px-4 py-3 text-sm text-slate-700 text-center">-</td>
-                </tr>
+                ) : (
+                  jumlahSiswaRows.map((row, index) => (
+                    <tr key={`${row.kelas}-${index}`}>
+                      <td className="px-4 py-3 text-sm font-semibold text-slate-900">{row.kelas}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center">
+                        {formatNumber(row.jumlah_rombel)}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.laki_laki)}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.perempuan)}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center border-r border-slate-200">
+                        {formatNumber(row.jumlah)}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.abk_laki)}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.abk_perempuan)}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.abk_jumlah)}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
+              {jumlahSiswaSummary && (
+                <tfoot>
+                  <tr className="bg-slate-50 font-semibold">
+                    <td className="px-4 py-3 text-sm text-slate-900">Total</td>
+                    <td className="px-4 py-3 text-sm text-slate-700 text-center">
+                      {formatNumber(jumlahSiswaSummary.jumlah_rombel)}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-700 text-center">
+                      {formatNumber(jumlahSiswaSummary.laki_laki)}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-700 text-center">
+                      {formatNumber(jumlahSiswaSummary.perempuan)}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-700 text-center border-r border-slate-200">
+                      {formatNumber(jumlahSiswaSummary.jumlah)}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-700 text-center">
+                      {formatNumber(jumlahSiswaSummary.abk_laki)}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-700 text-center">
+                      {formatNumber(jumlahSiswaSummary.abk_perempuan)}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-700 text-center">
+                      {formatNumber(jumlahSiswaSummary.abk_jumlah)}
+                    </td>
+                  </tr>
+                </tfoot>
+              )}
             </table>
           </div>
         </CardContent>
@@ -782,7 +944,9 @@ function ProfilSiswaTab() {
       <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
         <CardHeader>
           <CardTitle className="text-lg font-bold text-slate-900">Ekonomi Orang Tua</CardTitle>
-          <CardDescription className="text-slate-600">Data tingkat ekonomi orang tua siswa per kelas</CardDescription>
+          <CardDescription className="text-slate-600">
+            Data tingkat ekonomi orang tua siswa per kelas
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -797,15 +961,23 @@ function ProfilSiswaTab() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {["X", "XI", "XII"].map((kelas) => (
-                  <tr key={kelas}>
-                    <td className="px-4 py-3 text-sm font-semibold text-slate-900">{kelas}</td>
-                    <td className="px-4 py-3 text-sm text-slate-700 text-center">-</td>
-                    <td className="px-4 py-3 text-sm text-slate-700 text-center">-</td>
-                    <td className="px-4 py-3 text-sm text-slate-700 text-center">-</td>
-                    <td className="px-4 py-3 text-sm text-slate-700 text-center">-</td>
+                {ekonomiRows.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-500">
+                      Belum ada data ekonomi orang tua yang diinput oleh sekolah.
+                    </td>
                   </tr>
-                ))}
+                ) : (
+                  ekonomiRows.map((row, index) => (
+                    <tr key={`${row.kelas}-${index}`}>
+                      <td className="px-4 py-3 text-sm font-semibold text-slate-900">{row.kelas}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.p1)}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.p2)}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.p3)}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.lebih_p3)}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -828,12 +1000,20 @@ function ProfilSiswaTab() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {["ASN", "TNI/POLRI", "Swasta", "Petani", "Nelayan", "Buruh Tani"].map((pekerjaan) => (
-                  <tr key={pekerjaan}>
-                    <td className="px-4 py-3 text-sm text-slate-700">{pekerjaan}</td>
-                    <td className="px-4 py-3 text-sm text-slate-700 text-center">-</td>
+                {pekerjaanRows.length === 0 ? (
+                  <tr>
+                    <td colSpan={2} className="px-4 py-8 text-center text-sm text-slate-500">
+                      Belum ada data pekerjaan orang tua yang diinput oleh sekolah.
+                    </td>
                   </tr>
-                ))}
+                ) : (
+                  pekerjaanRows.map((row, index) => (
+                    <tr key={`${row.jenis}-${index}`}>
+                      <td className="px-4 py-3 text-sm text-slate-700">{row.jenis}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.jumlah)}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -844,58 +1024,108 @@ function ProfilSiswaTab() {
       <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
         <CardHeader>
           <CardTitle className="text-lg font-bold text-slate-900">Profil Lulusan</CardTitle>
-          <CardDescription className="text-slate-600">Data kelulusan dan kelanjutan studi/tujuan siswa per tahun</CardDescription>
+          <CardDescription className="text-slate-600">
+            Data kelulusan dan kelanjutan studi/tujuan siswa per tahun
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse min-w-[800px]">
               <thead>
                 <tr className="border-b-2 border-slate-200 bg-slate-50">
-                  <th rowSpan={2} className="px-4 py-3 text-left text-xs font-bold text-slate-900 border-r border-slate-200">Tahun</th>
-                  <th colSpan={3} className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">PTN</th>
-                  <th className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">UIN</th>
-                  <th className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">PTS</th>
-                  <th colSpan={7} className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">Kedinasan</th>
-                  <th className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">Bekerja</th>
-                  <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">Belum Bekerja/Melanjutkan</th>
+                  <th rowSpan={2} className="px-4 py-3 text-left text-xs font-bold text-slate-900 border-r border-slate-200">
+                    Tahun
+                  </th>
+                  <th colSpan={3} className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
+                    PTN
+                  </th>
+                  <th className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
+                    UIN
+                  </th>
+                  <th className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
+                    PTS
+                  </th>
+                  <th colSpan={7} className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
+                    Kedinasan
+                  </th>
+                  <th className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
+                    Bekerja
+                  </th>
+                  <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">
+                    Belum Bekerja/Melanjutkan
+                  </th>
                 </tr>
                 <tr className="border-b border-slate-200 bg-slate-50">
                   <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">SNBP</th>
                   <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">SNBT</th>
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">UM</th>
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200"></th>
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200"></th>
+                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">
+                    UM
+                  </th>
+                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">
+                    Jumlah
+                  </th>
+                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">
+                    Jumlah
+                  </th>
                   <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">Akmil</th>
                   <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">Akpol</th>
                   <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">STAN</th>
                   <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">STPDN</th>
                   <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">STTD</th>
                   <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">STIS</th>
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">Lain-lain</th>
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200"></th>
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700"></th>
+                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">
+                    Lain-lain
+                  </th>
+                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">
+                    Jumlah
+                  </th>
+                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">
+                    Jumlah
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {["2024", "2025"].map((tahun) => (
-                  <tr key={tahun}>
-                    <td className="px-4 py-3 text-sm font-semibold text-slate-900 border-r border-slate-200">{tahun}</td>
-                    <td className="px-4 py-3 text-sm text-slate-700 text-center">-</td>
-                    <td className="px-4 py-3 text-sm text-slate-700 text-center">-</td>
-                    <td className="px-4 py-3 text-sm text-slate-700 text-center border-r border-slate-200">-</td>
-                    <td className="px-4 py-3 text-sm text-slate-700 text-center border-r border-slate-200">-</td>
-                    <td className="px-4 py-3 text-sm text-slate-700 text-center border-r border-slate-200">-</td>
-                    <td className="px-4 py-3 text-sm text-slate-700 text-center">-</td>
-                    <td className="px-4 py-3 text-sm text-slate-700 text-center">-</td>
-                    <td className="px-4 py-3 text-sm text-slate-700 text-center">-</td>
-                    <td className="px-4 py-3 text-sm text-slate-700 text-center">-</td>
-                    <td className="px-4 py-3 text-sm text-slate-700 text-center">-</td>
-                    <td className="px-4 py-3 text-sm text-slate-700 text-center">-</td>
-                    <td className="px-4 py-3 text-sm text-slate-700 text-center border-r border-slate-200">-</td>
-                    <td className="px-4 py-3 text-sm text-slate-700 text-center border-r border-slate-200">-</td>
-                    <td className="px-4 py-3 text-sm text-slate-700 text-center">-</td>
+                {profilLulusanRows.length === 0 ? (
+                  <tr>
+                    <td colSpan={15} className="px-4 py-8 text-center text-sm text-slate-500">
+                      Belum ada data profil lulusan yang diinput oleh sekolah.
+                    </td>
                   </tr>
-                ))}
+                ) : (
+                  profilLulusanRows.map((row, index) => (
+                    <tr key={`${row.tahun}-${index}`}>
+                      <td className="px-4 py-3 text-sm font-semibold text-slate-900 border-r border-slate-200">
+                        {row.tahun}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.ptn_snbp)}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.ptn_snbt)}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center border-r border-slate-200">
+                        {formatNumber(row.ptn_um)}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center border-r border-slate-200">
+                        {formatNumber(row.uin)}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center border-r border-slate-200">
+                        {formatNumber(row.pts)}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.kedinasan_akmil)}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.kedinasan_akpol)}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.kedinasan_stan)}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.kedinasan_stpdn)}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.kedinasan_sttd)}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.kedinasan_stis)}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center border-r border-slate-200">
+                        {formatNumber(row.kedinasan_lainnya)}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center border-r border-slate-200">
+                        {formatNumber(row.bekerja)}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center">
+                        {formatNumber(row.belum_bekerja)}
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Card,
@@ -987,6 +987,233 @@ function ProfilGuruTab({ formData, updateFormData }: { formData: Partial<Sekolah
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery]);
+
+  const updateJumlahSiswaRow = (rowId: string, field: keyof JumlahSiswaRow, value: string) => {
+    setJumlahSiswaRows((prev) =>
+      prev.map((row) =>
+        row.id === rowId
+          ? {
+              ...row,
+              [field]: field === "kelas" ? value : toNumericValue(value),
+            }
+          : row,
+      ),
+    );
+  };
+
+  const jumlahSiswaSummary = computeJumlahSiswaSummary(jumlahSiswaRows);
+
+  const persistProfilSiswa = async (
+    payload: Record<string, any>,
+    successMessage: string,
+    onFinally?: () => void,
+  ) => {
+    try {
+      const response = await fetch("/api/sekolah/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ profil_siswa: payload }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Gagal menyimpan data profil siswa");
+      }
+
+      toast({
+        title: "Berhasil",
+        description: successMessage,
+      });
+    } catch (err) {
+      console.error("Error persisting profil siswa:", err);
+      toast({
+        title: "Gagal",
+        description: err instanceof Error ? err.message : "Terjadi kesalahan saat menyimpan data",
+        variant: "error",
+      });
+      throw err;
+    } finally {
+      onFinally?.();
+    }
+  };
+
+  const onSaveJumlahSiswa = useCallback(async () => {
+    const sanitizedRows = jumlahSiswaRows.map((row) => {
+      const kelas = row.kelas?.trim() || "";
+      const laki = row.laki_laki ?? 0;
+      const perempuan = row.perempuan ?? 0;
+      const abkLaki = row.abk_laki ?? 0;
+      const abkPerempuan = row.abk_perempuan ?? 0;
+
+      return {
+        kelas,
+        jumlah_rombel: row.jumlah_rombel,
+        laki_laki: row.laki_laki,
+        perempuan: row.perempuan,
+        jumlah: laki + perempuan,
+        abk_laki: row.abk_laki,
+        abk_perempuan: row.abk_perempuan,
+        abk_jumlah: abkLaki + abkPerempuan,
+      };
+    });
+
+    const summary = computeJumlahSiswaSummary(jumlahSiswaRows);
+
+    const updatedProfilSiswa = {
+      ...(formData.profil_siswa || {}),
+      jumlah_siswa: {
+        per_kelas: sanitizedRows,
+        total: {
+          jumlah_rombel: summary.total_rombel,
+          laki_laki: summary.total_laki_laki,
+          perempuan: summary.total_perempuan,
+          jumlah: summary.total_siswa,
+          abk_laki: summary.total_abk_laki,
+          abk_perempuan: summary.total_abk_perempuan,
+          abk_jumlah: summary.total_abk,
+        },
+      },
+    };
+
+    setIsSavingJumlahSiswa(true);
+    updateFormData("profil_siswa", updatedProfilSiswa);
+
+    try {
+      await persistProfilSiswa(updatedProfilSiswa, "Data jumlah siswa berhasil disimpan");
+    } finally {
+      setIsSavingJumlahSiswa(false);
+    }
+  }, [formData, jumlahSiswaRows, persistProfilSiswa, updateFormData]);
+
+  const updateEkonomiRow = (rowId: string, field: keyof EkonomiOrangTuaRow, value: string) => {
+    setEkonomiRows((prev) =>
+      prev.map((row) =>
+        row.id === rowId
+          ? {
+              ...row,
+              [field]: field === "kelas" ? value : toNumericValue(value),
+            }
+          : row,
+      ),
+    );
+  };
+
+  const onSaveEkonomi = useCallback(async () => {
+    const sanitizedRows = ekonomiRows.map((row) => ({
+      kelas: row.kelas?.trim() || "",
+      p1: row.p1,
+      p2: row.p2,
+      p3: row.p3,
+      lebih_p3: row.lebih_p3,
+    }));
+
+    const updatedProfilSiswa = {
+      ...(formData.profil_siswa || {}),
+      ekonomi_orang_tua: {
+        per_kelas: sanitizedRows,
+      },
+    };
+
+    setIsSavingEkonomi(true);
+    updateFormData("profil_siswa", updatedProfilSiswa);
+
+    try {
+      await persistProfilSiswa(updatedProfilSiswa, "Data ekonomi orang tua berhasil disimpan");
+    } finally {
+      setIsSavingEkonomi(false);
+    }
+  }, [ekonomiRows, formData, persistProfilSiswa, updateFormData]);
+
+  const updatePekerjaanRow = (rowId: string, field: keyof PekerjaanOrangTuaRow, value: string) => {
+    setPekerjaanRows((prev) =>
+      prev.map((row) =>
+        row.id === rowId
+          ? {
+              ...row,
+              [field]: field === "jenis" ? value : toNumericValue(value),
+            }
+          : row,
+      ),
+    );
+  };
+
+  const onSavePekerjaan = useCallback(async () => {
+    const sanitizedRows = pekerjaanRows
+      .map((row) => ({
+        jenis: row.jenis?.trim() || "",
+        jumlah: row.jumlah,
+      }))
+      .filter((row) => row.jenis);
+
+    const updatedProfilSiswa = {
+      ...(formData.profil_siswa || {}),
+      pekerjaan_orang_tua: {
+        detail: sanitizedRows,
+      },
+    };
+
+    setIsSavingPekerjaan(true);
+    updateFormData("profil_siswa", updatedProfilSiswa);
+
+    try {
+      await persistProfilSiswa(updatedProfilSiswa, "Data pekerjaan orang tua berhasil disimpan");
+    } finally {
+      setIsSavingPekerjaan(false);
+    }
+  }, [formData, pekerjaanRows, persistProfilSiswa, updateFormData]);
+
+  const updateProfilLulusanRow = (rowId: string, field: keyof ProfilLulusanRow, value: string) => {
+    setProfilLulusanRows((prev) =>
+      prev.map((row) =>
+        row.id === rowId
+          ? {
+              ...row,
+              [field]: field === "tahun" ? value : toNumericValue(value),
+            }
+          : row,
+      ),
+    );
+  };
+
+  const onSaveProfilLulusan = useCallback(async () => {
+    const sanitizedRows = profilLulusanRows
+      .map((row) => ({
+        tahun: row.tahun?.trim() || "",
+        ptn_snbp: row.ptn_snbp,
+        ptn_snbt: row.ptn_snbt,
+        ptn_um: row.ptn_um,
+        uin: row.uin,
+        pts: row.pts,
+        kedinasan_akmil: row.kedinasan_akmil,
+        kedinasan_akpol: row.kedinasan_akpol,
+        kedinasan_stan: row.kedinasan_stan,
+        kedinasan_stpdn: row.kedinasan_stpdn,
+        kedinasan_sttd: row.kedinasan_sttd,
+        kedinasan_stis: row.kedinasan_stis,
+        kedinasan_lainnya: row.kedinasan_lainnya,
+        bekerja: row.bekerja,
+        belum_bekerja: row.belum_bekerja,
+      }))
+      .filter((row) => row.tahun);
+
+    const updatedProfilSiswa = {
+      ...(formData.profil_siswa || {}),
+      profil_lulusan: {
+        per_tahun: sanitizedRows,
+      },
+    };
+
+    setIsSavingProfilLulusan(true);
+    updateFormData("profil_siswa", updatedProfilSiswa);
+
+    try {
+      await persistProfilSiswa(updatedProfilSiswa, "Data profil lulusan berhasil disimpan");
+    } finally {
+      setIsSavingProfilLulusan(false);
+    }
+  }, [formData, persistProfilSiswa, profilLulusanRows, updateFormData]);
 
   const openAddModal = () => {
     setNewGuru(createEmptyGuru());
@@ -2751,6 +2978,248 @@ const createEmptySiswa = (): SiswaForm => ({
   no_telepon: '',
 });
 
+type NumericValue = number | null;
+
+type JumlahSiswaRow = {
+  id: string;
+  kelas: string;
+  jumlah_rombel: NumericValue;
+  laki_laki: NumericValue;
+  perempuan: NumericValue;
+  abk_laki: NumericValue;
+  abk_perempuan: NumericValue;
+};
+
+type JumlahSiswaSummary = {
+  total_rombel: number;
+  total_laki_laki: number;
+  total_perempuan: number;
+  total_siswa: number;
+  total_abk_laki: number;
+  total_abk_perempuan: number;
+  total_abk: number;
+};
+
+type EkonomiOrangTuaRow = {
+  id: string;
+  kelas: string;
+  p1: NumericValue;
+  p2: NumericValue;
+  p3: NumericValue;
+  lebih_p3: NumericValue;
+};
+
+type PekerjaanOrangTuaRow = {
+  id: string;
+  jenis: string;
+  jumlah: NumericValue;
+};
+
+type ProfilLulusanRow = {
+  id: string;
+  tahun: string;
+  ptn_snbp: NumericValue;
+  ptn_snbt: NumericValue;
+  ptn_um: NumericValue;
+  uin: NumericValue;
+  pts: NumericValue;
+  kedinasan_akmil: NumericValue;
+  kedinasan_akpol: NumericValue;
+  kedinasan_stan: NumericValue;
+  kedinasan_stpdn: NumericValue;
+  kedinasan_sttd: NumericValue;
+  kedinasan_stis: NumericValue;
+  kedinasan_lainnya: NumericValue;
+  bekerja: NumericValue;
+  belum_bekerja: NumericValue;
+};
+
+const generateRowId = () => (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+  ? crypto.randomUUID()
+  : Math.random().toString(36).slice(2, 10));
+
+const toNumericValue = (value: any): NumericValue => {
+  if (value === null || value === undefined || value === "") {
+    return null;
+  }
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) ? numberValue : null;
+};
+
+const createJumlahSiswaRow = (kelas = ""): JumlahSiswaRow => ({
+  id: generateRowId(),
+  kelas,
+  jumlah_rombel: null,
+  laki_laki: null,
+  perempuan: null,
+  abk_laki: null,
+  abk_perempuan: null,
+});
+
+const defaultJumlahSiswaRows = () => ["X", "XI", "XII"].map(createJumlahSiswaRow);
+
+const createEkonomiRow = (kelas = ""): EkonomiOrangTuaRow => ({
+  id: generateRowId(),
+  kelas,
+  p1: null,
+  p2: null,
+  p3: null,
+  lebih_p3: null,
+});
+
+const defaultEkonomiRows = () => ["X", "XI", "XII"].map(createEkonomiRow);
+
+const defaultPekerjaanRows = (): PekerjaanOrangTuaRow[] => [
+  { id: generateRowId(), jenis: "ASN", jumlah: null },
+  { id: generateRowId(), jenis: "TNI/POLRI", jumlah: null },
+  { id: generateRowId(), jenis: "Swasta", jumlah: null },
+  { id: generateRowId(), jenis: "Petani", jumlah: null },
+  { id: generateRowId(), jenis: "Nelayan", jumlah: null },
+  { id: generateRowId(), jenis: "Buruh Tani", jumlah: null },
+  { id: generateRowId(), jenis: "Wirausaha", jumlah: null },
+  { id: generateRowId(), jenis: "Lainnya", jumlah: null },
+];
+
+const createProfilLulusanRow = (tahun = ""): ProfilLulusanRow => ({
+  id: generateRowId(),
+  tahun,
+  ptn_snbp: null,
+  ptn_snbt: null,
+  ptn_um: null,
+  uin: null,
+  pts: null,
+  kedinasan_akmil: null,
+  kedinasan_akpol: null,
+  kedinasan_stan: null,
+  kedinasan_stpdn: null,
+  kedinasan_sttd: null,
+  kedinasan_stis: null,
+  kedinasan_lainnya: null,
+  bekerja: null,
+  belum_bekerja: null,
+});
+
+const defaultProfilLulusanRows = () => {
+  const currentYear = new Date().getFullYear();
+  return [createProfilLulusanRow(String(currentYear)), createProfilLulusanRow(String(currentYear + 1))];
+};
+
+const normalizeJumlahSiswaRows = (rows: any[]): JumlahSiswaRow[] => {
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return defaultJumlahSiswaRows();
+  }
+
+  return rows.map((row: any) => ({
+    id: row?.id ?? generateRowId(),
+    kelas: row?.kelas ?? "",
+    jumlah_rombel: toNumericValue(row?.jumlah_rombel ?? row?.rombel ?? row?.jumlahRombel),
+    laki_laki: toNumericValue(
+      row?.laki_laki ?? row?.laki_laki ?? row?.jumlah_laki ?? row?.jumlahLaki ?? row?.laki
+    ),
+    perempuan: toNumericValue(
+      row?.perempuan ?? row?.jumlah_perempuan ?? row?.jumlahPerempuan ?? row?.p ?? row?.perempuan_siswa
+    ),
+    abk_laki: toNumericValue(
+      row?.abk_laki ?? row?.abkLaki ?? row?.abk_lk ?? row?.abk_lk_laki ?? row?.abk?.laki_laki
+    ),
+    abk_perempuan: toNumericValue(
+      row?.abk_perempuan ?? row?.abkPerempuan ?? row?.abk_pr ?? row?.abk?.perempuan
+    ),
+  }));
+};
+
+const computeJumlahSiswaSummary = (rows: JumlahSiswaRow[]): JumlahSiswaSummary => {
+  return rows.reduce(
+    (acc, row) => {
+      const rombel = row.jumlah_rombel ?? 0;
+      const laki = row.laki_laki ?? 0;
+      const perempuan = row.perempuan ?? 0;
+      const abkLaki = row.abk_laki ?? 0;
+      const abkPerempuan = row.abk_perempuan ?? 0;
+
+      acc.total_rombel += rombel;
+      acc.total_laki_laki += laki;
+      acc.total_perempuan += perempuan;
+      acc.total_siswa += laki + perempuan;
+      acc.total_abk_laki += abkLaki;
+      acc.total_abk_perempuan += abkPerempuan;
+      acc.total_abk += abkLaki + abkPerempuan;
+
+      return acc;
+    },
+    {
+      total_rombel: 0,
+      total_laki_laki: 0,
+      total_perempuan: 0,
+      total_siswa: 0,
+      total_abk_laki: 0,
+      total_abk_perempuan: 0,
+      total_abk: 0,
+    },
+  );
+};
+
+const normalizeEkonomiRows = (rows: any[]): EkonomiOrangTuaRow[] => {
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return defaultEkonomiRows();
+  }
+
+  return rows.map((row: any) => ({
+    id: row?.id ?? generateRowId(),
+    kelas: row?.kelas ?? "",
+    p1: toNumericValue(row?.p1 ?? row?.P1),
+    p2: toNumericValue(row?.p2 ?? row?.P2),
+    p3: toNumericValue(row?.p3 ?? row?.P3),
+    lebih_p3: toNumericValue(row?.lebih_p3 ?? row?.lebihP3 ?? row?.diatas_p3 ?? row?.diatasP3),
+  }));
+};
+
+const normalizePekerjaanRows = (rows: any[]): PekerjaanOrangTuaRow[] => {
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return defaultPekerjaanRows();
+  }
+
+  return rows.map((row: any) => ({
+    id: row?.id ?? generateRowId(),
+    jenis: row?.jenis ?? row?.nama ?? "",
+    jumlah: toNumericValue(row?.jumlah ?? row?.total ?? row?.value),
+  }));
+};
+
+const normalizeProfilLulusanRows = (rows: any[]): ProfilLulusanRow[] => {
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return defaultProfilLulusanRows();
+  }
+
+  return rows.map((row: any) => ({
+    id: row?.id ?? generateRowId(),
+    tahun: row?.tahun ?? "",
+    ptn_snbp: toNumericValue(row?.ptn_snbp ?? row?.snbp),
+    ptn_snbt: toNumericValue(row?.ptn_snbt ?? row?.snbt),
+    ptn_um: toNumericValue(row?.ptn_um ?? row?.um),
+    uin: toNumericValue(row?.uin),
+    pts: toNumericValue(row?.pts),
+    kedinasan_akmil: toNumericValue(row?.kedinasan_akmil ?? row?.akmil),
+    kedinasan_akpol: toNumericValue(row?.kedinasan_akpol ?? row?.akpol),
+    kedinasan_stan: toNumericValue(row?.kedinasan_stan ?? row?.stan),
+    kedinasan_stpdn: toNumericValue(row?.kedinasan_stpdn ?? row?.stpdn),
+    kedinasan_sttd: toNumericValue(row?.kedinasan_sttd ?? row?.sttd),
+    kedinasan_stis: toNumericValue(row?.kedinasan_stis ?? row?.stis),
+    kedinasan_lainnya: toNumericValue(row?.kedinasan_lainnya ?? row?.kedinasanLainnya),
+    bekerja: toNumericValue(row?.bekerja),
+    belum_bekerja: toNumericValue(
+      row?.belum_bekerja ?? row?.belumBekerja ?? row?.belum_bekerja_melanjutkan ?? row?.belum
+    ),
+  }));
+};
+
+const formatNumber = (value: NumericValue, options: Intl.NumberFormatOptions = {}) => {
+  if (value === null || value === undefined) {
+    return "-";
+  }
+  return new Intl.NumberFormat("id-ID", options).format(value);
+};
+
 function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<SekolahProfile>; updateFormData: (field: string, value: any) => void }) {
   const { toast } = useToast();
   const [siswaList, setSiswaList] = useState<any[]>(formData.profil_siswa?.detail || []);
@@ -2765,6 +3234,14 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
   const [searchQuery, setSearchQuery] = useState("");
   const [newSiswa, setNewSiswa] = useState<SiswaForm>(createEmptySiswa());
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [jumlahSiswaRows, setJumlahSiswaRows] = useState<JumlahSiswaRow[]>(defaultJumlahSiswaRows());
+  const [ekonomiRows, setEkonomiRows] = useState<EkonomiOrangTuaRow[]>(defaultEkonomiRows());
+  const [pekerjaanRows, setPekerjaanRows] = useState<PekerjaanOrangTuaRow[]>(defaultPekerjaanRows());
+  const [profilLulusanRows, setProfilLulusanRows] = useState<ProfilLulusanRow[]>(defaultProfilLulusanRows());
+  const [isSavingJumlahSiswa, setIsSavingJumlahSiswa] = useState(false);
+  const [isSavingEkonomi, setIsSavingEkonomi] = useState(false);
+  const [isSavingPekerjaan, setIsSavingPekerjaan] = useState(false);
+  const [isSavingProfilLulusan, setIsSavingProfilLulusan] = useState(false);
   const PAGE_SIZE = 6;
 
   const normalizedSearch = searchQuery.trim().toLowerCase();
@@ -2808,6 +3285,24 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
       setSiswaList(formData.profil_siswa.detail);
       setCurrentPage(1);
     }
+
+    const profil = formData.profil_siswa || {};
+
+    const jumlahRows = normalizeJumlahSiswaRows(profil.jumlah_siswa?.per_kelas);
+    setJumlahSiswaRows(jumlahRows);
+
+    const ekonomiData = normalizeEkonomiRows(profil.ekonomi_orang_tua?.per_kelas);
+    setEkonomiRows(ekonomiData);
+
+    const pekerjaanData = normalizePekerjaanRows(
+      profil.pekerjaan_orang_tua?.detail ?? profil.pekerjaan_orang_tua
+    );
+    setPekerjaanRows(pekerjaanData);
+
+    const profilLulusanData = normalizeProfilLulusanRows(
+      profil.profil_lulusan?.per_tahun ?? profil.profil_lulusan
+    );
+    setProfilLulusanRows(profilLulusanData);
   }, [formData.profil_siswa]);
 
   useEffect(() => {
@@ -3176,6 +3671,659 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
           </div>
         </CardContent>
       </Card>
+
+    {/* Jumlah Siswa Section */}
+    <Card className="border-0 bg-white shadow-lg shadow-green-100/50">
+      <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <CardTitle className="text-lg font-bold text-slate-900">Jumlah Siswa per Kelas</CardTitle>
+          <CardDescription className="text-slate-600">
+            Isi jumlah siswa dan siswa berkebutuhan khusus per kelas secara berkala
+          </CardDescription>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <Button
+            type="button"
+            onClick={() =>
+              setJumlahSiswaRows((prev) => [...prev, createJumlahSiswaRow("")])
+            }
+            variant="outline"
+            className="rounded-full border border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
+          >
+            <Plus className="mr-2 size-4" />
+            Tambah Kelas
+          </Button>
+          <Button
+            onClick={onSaveJumlahSiswa}
+            disabled={isSavingJumlahSiswa}
+            className="rounded-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isSavingJumlahSiswa ? (
+              <>
+                <Loader2 className="mr-2 size-4 animate-spin" />
+                Menyimpan...
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 size-4" />
+                Simpan Data
+              </>
+            )}
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse min-w-[720px]">
+            <thead>
+              <tr className="border-b-2 border-slate-200 bg-slate-50">
+                <th className="px-4 py-3 text-left text-xs font-bold text-slate-900">Kelas</th>
+                <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">Jumlah Rombel</th>
+                <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">Laki-laki</th>
+                <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">Perempuan</th>
+                <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">Jumlah</th>
+                <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">ABK Laki-laki</th>
+                <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">ABK Perempuan</th>
+                <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">ABK Jumlah</th>
+                <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {jumlahSiswaRows.map((row) => {
+                const total = (row.laki_laki ?? 0) + (row.perempuan ?? 0);
+                const abkTotal = (row.abk_laki ?? 0) + (row.abk_perempuan ?? 0);
+
+                return (
+                  <tr key={row.id} className="bg-white">
+                    <td className="px-4 py-3 text-sm">
+                      <input
+                        type="text"
+                        value={row.kelas}
+                        onChange={(e) => updateJumlahSiswaRow(row.id, "kelas", e.target.value)}
+                        placeholder="Contoh: X IPA 1"
+                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                      />
+                    </td>
+                    <td className="px-4 py-3 text-sm text-center">
+                      <input
+                        type="number"
+                        min={0}
+                        value={row.jumlah_rombel ?? ""}
+                        onChange={(e) => updateJumlahSiswaRow(row.id, "jumlah_rombel", e.target.value)}
+                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                      />
+                    </td>
+                    <td className="px-4 py-3 text-sm text-center">
+                      <input
+                        type="number"
+                        min={0}
+                        value={row.laki_laki ?? ""}
+                        onChange={(e) => updateJumlahSiswaRow(row.id, "laki_laki", e.target.value)}
+                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                      />
+                    </td>
+                    <td className="px-4 py-3 text-sm text-center">
+                      <input
+                        type="number"
+                        min={0}
+                        value={row.perempuan ?? ""}
+                        onChange={(e) => updateJumlahSiswaRow(row.id, "perempuan", e.target.value)}
+                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                      />
+                    </td>
+                    <td className="px-4 py-3 text-sm text-center font-semibold text-slate-900">
+                      {formatNumber(total)}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-center">
+                      <input
+                        type="number"
+                        min={0}
+                        value={row.abk_laki ?? ""}
+                        onChange={(e) => updateJumlahSiswaRow(row.id, "abk_laki", e.target.value)}
+                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                      />
+                    </td>
+                    <td className="px-4 py-3 text-sm text-center">
+                      <input
+                        type="number"
+                        min={0}
+                        value={row.abk_perempuan ?? ""}
+                        onChange={(e) => updateJumlahSiswaRow(row.id, "abk_perempuan", e.target.value)}
+                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                      />
+                    </td>
+                    <td className="px-4 py-3 text-sm text-center font-semibold text-slate-900">
+                      {formatNumber(abkTotal)}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          setJumlahSiswaRows((prev) =>
+                            prev.length > 1 ? prev.filter((item) => item.id !== row.id) : prev,
+                          )
+                        }
+                        className="h-9 w-9 rounded-full border border-red-100 bg-red-50 text-red-600 shadow-sm transition hover:bg-red-100 hover:text-red-700"
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            <tfoot>
+              <tr className="border-t-2 border-slate-200 bg-slate-50 font-semibold">
+                <td className="px-4 py-3 text-sm text-slate-900">Total</td>
+                <td className="px-4 py-3 text-sm text-center text-slate-900">
+                  {formatNumber(jumlahSiswaSummary.total_rombel)}
+                </td>
+                <td className="px-4 py-3 text-sm text-center text-slate-900">
+                  {formatNumber(jumlahSiswaSummary.total_laki_laki)}
+                </td>
+                <td className="px-4 py-3 text-sm text-center text-slate-900">
+                  {formatNumber(jumlahSiswaSummary.total_perempuan)}
+                </td>
+                <td className="px-4 py-3 text-sm text-center text-slate-900">
+                  {formatNumber(jumlahSiswaSummary.total_siswa)}
+                </td>
+                <td className="px-4 py-3 text-sm text-center text-slate-900">
+                  {formatNumber(jumlahSiswaSummary.total_abk_laki)}
+                </td>
+                <td className="px-4 py-3 text-sm text-center text-slate-900">
+                  {formatNumber(jumlahSiswaSummary.total_abk_perempuan)}
+                </td>
+                <td className="px-4 py-3 text-sm text-center text-slate-900">
+                  {formatNumber(jumlahSiswaSummary.total_abk)}
+                </td>
+                <td />
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <p className="mt-3 text-xs text-slate-500">
+          Catatan: ABK (Anak Berkebutuhan Khusus) mencakup siswa dengan kebutuhan layanan pendidikan khusus.
+        </p>
+      </CardContent>
+    </Card>
+
+    {/* Ekonomi Orang Tua Section */}
+    <Card className="border-0 bg-white shadow-lg shadow-green-100/50">
+      <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <CardTitle className="text-lg font-bold text-slate-900">Ekonomi Orang Tua</CardTitle>
+          <CardDescription className="text-slate-600">
+            Catat distribusi tingkat ekonomi orang tua siswa per kelas (P1 paling rendah)
+          </CardDescription>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <Button
+            type="button"
+            onClick={() => setEkonomiRows((prev) => [...prev, createEkonomiRow("")])}
+            variant="outline"
+            className="rounded-full border border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
+          >
+            <Plus className="mr-2 size-4" />
+            Tambah Kelas
+          </Button>
+          <Button
+            onClick={onSaveEkonomi}
+            disabled={isSavingEkonomi}
+            className="rounded-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isSavingEkonomi ? (
+              <>
+                <Loader2 className="mr-2 size-4 animate-spin" />
+                Menyimpan...
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 size-4" />
+                Simpan Data
+              </>
+            )}
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse min-w-[560px]">
+            <thead>
+              <tr className="border-b-2 border-slate-200 bg-slate-50">
+                <th className="px-4 py-3 text-left text-xs font-bold text-slate-900">Kelas</th>
+                <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">P1</th>
+                <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">P2</th>
+                <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">P3</th>
+                <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">&gt; P3</th>
+                <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {ekonomiRows.map((row) => (
+                <tr key={row.id} className="bg-white">
+                  <td className="px-4 py-3 text-sm">
+                    <input
+                      type="text"
+                      value={row.kelas}
+                      onChange={(e) => updateEkonomiRow(row.id, "kelas", e.target.value)}
+                      placeholder="Contoh: X IPA 1"
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                    />
+                  </td>
+                  <td className="px-4 py-3 text-sm text-center">
+                    <input
+                      type="number"
+                      min={0}
+                      value={row.p1 ?? ""}
+                      onChange={(e) => updateEkonomiRow(row.id, "p1", e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                    />
+                  </td>
+                  <td className="px-4 py-3 text-sm text-center">
+                    <input
+                      type="number"
+                      min={0}
+                      value={row.p2 ?? ""}
+                      onChange={(e) => updateEkonomiRow(row.id, "p2", e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                    />
+                  </td>
+                  <td className="px-4 py-3 text-sm text-center">
+                    <input
+                      type="number"
+                      min={0}
+                      value={row.p3 ?? ""}
+                      onChange={(e) => updateEkonomiRow(row.id, "p3", e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                    />
+                  </td>
+                  <td className="px-4 py-3 text-sm text-center">
+                    <input
+                      type="number"
+                      min={0}
+                      value={row.lebih_p3 ?? ""}
+                      onChange={(e) => updateEkonomiRow(row.id, "lebih_p3", e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                    />
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        setEkonomiRows((prev) =>
+                          prev.length > 1 ? prev.filter((item) => item.id !== row.id) : prev,
+                        )
+                      }
+                      className="h-9 w-9 rounded-full border border-red-100 bg-red-50 text-red-600 shadow-sm transition hover:bg-red-100 hover:text-red-700"
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+    </Card>
+
+    {/* Pekerjaan Orang Tua Section */}
+    <Card className="border-0 bg-white shadow-lg shadow-green-100/50">
+      <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <CardTitle className="text-lg font-bold text-slate-900">Pekerjaan Orang Tua</CardTitle>
+          <CardDescription className="text-slate-600">
+            Data jenis pekerjaan orang tua siswa untuk identifikasi kebutuhan dukungan
+          </CardDescription>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <Button
+            type="button"
+            onClick={() =>
+              setPekerjaanRows((prev) => [...prev, { id: generateRowId(), jenis: "", jumlah: null }])
+            }
+            variant="outline"
+            className="rounded-full border border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
+          >
+            <Plus className="mr-2 size-4" />
+            Tambah Jenis Pekerjaan
+          </Button>
+          <Button
+            onClick={onSavePekerjaan}
+            disabled={isSavingPekerjaan}
+            className="rounded-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isSavingPekerjaan ? (
+              <>
+                <Loader2 className="mr-2 size-4 animate-spin" />
+                Menyimpan...
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 size-4" />
+                Simpan Data
+              </>
+            )}
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse min-w-[420px]">
+            <thead>
+              <tr className="border-b-2 border-slate-200 bg-slate-50">
+                <th className="px-4 py-3 text-left text-xs font-bold text-slate-900">Jenis Pekerjaan</th>
+                <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">Jumlah Orang Tua</th>
+                <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {pekerjaanRows.map((row) => (
+                <tr key={row.id} className="bg-white">
+                  <td className="px-4 py-3 text-sm">
+                    <input
+                      type="text"
+                      value={row.jenis}
+                      onChange={(e) => updatePekerjaanRow(row.id, "jenis", e.target.value)}
+                      placeholder="Contoh: Wirausaha"
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                    />
+                  </td>
+                  <td className="px-4 py-3 text-sm text-center">
+                    <input
+                      type="number"
+                      min={0}
+                      value={row.jumlah ?? ""}
+                      onChange={(e) => updatePekerjaanRow(row.id, "jumlah", e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                    />
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        setPekerjaanRows((prev) =>
+                          prev.length > 1 ? prev.filter((item) => item.id !== row.id) : prev,
+                        )
+                      }
+                      className="h-9 w-9 rounded-full border border-red-100 bg-red-50 text-red-600 shadow-sm transition hover:bg-red-100 hover:text-red-700"
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+    </Card>
+
+    {/* Profil Lulusan Section */}
+    <Card className="border-0 bg-white shadow-lg shadow-green-100/50">
+      <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <CardTitle className="text-lg font-bold text-slate-900">Profil Lulusan</CardTitle>
+          <CardDescription className="text-slate-600">
+            Catat kelanjutan studi dan penempatan lulusan per tahun lulusan
+          </CardDescription>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <Button
+            type="button"
+            onClick={() =>
+              setProfilLulusanRows((prev) => [...prev, createProfilLulusanRow("")])
+            }
+            variant="outline"
+            className="rounded-full border border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
+          >
+            <Plus className="mr-2 size-4" />
+            Tambah Tahun
+          </Button>
+          <Button
+            onClick={onSaveProfilLulusan}
+            disabled={isSavingProfilLulusan}
+            className="rounded-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isSavingProfilLulusan ? (
+              <>
+                <Loader2 className="mr-2 size-4 animate-spin" />
+                Menyimpan...
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 size-4" />
+                Simpan Data
+              </>
+            )}
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse min-w-[960px]">
+            <thead>
+              <tr className="border-b-2 border-slate-200 bg-slate-50">
+                <th rowSpan={2} className="px-4 py-3 text-left text-xs font-bold text-slate-900 align-middle border-r border-slate-200">
+                  Tahun
+                </th>
+                <th colSpan={3} className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
+                  PTN
+                </th>
+                <th className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
+                  UIN
+                </th>
+                <th className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
+                  PTS
+                </th>
+                <th colSpan={7} className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
+                  Kedinasan
+                </th>
+                <th className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
+                  Bekerja
+                </th>
+                <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">
+                  Belum Bekerja/Melanjutkan
+                </th>
+                <th rowSpan={2} className="px-4 py-3 text-center text-xs font-bold text-slate-900 align-middle">
+                  Aksi
+                </th>
+              </tr>
+              <tr className="border-b border-slate-200 bg-slate-50">
+                <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">SNBP</th>
+                <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">SNBT</th>
+                <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">
+                  UM
+                </th>
+                <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">
+                  Jumlah
+                </th>
+                <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">
+                  Jumlah
+                </th>
+                <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">Akmil</th>
+                <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">Akpol</th>
+                <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">STAN</th>
+                <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">STPDN</th>
+                <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">STTD</th>
+                <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">STIS</th>
+                <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">
+                  Lainnya
+                </th>
+                <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">
+                  Jumlah
+                </th>
+                <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">
+                  Jumlah
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {profilLulusanRows.map((row) => (
+                <tr key={row.id} className="bg-white">
+                  <td className="px-4 py-3 text-sm">
+                    <input
+                      type="text"
+                      value={row.tahun}
+                      onChange={(e) => updateProfilLulusanRow(row.id, "tahun", e.target.value)}
+                      placeholder="Contoh: 2024"
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                    />
+                  </td>
+                  <td className="px-2 py-3 text-sm text-center">
+                    <input
+                      type="number"
+                      min={0}
+                      value={row.ptn_snbp ?? ""}
+                      onChange={(e) => updateProfilLulusanRow(row.id, "ptn_snbp", e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                    />
+                  </td>
+                  <td className="px-2 py-3 text-sm text-center">
+                    <input
+                      type="number"
+                      min={0}
+                      value={row.ptn_snbt ?? ""}
+                      onChange={(e) => updateProfilLulusanRow(row.id, "ptn_snbt", e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                    />
+                  </td>
+                  <td className="px-2 py-3 text-sm text-center border-r border-slate-200">
+                    <input
+                      type="number"
+                      min={0}
+                      value={row.ptn_um ?? ""}
+                      onChange={(e) => updateProfilLulusanRow(row.id, "ptn_um", e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                    />
+                  </td>
+                  <td className="px-2 py-3 text-sm text-center border-r border-slate-200">
+                    <input
+                      type="number"
+                      min={0}
+                      value={row.uin ?? ""}
+                      onChange={(e) => updateProfilLulusanRow(row.id, "uin", e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                    />
+                  </td>
+                  <td className="px-2 py-3 text-sm text-center border-r border-slate-200">
+                    <input
+                      type="number"
+                      min={0}
+                      value={row.pts ?? ""}
+                      onChange={(e) => updateProfilLulusanRow(row.id, "pts", e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                    />
+                  </td>
+                  <td className="px-2 py-3 text-sm text-center">
+                    <input
+                      type="number"
+                      min={0}
+                      value={row.kedinasan_akmil ?? ""}
+                      onChange={(e) => updateProfilLulusanRow(row.id, "kedinasan_akmil", e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                    />
+                  </td>
+                  <td className="px-2 py-3 text-sm text-center">
+                    <input
+                      type="number"
+                      min={0}
+                      value={row.kedinasan_akpol ?? ""}
+                      onChange={(e) => updateProfilLulusanRow(row.id, "kedinasan_akpol", e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                    />
+                  </td>
+                  <td className="px-2 py-3 text-sm text-center">
+                    <input
+                      type="number"
+                      min={0}
+                      value={row.kedinasan_stan ?? ""}
+                      onChange={(e) => updateProfilLulusanRow(row.id, "kedinasan_stan", e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                    />
+                  </td>
+                  <td className="px-2 py-3 text-sm text-center">
+                    <input
+                      type="number"
+                      min={0}
+                      value={row.kedinasan_stpdn ?? ""}
+                      onChange={(e) => updateProfilLulusanRow(row.id, "kedinasan_stpdn", e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                    />
+                  </td>
+                  <td className="px-2 py-3 text-sm text-center">
+                    <input
+                      type="number"
+                      min={0}
+                      value={row.kedinasan_sttd ?? ""}
+                      onChange={(e) => updateProfilLulusanRow(row.id, "kedinasan_sttd", e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                    />
+                  </td>
+                  <td className="px-2 py-3 text-sm text-center">
+                    <input
+                      type="number"
+                      min={0}
+                      value={row.kedinasan_stis ?? ""}
+                      onChange={(e) => updateProfilLulusanRow(row.id, "kedinasan_stis", e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                    />
+                  </td>
+                  <td className="px-2 py-3 text-sm text-center border-r border-slate-200">
+                    <input
+                      type="number"
+                      min={0}
+                      value={row.kedinasan_lainnya ?? ""}
+                      onChange={(e) => updateProfilLulusanRow(row.id, "kedinasan_lainnya", e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                    />
+                  </td>
+                  <td className="px-2 py-3 text-sm text-center border-r border-slate-200">
+                    <input
+                      type="number"
+                      min={0}
+                      value={row.bekerja ?? ""}
+                      onChange={(e) => updateProfilLulusanRow(row.id, "bekerja", e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                    />
+                  </td>
+                  <td className="px-2 py-3 text-sm text-center">
+                    <input
+                      type="number"
+                      min={0}
+                      value={row.belum_bekerja ?? ""}
+                      onChange={(e) => updateProfilLulusanRow(row.id, "belum_bekerja", e.target.value)}
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                    />
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        setProfilLulusanRows((prev) =>
+                          prev.length > 1 ? prev.filter((item) => item.id !== row.id) : prev,
+                        )
+                      }
+                      className="h-9 w-9 rounded-full border border-red-100 bg-red-50 text-red-600 shadow-sm transition hover:bg-red-100 hover:text-red-700"
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+    </Card>
 
       {/* List View */}
       <Card className="border-0 bg-gradient-to-br from-green-50 via-emerald-50/80 to-teal-50/60 shadow-lg shadow-green-100/50">
