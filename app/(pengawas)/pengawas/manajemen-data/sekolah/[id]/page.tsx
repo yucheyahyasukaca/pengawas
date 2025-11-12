@@ -57,7 +57,7 @@ const formatNumber = (value: number | null | undefined) => {
 };
 
 const sumNumbers = (values: Array<number | null | undefined>) =>
-  values.reduce((acc, val) => acc + (val ?? 0), 0);
+  values.reduce((acc, val) => (acc ?? 0) + (val ?? 0), 0);
 
 interface Sekolah {
   id: string | number;
@@ -113,6 +113,13 @@ export default function SekolahProfilePage() {
       setIsLoading(true);
       setError(null);
       setSekolahProfile(null);
+
+      // Validate sekolahId from URL params
+      if (!sekolahId || sekolahId === '' || sekolahId === 'undefined') {
+        setError('ID sekolah tidak ditemukan di URL');
+        setIsLoading(false);
+        return;
+      }
 
       const userResponse = await fetch('/api/auth/get-current-user');
       
@@ -175,7 +182,13 @@ export default function SekolahProfilePage() {
           cabangDinas: `KCD Wilayah ${filteredSekolah.kcd_wilayah || '-'}`,
           status: filteredSekolah.status || 'Aktif',
         });
-        await fetchSekolahProfile(filteredSekolah.id);
+        
+        // Only fetch profile if ID is valid
+        if (filteredSekolah.id) {
+          await fetchSekolahProfile(filteredSekolah.id);
+        } else {
+          throw new Error('ID sekolah tidak valid');
+        }
       } else {
         if (!sekolahBinaanNames.includes(foundSekolah.nama_sekolah)) {
           setError('Sekolah ini tidak termasuk sekolah binaan Anda');
@@ -193,7 +206,13 @@ export default function SekolahProfilePage() {
           cabangDinas: `KCD Wilayah ${foundSekolah.kcd_wilayah || '-'}`,
           status: foundSekolah.status || 'Aktif',
         });
-        await fetchSekolahProfile(foundSekolah.id);
+        
+        // Only fetch profile if ID is valid
+        if (foundSekolah.id) {
+          await fetchSekolahProfile(foundSekolah.id);
+        } else {
+          throw new Error('ID sekolah tidak valid');
+        }
       }
     } catch (err) {
       console.error("Error loading sekolah detail:", err);
@@ -205,6 +224,11 @@ export default function SekolahProfilePage() {
 
   const fetchSekolahProfile = async (id: string | number) => {
     try {
+      // Validate ID before making the request
+      if (!id || id === '' || id === null || id === undefined) {
+        throw new Error('ID sekolah wajib diisi');
+      }
+
       const response = await fetch(`/api/pengawas/sekolah/${id}`);
 
       if (!response.ok) {
@@ -216,6 +240,27 @@ export default function SekolahProfilePage() {
       }
 
       const result = await response.json();
+      console.log("=== Frontend: Full API Response ===");
+      console.log("Full API Response:", result);
+      console.log("Sekolah Profile Data:", result.data);
+      console.log("Profil Guru:", result.data?.profil_guru);
+      console.log("Profil Guru Type:", typeof result.data?.profil_guru);
+      console.log("Profil Guru is null:", result.data?.profil_guru === null);
+      console.log("Profil Guru is undefined:", result.data?.profil_guru === undefined);
+      
+      if (result.data?.profil_guru) {
+        console.log("Profil Guru Keys:", Object.keys(result.data.profil_guru));
+        console.log("Profil Guru Detail:", result.data.profil_guru.detail);
+        console.log("Profil Guru Detail Type:", typeof result.data.profil_guru.detail);
+        console.log("Profil Guru Detail isArray:", Array.isArray(result.data.profil_guru.detail));
+        if (Array.isArray(result.data.profil_guru.detail)) {
+          console.log("Profil Guru Detail Length:", result.data.profil_guru.detail.length);
+        }
+      } else {
+        console.warn("⚠️ Frontend: profil_guru is NULL or UNDEFINED!");
+      }
+      console.log("=== End Frontend API Response ===");
+      
       setSekolahProfile(result.data);
     } catch (err) {
       console.error("Error fetching sekolah profile:", err);
@@ -396,23 +441,49 @@ export default function SekolahProfilePage() {
 
       {/* Tab Content */}
       <div className="min-h-[400px]">
-        {activeTab === "identitas" && <IdentitasSekolahTab sekolah={sekolah} />}
-        {activeTab === "profil-guru" && <ProfilGuruTab />}
-        {activeTab === "profil-tenaga-kependidikan" && <ProfilTenagaKependidikanTab />}
+        {activeTab === "identitas" && (
+          <IdentitasSekolahTab sekolah={sekolah} sekolahProfile={sekolahProfile} />
+        )}
+        {activeTab === "profil-guru" && (
+          <ProfilGuruTab profilData={sekolahProfile?.profil_guru} />
+        )}
+        {activeTab === "profil-tenaga-kependidikan" && (
+          <ProfilTenagaKependidikanTab profilData={sekolahProfile?.profil_tenaga_kependidikan} />
+        )}
         {activeTab === "profil-siswa" && (
           <ProfilSiswaTab profilData={sekolahProfile?.profil_siswa} />
         )}
-        {activeTab === "branding" && <BrandingSekolahTab />}
-        {activeTab === "kokurikuler" && <KokurikulerTab />}
-        {activeTab === "ekstrakurikuler" && <EkstrakurikulerTab />}
-        {activeTab === "rapor-pendidikan" && <RaporPendidikanTab />}
+        {activeTab === "branding" && <BrandingSekolahTab profilData={sekolahProfile?.branding_sekolah} />}
+        {activeTab === "kokurikuler" && <KokurikulerTab profilData={sekolahProfile?.kokurikuler} />}
+        {activeTab === "ekstrakurikuler" && <EkstrakurikulerTab profilData={sekolahProfile?.ekstrakurikuler} />}
+        {activeTab === "rapor-pendidikan" && <RaporPendidikanTab profilData={sekolahProfile?.rapor_pendidikan} />}
       </div>
     </div>
   );
 }
 
 // Identitas Sekolah Tab
-function IdentitasSekolahTab({ sekolah }: { sekolah: Sekolah }) {
+function IdentitasSekolahTab({ sekolah, sekolahProfile }: { sekolah: Sekolah; sekolahProfile?: any }) {
+  // Debug logging untuk identitas sekolah
+  useEffect(() => {
+    console.log("=== IDENTITAS SEKOLAH TAB DEBUG ===");
+    console.log("Sekolah Profile:", sekolahProfile);
+    console.log("Kepala Sekolah:", sekolahProfile?.kepala_sekolah);
+    console.log("Status Akreditasi:", sekolahProfile?.status_akreditasi);
+    console.log("Jalan:", sekolahProfile?.jalan);
+    console.log("Desa:", sekolahProfile?.desa);
+    console.log("Kecamatan:", sekolahProfile?.kecamatan);
+    console.log("Nomor Telepon:", sekolahProfile?.nomor_telepon);
+    console.log("WhatsApp:", sekolahProfile?.whatsapp);
+    console.log("Email:", sekolahProfile?.email_sekolah);
+    console.log("Website:", sekolahProfile?.website);
+    console.log("Facebook:", sekolahProfile?.facebook);
+    console.log("Instagram:", sekolahProfile?.instagram);
+    console.log("TikTok:", sekolahProfile?.tiktok);
+    console.log("Twitter:", sekolahProfile?.twitter);
+    console.log("=== END IDENTITAS SEKOLAH DEBUG ===");
+  }, [sekolahProfile]);
+
   return (
     <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
       <CardHeader>
@@ -424,31 +495,31 @@ function IdentitasSekolahTab({ sekolah }: { sekolah: Sekolah }) {
           <div className="space-y-2">
             <label className="text-sm font-bold text-slate-900">Nama Sekolah</label>
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-              {sekolah.nama}
+              {sekolahProfile?.nama_sekolah || sekolah.nama || "-"}
             </div>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-bold text-slate-900">NPSN</label>
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-              {sekolah.npsn}
+              {sekolahProfile?.npsn || sekolah.npsn || "-"}
             </div>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-bold text-slate-900">Jenjang</label>
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-              {sekolah.jenjang}
+              {sekolahProfile?.jenjang || sekolah.jenjang || "-"}
             </div>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-bold text-slate-900">Nama Kepala Sekolah</label>
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-              -
+              {sekolahProfile?.kepala_sekolah || "-"}
             </div>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-bold text-slate-900">Status Akreditasi</label>
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-              -
+              {sekolahProfile?.status_akreditasi || "-"}
             </div>
           </div>
         </div>
@@ -459,19 +530,19 @@ function IdentitasSekolahTab({ sekolah }: { sekolah: Sekolah }) {
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <label className="text-xs font-semibold text-slate-600">Jalan</label>
-                <div className="mt-1 text-sm text-slate-700">-</div>
+                <div className="mt-1 text-sm text-slate-700">{sekolahProfile?.jalan || "-"}</div>
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-600">Desa</label>
-                <div className="mt-1 text-sm text-slate-700">-</div>
+                <div className="mt-1 text-sm text-slate-700">{sekolahProfile?.desa || "-"}</div>
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-600">Kecamatan</label>
-                <div className="mt-1 text-sm text-slate-700">-</div>
+                <div className="mt-1 text-sm text-slate-700">{sekolahProfile?.kecamatan || "-"}</div>
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-600">Kabupaten/Kota</label>
-                <div className="mt-1 text-sm text-slate-700">{sekolah.kabupaten}</div>
+                <div className="mt-1 text-sm text-slate-700">{sekolahProfile?.kabupaten_kota || sekolah.kabupaten || "-"}</div>
               </div>
             </div>
           </div>
@@ -481,19 +552,19 @@ function IdentitasSekolahTab({ sekolah }: { sekolah: Sekolah }) {
           <div className="space-y-2">
             <label className="text-sm font-bold text-slate-900">Nomor Telepon</label>
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-              -
+              {sekolahProfile?.nomor_telepon || "-"}
             </div>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-900">WA</label>
+            <label className="text-sm font-bold text-slate-900">WhatsApp</label>
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-              -
+              {sekolahProfile?.whatsapp || "-"}
             </div>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-bold text-slate-900">Email</label>
             <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-              -
+              {sekolahProfile?.email_sekolah || "-"}
             </div>
           </div>
         </div>
@@ -504,23 +575,67 @@ function IdentitasSekolahTab({ sekolah }: { sekolah: Sekolah }) {
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <label className="text-xs font-semibold text-slate-600">Website</label>
-                <div className="mt-1 text-sm text-slate-700">-</div>
+                <div className="mt-1 text-sm text-slate-700">
+                  {sekolahProfile?.website ? (
+                    <a 
+                      href={sekolahProfile.website.startsWith('http') ? sekolahProfile.website : `https://${sekolahProfile.website}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-indigo-600 hover:text-indigo-800 hover:underline"
+                    >
+                      {sekolahProfile.website}
+                    </a>
+                  ) : "-"}
+                </div>
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-600">Facebook</label>
-                <div className="mt-1 text-sm text-slate-700">-</div>
+                <div className="mt-1 text-sm text-slate-700">{sekolahProfile?.facebook || "-"}</div>
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-600">Instagram</label>
-                <div className="mt-1 text-sm text-slate-700">-</div>
+                <div className="mt-1 text-sm text-slate-700">
+                  {sekolahProfile?.instagram ? (
+                    <a 
+                      href={`https://instagram.com/${sekolahProfile.instagram.replace('@', '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-indigo-600 hover:text-indigo-800 hover:underline"
+                    >
+                      @{sekolahProfile.instagram.replace('@', '')}
+                    </a>
+                  ) : "-"}
+                </div>
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-600">Tiktok</label>
-                <div className="mt-1 text-sm text-slate-700">-</div>
+                <label className="text-xs font-semibold text-slate-600">TikTok</label>
+                <div className="mt-1 text-sm text-slate-700">
+                  {sekolahProfile?.tiktok ? (
+                    <a 
+                      href={`https://tiktok.com/@${sekolahProfile.tiktok.replace('@', '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-indigo-600 hover:text-indigo-800 hover:underline"
+                    >
+                      @{sekolahProfile.tiktok.replace('@', '')}
+                    </a>
+                  ) : "-"}
+                </div>
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-600">Twitter (X)</label>
-                <div className="mt-1 text-sm text-slate-700">-</div>
+                <div className="mt-1 text-sm text-slate-700">
+                  {sekolahProfile?.twitter ? (
+                    <a 
+                      href={`https://twitter.com/${sekolahProfile.twitter.replace('@', '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-indigo-600 hover:text-indigo-800 hover:underline"
+                    >
+                      @{sekolahProfile.twitter.replace('@', '')}
+                    </a>
+                  ) : "-"}
+                </div>
               </div>
             </div>
           </div>
@@ -531,7 +646,102 @@ function IdentitasSekolahTab({ sekolah }: { sekolah: Sekolah }) {
 }
 
 // Profil Guru Tab
-function ProfilGuruTab() {
+function ProfilGuruTab({ profilData }: { profilData?: any }) {
+  // Debug: log data structure - use useEffect to ensure it runs
+  useEffect(() => {
+    console.log("=== PROFIL GURU TAB DEBUG ===");
+    console.log("Profil Guru Tab - profilData:", profilData);
+    console.log("Profil Guru Tab - typeof:", typeof profilData);
+    console.log("Profil Guru Tab - isArray:", Array.isArray(profilData));
+    
+    if (profilData) {
+      console.log("Profil Guru Data keys:", Object.keys(profilData));
+      console.log("Profil Guru Data detail:", profilData.detail);
+      console.log("Profil Guru Data data:", profilData.data);
+      console.log("Profil Guru Data stringified:", JSON.stringify(profilData, null, 2));
+    } else {
+      console.warn("ProfilData is null/undefined!");
+    }
+  }, [profilData]);
+
+  // Extract statistics from profilData - support multiple data structures
+  let jenisKelamin = profilData?.jenis_kelamin || profilData?.statistik?.jenis_kelamin || {};
+  let statusKepegawaian = profilData?.status_kepegawaian || profilData?.statistik?.status_kepegawaian || {};
+  let pendidikan = profilData?.pendidikan || profilData?.statistik?.pendidikan || {};
+
+  // Extract detail guru list - support multiple formats
+  // Based on sekolah profil page, structure is: profil_guru.detail = array of guru
+  let detailGuru: any[] = [];
+  
+  if (!profilData) {
+    console.warn("Profil Guru Data is null/undefined");
+  } else if (Array.isArray(profilData)) {
+    // If profilData itself is an array
+    detailGuru = profilData;
+    console.log("ProfilData is array, length:", profilData.length);
+  } else if (Array.isArray(profilData?.detail)) {
+    // Standard structure: profil_guru.detail = array
+    detailGuru = profilData.detail;
+    console.log("Found detail array (standard structure), length:", profilData.detail.length);
+  } else if (Array.isArray(profilData?.data)) {
+    detailGuru = profilData.data;
+    console.log("Found data array, length:", profilData.data.length);
+  } else if (profilData && typeof profilData === 'object') {
+    // Try to find any array property
+    const arrayKeys = Object.keys(profilData).filter(key => Array.isArray(profilData[key]));
+    if (arrayKeys.length > 0) {
+      console.log("Found array keys:", arrayKeys);
+      // Prefer 'detail' if it exists
+      if (arrayKeys.includes('detail')) {
+        detailGuru = profilData.detail;
+        console.log("Using 'detail' array, length:", detailGuru.length);
+      } else {
+        detailGuru = profilData[arrayKeys[0]];
+        console.log("Using first array key:", arrayKeys[0], "length:", detailGuru.length);
+      }
+    } else {
+      // If no array found, check if it's a single object that should be in an array
+      if (profilData.nama || profilData.Nama) {
+        console.log("Found single guru object, converting to array");
+        detailGuru = [profilData];
+      }
+    }
+  }
+  
+  console.log("Final Detail Guru extracted:", detailGuru);
+  console.log("Final Detail Guru length:", detailGuru.length);
+  console.log("First guru sample:", detailGuru[0]);
+
+  // Calculate statistics from detail array if statistics are not available
+  if (detailGuru.length > 0 && (!jenisKelamin.laki_laki && !jenisKelamin.perempuan)) {
+    console.log("Calculating statistics from detail array");
+    jenisKelamin = {
+      laki_laki: detailGuru.filter((g: any) => (g.jenis_kelamin || g.jenisKelamin || '').toLowerCase() === 'laki-laki' || (g.jenis_kelamin || g.jenisKelamin || '').toLowerCase() === 'laki laki').length,
+      perempuan: detailGuru.filter((g: any) => (g.jenis_kelamin || g.jenisKelamin || '').toLowerCase() === 'perempuan').length,
+    };
+    
+    statusKepegawaian = {
+      pns: detailGuru.filter((g: any) => (g.status_kepegawaian || g.statusKepegawaian || g.status || '').toLowerCase().includes('pns')).length,
+      pppk: detailGuru.filter((g: any) => (g.status_kepegawaian || g.statusKepegawaian || g.status || '').toLowerCase().includes('pppk')).length,
+      pppk_paruh_waktu: detailGuru.filter((g: any) => (g.status_kepegawaian || g.statusKepegawaian || g.status || '').toLowerCase().includes('pppk paruh waktu') || (g.status_kepegawaian || g.statusKepegawaian || g.status || '').toLowerCase().includes('pppk paruh')).length,
+      guru_tamu: detailGuru.filter((g: any) => (g.status_kepegawaian || g.statusKepegawaian || g.status || '').toLowerCase().includes('guru tamu')).length,
+      gty: detailGuru.filter((g: any) => (g.status_kepegawaian || g.statusKepegawaian || g.status || '').toLowerCase().includes('gty')).length,
+      gtt: detailGuru.filter((g: any) => (g.status_kepegawaian || g.statusKepegawaian || g.status || '').toLowerCase().includes('gtt')).length,
+    };
+    
+    pendidikan = {
+      sma: detailGuru.filter((g: any) => (g.pendidikan || '').toLowerCase().includes('sma')).length,
+      d1: detailGuru.filter((g: any) => (g.pendidikan || '').toLowerCase().includes('d1')).length,
+      d2: detailGuru.filter((g: any) => (g.pendidikan || '').toLowerCase().includes('d2')).length,
+      d3: detailGuru.filter((g: any) => (g.pendidikan || '').toLowerCase().includes('d3')).length,
+      s1: detailGuru.filter((g: any) => (g.pendidikan || '').toLowerCase().includes('s1') || (g.pendidikan || '').toLowerCase().includes('s1/d4')).length,
+      s2: detailGuru.filter((g: any) => (g.pendidikan || '').toLowerCase().includes('s2')).length,
+      s3: detailGuru.filter((g: any) => (g.pendidikan || '').toLowerCase().includes('s3')).length,
+    };
+    
+    console.log("Calculated statistics:", { jenisKelamin, statusKepegawaian, pendidikan });
+  }
+
   return (
     <div className="space-y-6">
       {/* Statistics */}
@@ -554,65 +764,65 @@ function ProfilGuruTab() {
                 <tr>
                   <td rowSpan={2} className="px-6 py-4 text-sm font-semibold text-slate-900 align-top border-r border-slate-100">Jenis Kelamin</td>
                   <td className="px-6 py-3 text-sm text-slate-700">Laki-laki</td>
-                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">0</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{formatNumber(toNumber(jenisKelamin.laki_laki ?? jenisKelamin.laki))}</td>
                 </tr>
                 <tr>
                   <td className="px-6 py-3 text-sm text-slate-700">Perempuan</td>
-                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">0</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{formatNumber(toNumber(jenisKelamin.perempuan))}</td>
                 </tr>
                 <tr>
                   <td rowSpan={6} className="px-6 py-4 text-sm font-semibold text-slate-900 align-top border-r border-slate-100">Status Kepegawaian</td>
                   <td className="px-6 py-3 text-sm text-slate-700">PNS</td>
-                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">0</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{formatNumber(toNumber(statusKepegawaian.pns))}</td>
                 </tr>
                 <tr>
                   <td className="px-6 py-3 text-sm text-slate-700">PPPK</td>
-                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">0</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{formatNumber(toNumber(statusKepegawaian.pppk))}</td>
                 </tr>
                 <tr>
                   <td className="px-6 py-3 text-sm text-slate-700">PPPK paruh waktu</td>
-                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">0</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{formatNumber(toNumber(statusKepegawaian.pppk_paruh_waktu ?? statusKepegawaian.pppkParuhWaktu))}</td>
                 </tr>
                 <tr>
                   <td className="px-6 py-3 text-sm text-slate-700">Guru Tamu</td>
-                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">0</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{formatNumber(toNumber(statusKepegawaian.guru_tamu ?? statusKepegawaian.guruTamu))}</td>
                 </tr>
                 <tr>
                   <td className="px-6 py-3 text-sm text-slate-700">GTY</td>
-                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">0</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{formatNumber(toNumber(statusKepegawaian.gty))}</td>
                 </tr>
                 <tr>
                   <td className="px-6 py-3 text-sm text-slate-700">GTT</td>
-                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">0</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{formatNumber(toNumber(statusKepegawaian.gtt))}</td>
                 </tr>
                 <tr>
                   <td rowSpan={7} className="px-6 py-4 text-sm font-semibold text-slate-900 align-top border-r border-slate-100">Pendidikan</td>
                   <td className="px-6 py-3 text-sm text-slate-700">SMA/ sederajat</td>
-                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">0</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{formatNumber(toNumber(pendidikan.sma ?? pendidikan.sma_sederajat))}</td>
                 </tr>
                 <tr>
                   <td className="px-6 py-3 text-sm text-slate-700">D1</td>
-                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">0</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{formatNumber(toNumber(pendidikan.d1))}</td>
                 </tr>
                 <tr>
                   <td className="px-6 py-3 text-sm text-slate-700">D2</td>
-                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">0</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{formatNumber(toNumber(pendidikan.d2))}</td>
                 </tr>
                 <tr>
                   <td className="px-6 py-3 text-sm text-slate-700">D3</td>
-                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">0</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{formatNumber(toNumber(pendidikan.d3))}</td>
                 </tr>
                 <tr>
                   <td className="px-6 py-3 text-sm text-slate-700">S1/D4</td>
-                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">0</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{formatNumber(toNumber(pendidikan.s1 ?? pendidikan.s1_d4 ?? pendidikan.s1D4))}</td>
                 </tr>
                 <tr>
                   <td className="px-6 py-3 text-sm text-slate-700">S2</td>
-                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">0</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{formatNumber(toNumber(pendidikan.s2))}</td>
                 </tr>
                 <tr>
                   <td className="px-6 py-3 text-sm text-slate-700">S3</td>
-                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">0</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{formatNumber(toNumber(pendidikan.s3))}</td>
                 </tr>
               </tbody>
             </table>
@@ -656,11 +866,35 @@ function ProfilGuruTab() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                <tr>
-                  <td colSpan={15} className="px-4 py-8 text-center text-sm text-slate-500">
-                    Belum ada data guru
-                  </td>
-                </tr>
+                {detailGuru.length === 0 ? (
+                  <tr>
+                    <td colSpan={15} className="px-4 py-8 text-center text-sm text-slate-500">
+                      Belum ada data guru yang diinput oleh sekolah.
+                    </td>
+                  </tr>
+                ) : (
+                  detailGuru.map((guru: any, index: number) => (
+                    <tr key={index}>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{index + 1}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700">{guru.nama || "-"}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700">{guru.nip || "-"}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700">{guru.tanggal_lahir || guru.tanggalLahir || "-"}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700">{guru.jenis_kelamin || guru.jenisKelamin || "-"}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700">{guru.status || "-"}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700">{guru.pendidikan || "-"}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700">{guru.jurusan || "-"}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700">{guru.mata_pelajaran || guru.mataPelajaran || "-"}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(toNumber(guru.jumlah_jam ?? guru.jumlahJam))}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{guru.waka ? "✓" : "-"}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{(guru.kepala_lab ?? guru.kepalaLab) ? "✓" : "-"}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{guru.wali_kelas ?? guru.waliKelas ? "✓" : "-"}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{guru.guru_wali ?? guru.guruWali ? "✓" : "-"}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{guru.ekstrakurikuler ? "✓" : "-"}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{guru.lainnya || "-"}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700">{(guru.tanggal_purna_tugas ?? guru.tanggalPurnaTugas) || "-"}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -671,7 +905,90 @@ function ProfilGuruTab() {
 }
 
 // Profil Tenaga Kependidikan Tab
-function ProfilTenagaKependidikanTab() {
+function ProfilTenagaKependidikanTab({ profilData }: { profilData?: any }) {
+  // Debug: log data structure
+  useEffect(() => {
+    console.log("=== PROFIL TENAGA KEPENDIDIKAN TAB DEBUG ===");
+    console.log("Profil Tenaga Kependidikan Tab - profilData:", profilData);
+    console.log("Profil Tenaga Kependidikan Tab - typeof:", typeof profilData);
+    console.log("Profil Tenaga Kependidikan Tab - isArray:", Array.isArray(profilData));
+    
+    if (profilData) {
+      console.log("Profil Tenaga Kependidikan Data keys:", Object.keys(profilData));
+      console.log("Profil Tenaga Kependidikan Data detail:", profilData.detail);
+      console.log("Profil Tenaga Kependidikan Data data:", profilData.data);
+      console.log("Profil Tenaga Kependidikan Data stringified:", JSON.stringify(profilData, null, 2));
+    } else {
+      console.warn("ProfilData is null/undefined!");
+    }
+  }, [profilData]);
+
+  // Extract statistics from profilData - support multiple data structures
+  let jenisKelamin = profilData?.jenis_kelamin || profilData?.statistik?.jenis_kelamin || {};
+  let statusKepegawaian = profilData?.status_kepegawaian || profilData?.statistik?.status_kepegawaian || {};
+
+  // Extract detail tenaga list - support multiple formats
+  let detailTenaga: any[] = [];
+  
+  if (!profilData) {
+    console.warn("Profil Tenaga Kependidikan Data is null/undefined");
+  } else if (Array.isArray(profilData)) {
+    // If profilData itself is an array
+    detailTenaga = profilData;
+    console.log("ProfilData is array, length:", profilData.length);
+  } else if (Array.isArray(profilData?.detail)) {
+    // Standard structure: profil_tenaga_kependidikan.detail = array
+    detailTenaga = profilData.detail;
+    console.log("Found detail array (standard structure), length:", profilData.detail.length);
+  } else if (Array.isArray(profilData?.data)) {
+    detailTenaga = profilData.data;
+    console.log("Found data array, length:", profilData.data.length);
+  } else if (profilData && typeof profilData === 'object') {
+    // Try to find any array property
+    const arrayKeys = Object.keys(profilData).filter(key => Array.isArray(profilData[key]));
+    if (arrayKeys.length > 0) {
+      console.log("Found array keys:", arrayKeys);
+      // Prefer 'detail' if it exists
+      if (arrayKeys.includes('detail')) {
+        detailTenaga = profilData.detail;
+        console.log("Using 'detail' array, length:", detailTenaga.length);
+      } else {
+        detailTenaga = profilData[arrayKeys[0]];
+        console.log("Using first array key:", arrayKeys[0], "length:", detailTenaga.length);
+      }
+    } else {
+      // If no array found, check if it's a single object that should be in an array
+      if (profilData.nama || profilData.Nama) {
+        console.log("Found single tenaga object, converting to array");
+        detailTenaga = [profilData];
+      }
+    }
+  }
+  
+  console.log("Final Detail Tenaga extracted:", detailTenaga);
+  console.log("Final Detail Tenaga length:", detailTenaga.length);
+  console.log("First tenaga sample:", detailTenaga[0]);
+
+  // Calculate statistics from detail array if statistics are not available
+  if (detailTenaga.length > 0 && (!jenisKelamin.laki_laki && !jenisKelamin.perempuan)) {
+    console.log("Calculating statistics from detail array");
+    jenisKelamin = {
+      laki_laki: detailTenaga.filter((t: any) => (t.jenis_kelamin || t.jenisKelamin || '').toLowerCase() === 'laki-laki' || (t.jenis_kelamin || t.jenisKelamin || '').toLowerCase() === 'laki laki').length,
+      perempuan: detailTenaga.filter((t: any) => (t.jenis_kelamin || t.jenisKelamin || '').toLowerCase() === 'perempuan').length,
+    };
+    
+    statusKepegawaian = {
+      pns: detailTenaga.filter((t: any) => (t.status_kepegawaian || t.statusKepegawaian || t.status || '').toLowerCase().includes('pns')).length,
+      pppk: detailTenaga.filter((t: any) => (t.status_kepegawaian || t.statusKepegawaian || t.status || '').toLowerCase().includes('pppk')).length,
+      pppk_paruh_waktu: detailTenaga.filter((t: any) => (t.status_kepegawaian || t.statusKepegawaian || t.status || '').toLowerCase().includes('pppk paruh waktu') || (t.status_kepegawaian || t.statusKepegawaian || t.status || '').toLowerCase().includes('pppk paruh')).length,
+      guru_tamu: detailTenaga.filter((t: any) => (t.status_kepegawaian || t.statusKepegawaian || t.status || '').toLowerCase().includes('guru tamu')).length,
+      gty: detailTenaga.filter((t: any) => (t.status_kepegawaian || t.statusKepegawaian || t.status || '').toLowerCase().includes('gty')).length,
+      gtt: detailTenaga.filter((t: any) => (t.status_kepegawaian || t.statusKepegawaian || t.status || '').toLowerCase().includes('gtt')).length,
+    };
+    
+    console.log("Calculated statistics:", { jenisKelamin, statusKepegawaian });
+  }
+
   return (
     <div className="space-y-6">
       {/* Statistics */}
@@ -694,36 +1011,36 @@ function ProfilTenagaKependidikanTab() {
                 <tr>
                   <td rowSpan={2} className="px-6 py-4 text-sm font-semibold text-slate-900 align-top border-r border-slate-100">Jenis Kelamin</td>
                   <td className="px-6 py-3 text-sm text-slate-700">Laki-laki</td>
-                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">0</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{formatNumber(toNumber(jenisKelamin.laki_laki ?? jenisKelamin.laki))}</td>
                 </tr>
                 <tr>
                   <td className="px-6 py-3 text-sm text-slate-700">Perempuan</td>
-                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">0</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{formatNumber(toNumber(jenisKelamin.perempuan))}</td>
                 </tr>
                 <tr>
                   <td rowSpan={6} className="px-6 py-4 text-sm font-semibold text-slate-900 align-top border-r border-slate-100">Status Kepegawaian</td>
                   <td className="px-6 py-3 text-sm text-slate-700">PNS</td>
-                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">0</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{formatNumber(toNumber(statusKepegawaian.pns))}</td>
                 </tr>
                 <tr>
                   <td className="px-6 py-3 text-sm text-slate-700">PPPK</td>
-                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">0</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{formatNumber(toNumber(statusKepegawaian.pppk))}</td>
                 </tr>
                 <tr>
                   <td className="px-6 py-3 text-sm text-slate-700">PPPK paruh waktu</td>
-                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">0</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{formatNumber(toNumber(statusKepegawaian.pppk_paruh_waktu ?? statusKepegawaian.pppkParuhWaktu))}</td>
                 </tr>
                 <tr>
                   <td className="px-6 py-3 text-sm text-slate-700">Guru Tamu</td>
-                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">0</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{formatNumber(toNumber(statusKepegawaian.guru_tamu ?? statusKepegawaian.guruTamu))}</td>
                 </tr>
                 <tr>
                   <td className="px-6 py-3 text-sm text-slate-700">GTY</td>
-                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">0</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{formatNumber(toNumber(statusKepegawaian.gty))}</td>
                 </tr>
                 <tr>
                   <td className="px-6 py-3 text-sm text-slate-700">GTT</td>
-                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">0</td>
+                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">{formatNumber(toNumber(statusKepegawaian.gtt))}</td>
                 </tr>
               </tbody>
             </table>
@@ -754,11 +1071,27 @@ function ProfilTenagaKependidikanTab() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                <tr>
-                  <td colSpan={9} className="px-4 py-8 text-center text-sm text-slate-500">
-                    Belum ada data tenaga kependidikan
-                  </td>
-                </tr>
+                {detailTenaga.length === 0 ? (
+                  <tr>
+                    <td colSpan={9} className="px-4 py-8 text-center text-sm text-slate-500">
+                      Belum ada data tenaga kependidikan yang diinput oleh sekolah.
+                    </td>
+                  </tr>
+                ) : (
+                  detailTenaga.map((tenaga: any, index: number) => (
+                    <tr key={index}>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{index + 1}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700">{tenaga.nama || "-"}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700">{tenaga.nip || "-"}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700">{tenaga.tanggal_lahir || tenaga.tanggalLahir || "-"}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700">{tenaga.jenis_kelamin || tenaga.jenisKelamin || "-"}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700">{tenaga.status || tenaga.status_kepegawaian || tenaga.statusKepegawaian || "-"}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700">{tenaga.pendidikan || "-"}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700">{tenaga.tugas || "-"}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700">{(tenaga.tanggal_purna_tugas ?? tenaga.tanggalPurnaTugas) || "-"}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -1136,20 +1469,44 @@ function ProfilSiswaTab({ profilData }: { profilData?: any }) {
 }
 
 // Branding Sekolah Tab
-function BrandingSekolahTab() {
-  const brandingList = [
-    "Sekolah Berintegritas",
-    "Sekolah Adiwiyata",
-    "Sekolah Sadar Bencana",
-    "Sekolah Ramah Anak",
-    "Sekolah Riset",
-    "Sekolah Lifeskill",
-    "Sekolah Berkarakter",
-    "Sekolah Penghafal Al Qur'an",
-    "Sekolah Sehat",
-    "Sekolah Olah raga",
-    "Sekolah Leadership",
+function BrandingSekolahTab({ profilData }: { profilData?: any }) {
+  const brandingOptions = [
+    { id: "integritas", label: "Sekolah Berintegritas" },
+    { id: "adiwiyata", label: "Sekolah Adiwiyata" },
+    { id: "sadar-bencana", label: "Sekolah Sadar Bencana" },
+    { id: "ramah-anak", label: "Sekolah Ramah Anak" },
+    { id: "riset", label: "Sekolah Riset" },
+    { id: "lifeskill", label: "Sekolah Lifeskill" },
+    { id: "berkarakter", label: "Sekolah Berkarakter" },
+    { id: "penghafal-quran", label: "Sekolah Penghafal Al Qur'an" },
+    { id: "sehat", label: "Sekolah Sehat" },
+    { id: "olahraga", label: "Sekolah Olah Raga" },
+    { id: "leadership", label: "Sekolah Leadership" },
   ];
+
+  // Extract branding data from profilData
+  let brandingList: any[] = [];
+  
+  if (profilData?.detail && Array.isArray(profilData.detail)) {
+    // Merge with options to ensure all branding options are shown
+    brandingList = brandingOptions.map((option) => {
+      const found = profilData.detail.find(
+        (item: any) => item.id === option.id || item.nama === option.label
+      );
+      return {
+        id: option.id,
+        nama: option.label,
+        status: found ? Boolean(found.status ?? found.ada ?? found.value ?? found.ya) : false,
+      };
+    });
+  } else {
+    // Default: all false
+    brandingList = brandingOptions.map((option) => ({
+      id: option.id,
+      nama: option.label,
+      status: false,
+    }));
+  }
 
   return (
     <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
@@ -1167,12 +1524,30 @@ function BrandingSekolahTab() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {brandingList.map((branding) => (
-                <tr key={branding}>
-                  <td className="px-6 py-3 text-sm text-slate-700">{branding}</td>
-                  <td className="px-6 py-3 text-sm text-slate-700 text-center font-medium">-</td>
+              {brandingList.length === 0 ? (
+                <tr>
+                  <td colSpan={2} className="px-6 py-8 text-center text-sm text-slate-500">
+                    Belum ada data branding sekolah yang diinput.
+                  </td>
                 </tr>
-              ))}
+              ) : (
+                brandingList.map((branding) => (
+                  <tr key={branding.id || branding.nama}>
+                    <td className="px-6 py-3 text-sm text-slate-700">{branding.nama}</td>
+                    <td className="px-6 py-3 text-center">
+                      {branding.status ? (
+                        <span className="inline-flex items-center justify-center rounded-full bg-green-100 px-4 py-1.5 text-sm font-semibold text-green-700 border border-green-200">
+                          Ya
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center justify-center rounded-full bg-slate-100 px-4 py-1.5 text-sm font-semibold text-slate-600 border border-slate-200">
+                          Tidak
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -1182,14 +1557,38 @@ function BrandingSekolahTab() {
 }
 
 // Kokurikuler Tab
-function KokurikulerTab() {
-  const kokurikulerList = [
-    "7 Kebiasaan Anak Indonesia Hebat",
-    "Projek Kolaboratif Antar Mapel",
-    "Penguatan Budaya Sekolah",
+function KokurikulerTab({ profilData }: { profilData?: any }) {
+  const kegiatanOptions = [
+    { id: "7-kebiasaan", nama: "7 Kebiasaan Anak Indonesia Hebat" },
+    { id: "projek-kolaboratif", nama: "Projek Kolaboratif Antar Mapel" },
+    { id: "penguatan-budaya", nama: "Penguatan Budaya Sekolah" },
   ];
 
   const kelasList = ["X", "XI", "XII", "XIII"];
+
+  // Extract kokurikuler data from profilData
+  let kokurikulerData: any[] = [];
+  
+  if (profilData?.detail && Array.isArray(profilData.detail)) {
+    // Merge with options to ensure all kegiatan are shown
+    kokurikulerData = kegiatanOptions.map((option) => {
+      const found = profilData.detail.find(
+        (item: any) => item.id === option.id || item.nama === option.nama
+      );
+      return {
+        id: option.id,
+        nama: option.nama,
+        kelas: found?.kelas || { X: false, XI: false, XII: false, XIII: false },
+      };
+    });
+  } else {
+    // Default: all false
+    kokurikulerData = kegiatanOptions.map((option) => ({
+      id: option.id,
+      nama: option.nama,
+      kelas: { X: false, XI: false, XII: false, XIII: false },
+    }));
+  }
 
   return (
     <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
@@ -1219,16 +1618,24 @@ function KokurikulerTab() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {kokurikulerList.map((kokurikuler) => (
-                <tr key={kokurikuler}>
-                  <td className="px-4 py-3 text-sm text-slate-700">{kokurikuler}</td>
-                  {kelasList.map((kelas) => (
-                    <td key={kelas} className="px-4 py-3 text-sm text-slate-700 text-center">
-                      -
-                    </td>
-                  ))}
+              {kokurikulerData.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-500">
+                    Belum ada data kokurikuler yang diinput oleh sekolah.
+                  </td>
                 </tr>
-              ))}
+              ) : (
+                kokurikulerData.map((kokurikuler) => (
+                  <tr key={kokurikuler.id || kokurikuler.nama}>
+                    <td className="px-4 py-3 text-sm text-slate-700">{kokurikuler.nama}</td>
+                    {kelasList.map((kelas) => (
+                      <td key={kelas} className="px-4 py-3 text-sm text-slate-700 text-center">
+                        {kokurikuler.kelas?.[kelas] ? "Ya" : "Tidak"}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -1238,36 +1645,50 @@ function KokurikulerTab() {
 }
 
 // Ekstrakurikuler Tab
-function EkstrakurikulerTab() {
-  const ekstrakurikulerList = [
-    "Pramuka",
-    "Paskibra",
-    "PKS",
-    "Kesehatan Sekolah (UKS)",
-    "Leadership",
-    "Teater",
-    "Kerawitan",
-    "Paduan suara",
-    "Band",
-    "Seni Tari tradisional",
-    "Seni Lukis",
-    "Ketoprak",
-    "Seni Pedalangan (Wayang)",
-    "Wayang Orang",
-    "Fotografi",
-    "Perfilman",
-    "Tari Modern (dance)",
-    "Pencak Silat",
-    "Taekwondo",
-    "Karate",
-    "Yudho",
-    "Kempo",
-    "Tinju",
-    "Sepak Bola",
-    "Bola Voley",
-    "Tenis Meja",
-    "Tenis Lapangan",
+function EkstrakurikulerTab({ profilData }: { profilData?: any }) {
+  const ekstrakurikulerOptions = [
+    "Pramuka", "Paskibra", "PKS", "Kesehatan Sekolah (UKS)", "Leadership",
+    "Teater", "Kerawitan", "Paduan suara", "Band", "Seni Tari tradisional",
+    "Seni Lukis", "Ketoprak", "Seni Pedalangan (Wayang)", "Wayang Orang",
+    "Fotografi", "Perfilman", "Tari Modern (dance)", "Pencak Silat",
+    "Taekwondo", "Karate", "Yudho", "Kempo", "Tinju", "Sepak Bola",
+    "Bola Voley", "Tenis Meja", "Tenis Lapangan",
   ];
+
+  // Extract ekstrakurikuler data from profilData
+  let ekstraData: any[] = [];
+  
+  if (profilData?.detail && Array.isArray(profilData.detail)) {
+    // Merge with options to ensure all ekstrakurikuler are shown
+    const existingMap = new Map(profilData.detail.map((item: any) => [item.nama, item]));
+    
+    ekstraData = ekstrakurikulerOptions.map((nama, index) => {
+      const found = existingMap.get(nama);
+      return found || {
+        id: `ekstra-${index + 1}`,
+        nama,
+        ada: false,
+        sifat: "",
+        jumlah_peserta: null,
+      };
+    });
+    
+    // Add any custom ekstrakurikuler that aren't in the default list
+    profilData.detail.forEach((item: any) => {
+      if (!ekstrakurikulerOptions.includes(item.nama)) {
+        ekstraData.push(item);
+      }
+    });
+  } else {
+    // Default: all false
+    ekstraData = ekstrakurikulerOptions.map((nama, index) => ({
+      id: `ekstra-${index + 1}`,
+      nama,
+      ada: false,
+      sifat: "",
+      jumlah_peserta: null,
+    }));
+  }
 
   return (
     <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
@@ -1295,15 +1716,29 @@ function EkstrakurikulerTab() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {ekstrakurikulerList.map((ekstra, index) => (
-                <tr key={ekstra}>
-                  <td className="px-4 py-3 text-sm text-slate-700 text-center">{index + 1}</td>
-                  <td className="px-4 py-3 text-sm text-slate-700">{ekstra}</td>
-                  <td className="px-4 py-3 text-sm text-slate-700 text-center">-</td>
-                  <td className="px-4 py-3 text-sm text-slate-700 text-center">-</td>
-                  <td className="px-4 py-3 text-sm text-slate-700 text-center">-</td>
+              {ekstraData.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-500">
+                    Belum ada data ekstrakurikuler yang diinput oleh sekolah.
+                  </td>
                 </tr>
-              ))}
+              ) : (
+                ekstraData.map((ekstra, index) => (
+                  <tr key={ekstra.id || ekstra.nama || index}>
+                    <td className="px-4 py-3 text-sm text-slate-700 text-center">{index + 1}</td>
+                    <td className="px-4 py-3 text-sm text-slate-700">{ekstra.nama || "-"}</td>
+                    <td className="px-4 py-3 text-sm text-slate-700 text-center">
+                      {ekstra.ada ? "Ada" : "Tidak"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-700 text-center">
+                      {ekstra.sifat || "-"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-700 text-center">
+                      {ekstra.jumlah_peserta != null ? formatNumber(toNumber(ekstra.jumlah_peserta)) : "-"}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -1313,24 +1748,74 @@ function EkstrakurikulerTab() {
 }
 
 // Rapor Pendidikan Tab
-function RaporPendidikanTab() {
+function RaporPendidikanTab({ profilData }: { profilData?: any }) {
   const indikatorList = [
-    { no: "A.1", indikator: "Kemampuan Literasi" },
-    { no: "A.2", indikator: "Kemampuan Numerasi" },
-    { no: "A.3", indikator: "Karakter" },
-    { no: "C.3", indikator: "Pengalaman Pelatihan PTK" },
-    { no: "D.1", indikator: "Kualitas Pembelajaran" },
-    { no: "D.2", indikator: "Refleksi dan perbaikan pembelajaran oleh guru" },
-    { no: "D.3", indikator: "Kepemimpinan instruksional" },
-    { no: "D.4", indikator: "Iklim keamanan satuan pendidikan" },
-    { no: "D.6", indikator: "Iklim Kesetaraan Gender" },
-    { no: "D.8", indikator: "Iklim Kebinekaan" },
-    { no: "D.10", indikator: "Iklim Inklusivitas" },
-    { no: "E.1", indikator: "Partisipasi warga satuan pendidikan" },
-    { no: "E.2", indikator: "Proporsi pemanfaatan sumber daya sekolah untuk peningkatan mutu" },
-    { no: "E.3", indikator: "Pemanfaatan TIK untuk pengelolaan anggaran" },
-    { no: "E.5", indikator: "Program dan kebijakan satuan pendidikan" },
+    { id: "A.1", indikator: "Kemampuan Literasi" },
+    { id: "A.2", indikator: "Kemampuan Numerasi" },
+    { id: "A.3", indikator: "Karakter" },
+    { id: "C.3", indikator: "Pengalaman Pelatihan PTK" },
+    { id: "D.1", indikator: "Kualitas Pembelajaran" },
+    { id: "D.2", indikator: "Refleksi dan perbaikan pembelajaran oleh guru" },
+    { id: "D.3", indikator: "Kepemimpinan instruksional" },
+    { id: "D.4", indikator: "Iklim keamanan satuan pendidikan" },
+    { id: "D.6", indikator: "Iklim Kesetaraan Gender" },
+    { id: "D.8", indikator: "Iklim Kebinekaan" },
+    { id: "D.10", indikator: "Iklim Inklusivitas" },
+    { id: "E.1", indikator: "Partisipasi warga satuan pendidikan" },
+    { id: "E.2", indikator: "Proporsi pemanfaatan sumber daya sekolah untuk peningkatan mutu" },
+    { id: "E.3", indikator: "Pemanfaatan TIK untuk pengelolaan anggaran" },
+    { id: "E.5", indikator: "Program dan kebijakan satuan pendidikan" },
   ];
+
+  // Extract rapor data from profilData
+  let raporData: any[] = [];
+  
+  if (profilData?.detail && Array.isArray(profilData.detail)) {
+    // Merge with indikator list to ensure all indikators are shown
+    const existingMap = new Map(profilData.detail.map((item: any) => [item.id, item]));
+    
+    raporData = indikatorList.map((indikator) => {
+      const found = existingMap.get(indikator.id);
+      return found || {
+        id: indikator.id,
+        indikator: indikator.indikator,
+        capaian: "",
+        skor: null,
+        skor_tahun_lalu: null,
+        catatan: "",
+      };
+    });
+    
+    // Add any custom indikators that aren't in the default list
+    profilData.detail.forEach((item: any) => {
+      if (!indikatorList.some(ind => ind.id === item.id)) {
+        raporData.push(item);
+      }
+    });
+  } else {
+    // Default: all empty
+    raporData = indikatorList.map((indikator) => ({
+      id: indikator.id,
+      indikator: indikator.indikator,
+      capaian: "",
+      skor: null,
+      skor_tahun_lalu: null,
+      catatan: "",
+    }));
+  }
+
+  // Calculate perubahan (difference between current and previous year)
+  const calculatePerubahan = (skor: number | null, skorTahunLalu: number | null) => {
+    if (skor == null || skorTahunLalu == null) return null;
+    return skor - skorTahunLalu;
+  };
+
+  const getKeterangan = (perubahan: number | null) => {
+    if (perubahan == null) return "-";
+    if (perubahan > 0) return "Naik";
+    if (perubahan < 0) return "Turun";
+    return "Tetap";
+  };
 
   return (
     <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
@@ -1353,17 +1838,46 @@ function RaporPendidikanTab() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {indikatorList.map((item) => (
-                <tr key={item.no}>
-                  <td className="px-4 py-3 text-sm font-semibold text-slate-900">{item.no}</td>
-                  <td className="px-4 py-3 text-sm text-slate-700">{item.indikator}</td>
-                  <td className="px-4 py-3 text-sm text-slate-700 text-center">-</td>
-                  <td className="px-4 py-3 text-sm text-slate-700 text-center">-</td>
-                  <td className="px-4 py-3 text-sm text-slate-700 text-center">-</td>
-                  <td className="px-4 py-3 text-sm text-slate-700 text-center">0.00</td>
-                  <td className="px-4 py-3 text-sm text-slate-700 text-center bg-yellow-50">Tetap</td>
+              {raporData.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-8 text-center text-sm text-slate-500">
+                    Belum ada data rapor pendidikan yang diinput oleh sekolah.
+                  </td>
                 </tr>
-              ))}
+              ) : (
+                raporData.map((item) => {
+                  const skor = toNumber(item.skor ?? item.skor_tahun_ini);
+                  const skorTahunLalu = toNumber(item.skor_tahun_lalu);
+                  const perubahan = calculatePerubahan(skor, skorTahunLalu);
+                  const keterangan = getKeterangan(perubahan);
+                  
+                  return (
+                    <tr key={item.id}>
+                      <td className="px-4 py-3 text-sm font-semibold text-slate-900">{item.id}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700">{item.indikator || "-"}</td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center">
+                        {item.capaian || item.hasil_capaian || "-"}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center">
+                        {skor != null ? formatNumber(skor) : "-"}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center">
+                        {skorTahunLalu != null ? formatNumber(skorTahunLalu) : "-"}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-slate-700 text-center">
+                        {perubahan != null ? (perubahan > 0 ? "+" : "") + formatNumber(perubahan) : "-"}
+                      </td>
+                      <td className={`px-4 py-3 text-sm text-slate-700 text-center ${
+                        keterangan === "Naik" ? "bg-green-50" : 
+                        keterangan === "Turun" ? "bg-red-50" : 
+                        keterangan === "Tetap" ? "bg-yellow-50" : ""
+                      }`}>
+                        {keterangan}
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>

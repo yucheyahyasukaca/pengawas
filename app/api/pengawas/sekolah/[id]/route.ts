@@ -103,6 +103,32 @@ export async function GET(
       );
     }
 
+    // Log profil_guru untuk debugging - lebih detail
+    console.log("=== API Response Debug ===");
+    console.log("Sekolah ID:", sekolahId);
+    console.log("Sekolah Name:", data.nama_sekolah);
+    console.log("profil_guru:", JSON.stringify(data.profil_guru, null, 2));
+    console.log("profil_guru type:", typeof data.profil_guru);
+    console.log("profil_guru is null:", data.profil_guru === null);
+    console.log("profil_guru is undefined:", data.profil_guru === undefined);
+    
+    if (data.profil_guru) {
+      console.log("profil_guru keys:", Object.keys(data.profil_guru));
+      console.log("profil_guru.detail exists:", 'detail' in data.profil_guru);
+      console.log("profil_guru.detail:", data.profil_guru.detail);
+      console.log("profil_guru.detail type:", typeof data.profil_guru.detail);
+      console.log("profil_guru.detail isArray:", Array.isArray(data.profil_guru.detail));
+      if (Array.isArray(data.profil_guru.detail)) {
+        console.log("profil_guru.detail length:", data.profil_guru.detail.length);
+        if (data.profil_guru.detail.length > 0) {
+          console.log("First guru sample:", JSON.stringify(data.profil_guru.detail[0], null, 2));
+        }
+      }
+    } else {
+      console.warn("⚠️ profil_guru is NULL or UNDEFINED!");
+    }
+    console.log("=== End API Response Debug ===");
+
     return NextResponse.json(
       {
         success: true,
