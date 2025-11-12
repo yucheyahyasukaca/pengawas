@@ -485,7 +485,7 @@ export default function MonitoringDetailPage() {
       const targetSekolahId = sekolahId || (filteredSekolah.length > 0 ? filteredSekolah[0].id.toString() : null);
       
       if (targetSekolahId) {
-        const found = filteredSekolah.find((s) => s.id.toString() === targetSekolahId);
+        const found = filteredSekolah.find((s: SekolahData) => s.id.toString() === targetSekolahId);
         if (found) {
           setSelectedSekolah(found);
           
