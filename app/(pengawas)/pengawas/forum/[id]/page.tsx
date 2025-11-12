@@ -597,8 +597,8 @@ export default function ThreadDetailPage() {
                       >
                         <div className="aspect-square relative">
                           <Image
-                            src={att.url}
-                            alt={att.name}
+                            src={att.file_url}
+                            alt={att.file_name}
                             fill
                             className="object-cover"
                           />

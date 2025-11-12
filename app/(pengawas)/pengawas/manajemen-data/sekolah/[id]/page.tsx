@@ -1102,8 +1102,50 @@ function ProfilTenagaKependidikanTab({ profilData }: { profilData?: any }) {
 }
 
 // Profil Siswa Tab
+interface JumlahSiswaRow {
+  kelas: string;
+  jumlah_rombel?: number | null;
+  laki_laki?: number | null;
+  perempuan?: number | null;
+  jumlah?: number | null;
+  abk_laki?: number | null;
+  abk_perempuan?: number | null;
+  abk_jumlah?: number | null;
+}
+
+interface EkonomiRow {
+  kelas: string;
+  p1?: number | null;
+  p2?: number | null;
+  p3?: number | null;
+  lebih_p3?: number | null;
+}
+
+interface PekerjaanRow {
+  jenis: string;
+  jumlah?: number | null;
+}
+
+interface ProfilLulusanRow {
+  tahun: string;
+  ptn_snbp?: number | null;
+  ptn_snbt?: number | null;
+  ptn_um?: number | null;
+  uin?: number | null;
+  pts?: number | null;
+  kedinasan_akmil?: number | null;
+  kedinasan_akpol?: number | null;
+  kedinasan_stan?: number | null;
+  kedinasan_stpdn?: number | null;
+  kedinasan_sttd?: number | null;
+  kedinasan_stis?: number | null;
+  kedinasan_lainnya?: number | null;
+  bekerja?: number | null;
+  belum_bekerja?: number | null;
+}
+
 function ProfilSiswaTab({ profilData }: { profilData?: any }) {
-  const jumlahSiswaRows = Array.isArray(profilData?.jumlah_siswa?.per_kelas)
+  const jumlahSiswaRows: JumlahSiswaRow[] = Array.isArray(profilData?.jumlah_siswa?.per_kelas)
     ? profilData.jumlah_siswa.per_kelas.map((row: any) => {
         const laki = toNumber(row?.laki_laki ?? row?.jumlah_laki ?? row?.laki);
         const perempuan = toNumber(row?.perempuan ?? row?.jumlah_perempuan ?? row?.perempuan);
@@ -1138,7 +1180,7 @@ function ProfilSiswaTab({ profilData }: { profilData?: any }) {
         }
       : null;
 
-  const ekonomiRows = Array.isArray(profilData?.ekonomi_orang_tua?.per_kelas)
+  const ekonomiRows: EkonomiRow[] = Array.isArray(profilData?.ekonomi_orang_tua?.per_kelas)
     ? profilData.ekonomi_orang_tua.per_kelas.map((row: any) => ({
         kelas: row?.kelas ?? "-",
         p1: toNumber(row?.p1 ?? row?.P1),
@@ -1148,14 +1190,14 @@ function ProfilSiswaTab({ profilData }: { profilData?: any }) {
       }))
     : [];
 
-  const pekerjaanRows = Array.isArray(profilData?.pekerjaan_orang_tua?.detail ?? profilData?.pekerjaan_orang_tua)
+  const pekerjaanRows: PekerjaanRow[] = Array.isArray(profilData?.pekerjaan_orang_tua?.detail ?? profilData?.pekerjaan_orang_tua)
     ? (profilData.pekerjaan_orang_tua.detail ?? profilData.pekerjaan_orang_tua).map((row: any) => ({
         jenis: row?.jenis ?? row?.nama ?? "-",
         jumlah: toNumber(row?.jumlah ?? row?.total ?? row?.value),
       }))
     : [];
 
-  const profilLulusanRows = Array.isArray(profilData?.profil_lulusan?.per_tahun ?? profilData?.profil_lulusan)
+  const profilLulusanRows: ProfilLulusanRow[] = Array.isArray(profilData?.profil_lulusan?.per_tahun ?? profilData?.profil_lulusan)
     ? (profilData.profil_lulusan?.per_tahun ?? profilData.profil_lulusan).map((row: any) => ({
         tahun: row?.tahun ?? "-",
         ptn_snbp: toNumber(row?.ptn_snbp ?? row?.snbp),

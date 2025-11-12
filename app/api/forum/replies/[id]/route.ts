@@ -82,8 +82,15 @@ export async function PUT(
     };
 
     if (isAdmin && !isAuthor) {
-      updateData.edited_by = adminUser.id;
+      updateData.edited_by = adminUser!.id;
     } else {
+      // If not admin, must be author, so pengawasUser must exist
+      if (!pengawasUser) {
+        return NextResponse.json(
+          { error: "Unauthorized" },
+          { status: 401 }
+        );
+      }
       updateData.edited_by = pengawasUser.id;
     }
 
@@ -205,8 +212,15 @@ export async function DELETE(
     };
 
     if (isAdmin) {
-      deleteData.deleted_by = adminUser.id;
+      deleteData.deleted_by = adminUser!.id;
     } else {
+      // If not admin, must be author, so pengawasUser must exist
+      if (!pengawasUser) {
+        return NextResponse.json(
+          { error: "Unauthorized" },
+          { status: 401 }
+        );
+      }
       deleteData.deleted_by = pengawasUser.id;
     }
 
