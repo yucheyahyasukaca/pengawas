@@ -3016,9 +3016,50 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
   const [isSavingEkonomi, setIsSavingEkonomi] = useState(false);
   const [isSavingPekerjaan, setIsSavingPekerjaan] = useState(false);
   const [isSavingProfilLulusan, setIsSavingProfilLulusan] = useState(false);
+  const [showFormJumlahSiswa, setShowFormJumlahSiswa] = useState(false);
+  const [showFormEkonomi, setShowFormEkonomi] = useState(false);
+  const [showFormPekerjaan, setShowFormPekerjaan] = useState(false);
+  const [showFormProfilLulusan, setShowFormProfilLulusan] = useState(false);
   const PAGE_SIZE = 6;
 
   const jumlahSiswaSummary = computeJumlahSiswaSummary(jumlahSiswaRows);
+
+  // Load data when form is opened
+  useEffect(() => {
+    if (showFormJumlahSiswa && formData.profil_siswa?.jumlah_siswa?.per_kelas?.length > 0) {
+      const rows = normalizeJumlahSiswaRows(formData.profil_siswa.jumlah_siswa.per_kelas);
+      setJumlahSiswaRows(rows.length > 0 ? rows : defaultJumlahSiswaRows());
+    } else if (!showFormJumlahSiswa) {
+      setJumlahSiswaRows(defaultJumlahSiswaRows());
+    }
+  }, [showFormJumlahSiswa, formData.profil_siswa?.jumlah_siswa]);
+
+  useEffect(() => {
+    if (showFormEkonomi && formData.profil_siswa?.ekonomi_orang_tua?.per_kelas?.length > 0) {
+      const rows = normalizeEkonomiRows(formData.profil_siswa.ekonomi_orang_tua.per_kelas);
+      setEkonomiRows(rows.length > 0 ? rows : defaultEkonomiRows());
+    } else if (!showFormEkonomi) {
+      setEkonomiRows(defaultEkonomiRows());
+    }
+  }, [showFormEkonomi, formData.profil_siswa?.ekonomi_orang_tua]);
+
+  useEffect(() => {
+    if (showFormPekerjaan && formData.profil_siswa?.pekerjaan_orang_tua?.length > 0) {
+      const rows = normalizePekerjaanRows(formData.profil_siswa.pekerjaan_orang_tua);
+      setPekerjaanRows(rows.length > 0 ? rows : defaultPekerjaanRows());
+    } else if (!showFormPekerjaan) {
+      setPekerjaanRows(defaultPekerjaanRows());
+    }
+  }, [showFormPekerjaan, formData.profil_siswa?.pekerjaan_orang_tua]);
+
+  useEffect(() => {
+    if (showFormProfilLulusan && formData.profil_siswa?.profil_lulusan?.per_tahun?.length > 0) {
+      const rows = normalizeProfilLulusanRows(formData.profil_siswa.profil_lulusan.per_tahun);
+      setProfilLulusanRows(rows.length > 0 ? rows : defaultProfilLulusanRows());
+    } else if (!showFormProfilLulusan) {
+      setProfilLulusanRows(defaultProfilLulusanRows());
+    }
+  }, [showFormProfilLulusan, formData.profil_siswa?.profil_lulusan]);
 
   const updateJumlahSiswaRow = (rowId: string, field: keyof JumlahSiswaRow, value: string) => {
     setJumlahSiswaRows((prev) =>
@@ -3692,51 +3733,236 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
             Isi jumlah siswa dan siswa berkebutuhan khusus per kelas secara berkala
           </CardDescription>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        {!showFormJumlahSiswa && (
           <Button
             type="button"
-            onClick={() =>
-              setJumlahSiswaRows((prev) => [...prev, createJumlahSiswaRow("")])
-            }
-            variant="outline"
-            className="rounded-full border border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
+            onClick={() => setShowFormJumlahSiswa(true)}
+            className="w-full sm:w-auto rounded-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-4 md:px-5 py-2.5 md:py-2 text-sm font-semibold text-white shadow-md transition hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 hover:shadow-lg"
           >
             <Plus className="mr-2 size-4" />
-            Tambah Kelas
+            {formData.profil_siswa?.jumlah_siswa?.per_kelas?.length > 0 ? "Edit Data" : "Tambah Data"}
           </Button>
-          <Button
-            onClick={handleJumlahSiswaSave}
-            disabled={isSavingJumlahSiswa}
-            className="rounded-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isSavingJumlahSiswa ? (
-              <>
-                <Loader2 className="mr-2 size-4 animate-spin" />
-                Menyimpan...
-              </>
-            ) : (
-              <>
-                <Save className="mr-2 size-4" />
-                Simpan Data
-              </>
-            )}
-          </Button>
-        </div>
+        )}
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
+        {!showFormJumlahSiswa ? (
+          formData.profil_siswa?.jumlah_siswa?.per_kelas?.length > 0 ? (
+            <div className="space-y-4">
+              {/* Mobile Card View */}
+              <div className="block md:hidden space-y-3">
+                {formData.profil_siswa.jumlah_siswa.per_kelas.map((row: any, index: number) => {
+                  const total = (row.laki_laki ?? 0) + (row.perempuan ?? 0);
+                  const abkTotal = (row.abk_laki ?? 0) + (row.abk_perempuan ?? 0);
+                  return (
+                    <div key={index} className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
+                      <div className="font-semibold text-base text-slate-900 mb-3 pb-2 border-b border-slate-200">
+                        {row.kelas || "-"}
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <div className="text-slate-500 text-xs mb-1">Jumlah Rombel</div>
+                          <div className="font-medium text-slate-900">{formatNumber(row.jumlah_rombel)}</div>
+                        </div>
+                        <div>
+                          <div className="text-slate-500 text-xs mb-1">Laki-laki</div>
+                          <div className="font-medium text-slate-900">{formatNumber(row.laki_laki)}</div>
+                        </div>
+                        <div>
+                          <div className="text-slate-500 text-xs mb-1">Perempuan</div>
+                          <div className="font-medium text-slate-900">{formatNumber(row.perempuan)}</div>
+                        </div>
+                        <div>
+                          <div className="text-slate-500 text-xs mb-1">Jumlah</div>
+                          <div className="font-semibold text-slate-900">{formatNumber(total)}</div>
+                        </div>
+                        <div>
+                          <div className="text-slate-500 text-xs mb-1">ABK Laki-laki</div>
+                          <div className="font-medium text-slate-900">{formatNumber(row.abk_laki)}</div>
+                        </div>
+                        <div>
+                          <div className="text-slate-500 text-xs mb-1">ABK Perempuan</div>
+                          <div className="font-medium text-slate-900">{formatNumber(row.abk_perempuan)}</div>
+                        </div>
+                        <div className="col-span-2">
+                          <div className="text-slate-500 text-xs mb-1">ABK Jumlah</div>
+                          <div className="font-semibold text-slate-900">{formatNumber(abkTotal)}</div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                {formData.profil_siswa.jumlah_siswa.total && (
+                  <div className="bg-slate-50 rounded-lg border-2 border-slate-300 p-4 shadow-sm">
+                    <div className="font-bold text-base text-slate-900 mb-3 pb-2 border-b-2 border-slate-300">
+                      Total
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <div className="text-slate-600 text-xs mb-1">Jumlah Rombel</div>
+                        <div className="font-bold text-slate-900">{formatNumber(formData.profil_siswa.jumlah_siswa.total.jumlah_rombel)}</div>
+                      </div>
+                      <div>
+                        <div className="text-slate-600 text-xs mb-1">Laki-laki</div>
+                        <div className="font-bold text-slate-900">{formatNumber(formData.profil_siswa.jumlah_siswa.total.laki_laki)}</div>
+                      </div>
+                      <div>
+                        <div className="text-slate-600 text-xs mb-1">Perempuan</div>
+                        <div className="font-bold text-slate-900">{formatNumber(formData.profil_siswa.jumlah_siswa.total.perempuan)}</div>
+                      </div>
+                      <div>
+                        <div className="text-slate-600 text-xs mb-1">Jumlah</div>
+                        <div className="font-bold text-slate-900">{formatNumber(formData.profil_siswa.jumlah_siswa.total.jumlah)}</div>
+                      </div>
+                      <div>
+                        <div className="text-slate-600 text-xs mb-1">ABK Laki-laki</div>
+                        <div className="font-bold text-slate-900">{formatNumber(formData.profil_siswa.jumlah_siswa.total.abk_laki)}</div>
+                      </div>
+                      <div>
+                        <div className="text-slate-600 text-xs mb-1">ABK Perempuan</div>
+                        <div className="font-bold text-slate-900">{formatNumber(formData.profil_siswa.jumlah_siswa.total.abk_perempuan)}</div>
+                      </div>
+                      <div className="col-span-2">
+                        <div className="text-slate-600 text-xs mb-1">ABK Jumlah</div>
+                        <div className="font-bold text-slate-900">{formatNumber(formData.profil_siswa.jumlah_siswa.total.abk_jumlah)}</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full border-collapse min-w-[720px]">
+                  <thead>
+                    <tr className="border-b-2 border-slate-200 bg-slate-50">
+                      <th className="px-4 py-3 text-left text-xs font-bold text-slate-900">Kelas</th>
+                      <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">Jumlah Rombel</th>
+                      <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">Laki-laki</th>
+                      <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">Perempuan</th>
+                      <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">Jumlah</th>
+                      <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">ABK Laki-laki</th>
+                      <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">ABK Perempuan</th>
+                      <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">ABK Jumlah</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {formData.profil_siswa.jumlah_siswa.per_kelas.map((row: any, index: number) => {
+                      const total = (row.laki_laki ?? 0) + (row.perempuan ?? 0);
+                      const abkTotal = (row.abk_laki ?? 0) + (row.abk_perempuan ?? 0);
+                      return (
+                        <tr key={index} className="bg-white">
+                          <td className="px-4 py-3 text-sm font-semibold text-slate-900">{row.kelas || "-"}</td>
+                          <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.jumlah_rombel)}</td>
+                          <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.laki_laki)}</td>
+                          <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.perempuan)}</td>
+                          <td className="px-4 py-3 text-sm text-slate-700 text-center font-semibold">{formatNumber(total)}</td>
+                          <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.abk_laki)}</td>
+                          <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.abk_perempuan)}</td>
+                          <td className="px-4 py-3 text-sm text-slate-700 text-center font-semibold">{formatNumber(abkTotal)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                  {formData.profil_siswa.jumlah_siswa.total && (
+                    <tfoot>
+                      <tr className="border-t-2 border-slate-200 bg-slate-50 font-semibold">
+                        <td className="px-4 py-3 text-sm text-slate-900">Total</td>
+                        <td className="px-4 py-3 text-sm text-center text-slate-900">
+                          {formatNumber(formData.profil_siswa.jumlah_siswa.total.jumlah_rombel)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-center text-slate-900">
+                          {formatNumber(formData.profil_siswa.jumlah_siswa.total.laki_laki)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-center text-slate-900">
+                          {formatNumber(formData.profil_siswa.jumlah_siswa.total.perempuan)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-center text-slate-900">
+                          {formatNumber(formData.profil_siswa.jumlah_siswa.total.jumlah)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-center text-slate-900">
+                          {formatNumber(formData.profil_siswa.jumlah_siswa.total.abk_laki)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-center text-slate-900">
+                          {formatNumber(formData.profil_siswa.jumlah_siswa.total.abk_perempuan)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-center text-slate-900">
+                          {formatNumber(formData.profil_siswa.jumlah_siswa.total.abk_jumlah)}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  )}
+                </table>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12 px-4">
+              <div className="p-4 rounded-full bg-gradient-to-br from-green-100 to-emerald-100 mb-4">
+                <GraduationCap className="size-8 text-green-600" />
+              </div>
+              <p className="text-sm font-medium text-slate-600 mb-2">Belum ada data</p>
+              <p className="text-xs text-slate-500 text-center max-w-md mb-4">
+                Klik tombol "Tambah Data" di atas untuk menambahkan data jumlah siswa per kelas
+              </p>
+            </div>
+          )
+        ) : (
+          <div className="space-y-4">
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowFormJumlahSiswa(false)}
+                className="rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-100"
+              >
+                <X className="mr-2 size-4" />
+                Tutup Form
+              </Button>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+              <Button
+                type="button"
+                onClick={() =>
+                  setJumlahSiswaRows((prev) => [...prev, createJumlahSiswaRow("")])
+                }
+                variant="outline"
+                className="rounded-full border border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
+              >
+                <Plus className="mr-2 size-4" />
+                Tambah Kelas
+              </Button>
+              <Button
+                onClick={async () => {
+                  await handleJumlahSiswaSave();
+                  setShowFormJumlahSiswa(false);
+                }}
+                disabled={isSavingJumlahSiswa}
+                className="rounded-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSavingJumlahSiswa ? (
+                  <>
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                    Menyimpan...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 size-4" />
+                    Simpan Data
+                  </>
+                )}
+              </Button>
+            </div>
+        <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
           <table className="w-full border-collapse min-w-[720px]">
             <thead>
               <tr className="border-b-2 border-slate-200 bg-slate-50">
-                <th className="px-4 py-3 text-left text-xs font-bold text-slate-900">Kelas</th>
-                <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">Jumlah Rombel</th>
-                <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">Laki-laki</th>
-                <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">Perempuan</th>
-                <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">Jumlah</th>
-                <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">ABK Laki-laki</th>
-                <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">ABK Perempuan</th>
-                <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">ABK Jumlah</th>
-                <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">Aksi</th>
+                <th className="px-2 md:px-4 py-3 text-left text-xs font-bold text-slate-900">Kelas</th>
+                <th className="px-2 md:px-4 py-3 text-center text-xs font-bold text-slate-900">Jumlah Rombel</th>
+                <th className="px-2 md:px-4 py-3 text-center text-xs font-bold text-slate-900">Laki-laki</th>
+                <th className="px-2 md:px-4 py-3 text-center text-xs font-bold text-slate-900">Perempuan</th>
+                <th className="px-2 md:px-4 py-3 text-center text-xs font-bold text-slate-900">Jumlah</th>
+                <th className="px-2 md:px-4 py-3 text-center text-xs font-bold text-slate-900">ABK Laki-laki</th>
+                <th className="px-2 md:px-4 py-3 text-center text-xs font-bold text-slate-900">ABK Perempuan</th>
+                <th className="px-2 md:px-4 py-3 text-center text-xs font-bold text-slate-900">ABK Jumlah</th>
+                <th className="px-2 md:px-4 py-3 text-center text-xs font-bold text-slate-900">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -3746,67 +3972,67 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
 
                 return (
                   <tr key={row.id} className="bg-white">
-                    <td className="px-4 py-3 text-sm">
+                    <td className="px-2 md:px-4 py-3 text-sm">
                       <input
                         type="text"
                         value={row.kelas}
                         onChange={(e) => updateJumlahSiswaRow(row.id, "kelas", e.target.value)}
                         placeholder="Contoh: X IPA 1"
-                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                        className="w-full rounded-lg border border-slate-200 bg-white px-2 md:px-3 py-2.5 md:py-2 text-sm md:text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
                       />
                     </td>
-                    <td className="px-4 py-3 text-sm text-center">
+                    <td className="px-2 md:px-4 py-3 text-sm text-center">
                       <input
                         type="number"
                         min={0}
                         value={row.jumlah_rombel ?? ""}
                         onChange={(e) => updateJumlahSiswaRow(row.id, "jumlah_rombel", e.target.value)}
-                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                        className="w-full rounded-lg border border-slate-200 bg-white px-2 md:px-3 py-2.5 md:py-2 text-sm md:text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
                       />
                     </td>
-                    <td className="px-4 py-3 text-sm text-center">
+                    <td className="px-2 md:px-4 py-3 text-sm text-center">
                       <input
                         type="number"
                         min={0}
                         value={row.laki_laki ?? ""}
                         onChange={(e) => updateJumlahSiswaRow(row.id, "laki_laki", e.target.value)}
-                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                        className="w-full rounded-lg border border-slate-200 bg-white px-2 md:px-3 py-2.5 md:py-2 text-sm md:text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
                       />
                     </td>
-                    <td className="px-4 py-3 text-sm text-center">
+                    <td className="px-2 md:px-4 py-3 text-sm text-center">
                       <input
                         type="number"
                         min={0}
                         value={row.perempuan ?? ""}
                         onChange={(e) => updateJumlahSiswaRow(row.id, "perempuan", e.target.value)}
-                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                        className="w-full rounded-lg border border-slate-200 bg-white px-2 md:px-3 py-2.5 md:py-2 text-sm md:text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
                       />
                     </td>
-                    <td className="px-4 py-3 text-sm text-center font-semibold text-slate-900">
+                    <td className="px-2 md:px-4 py-3 text-sm text-center font-semibold text-slate-900">
                       {formatNumber(total)}
                     </td>
-                    <td className="px-4 py-3 text-sm text-center">
+                    <td className="px-2 md:px-4 py-3 text-sm text-center">
                       <input
                         type="number"
                         min={0}
                         value={row.abk_laki ?? ""}
                         onChange={(e) => updateJumlahSiswaRow(row.id, "abk_laki", e.target.value)}
-                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                        className="w-full rounded-lg border border-slate-200 bg-white px-2 md:px-3 py-2.5 md:py-2 text-sm md:text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
                       />
                     </td>
-                    <td className="px-4 py-3 text-sm text-center">
+                    <td className="px-2 md:px-4 py-3 text-sm text-center">
                       <input
                         type="number"
                         min={0}
                         value={row.abk_perempuan ?? ""}
                         onChange={(e) => updateJumlahSiswaRow(row.id, "abk_perempuan", e.target.value)}
-                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                        className="w-full rounded-lg border border-slate-200 bg-white px-2 md:px-3 py-2.5 md:py-2 text-sm md:text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
                       />
                     </td>
-                    <td className="px-4 py-3 text-sm text-center font-semibold text-slate-900">
+                    <td className="px-2 md:px-4 py-3 text-sm text-center font-semibold text-slate-900">
                       {formatNumber(abkTotal)}
                     </td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="px-2 md:px-4 py-3 text-center">
                       <Button
                         type="button"
                         variant="ghost"
@@ -3816,9 +4042,9 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
                             prev.length > 1 ? prev.filter((item) => item.id !== row.id) : prev,
                           )
                         }
-                        className="h-9 w-9 rounded-full border border-red-100 bg-red-50 text-red-600 shadow-sm transition hover:bg-red-100 hover:text-red-700"
+                        className="h-8 w-8 md:h-9 md:w-9 rounded-full border border-red-100 bg-red-50 text-red-600 shadow-sm transition hover:bg-red-100 hover:text-red-700"
                       >
-                        <Trash2 className="size-4" />
+                        <Trash2 className="size-3 md:size-4" />
                       </Button>
                     </td>
                   </tr>
@@ -3857,6 +4083,8 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
         <p className="mt-3 text-xs text-slate-500">
           Catatan: ABK (Anak Berkebutuhan Khusus) mencakup siswa dengan kebutuhan layanan pendidikan khusus.
         </p>
+          </div>
+        )}
       </CardContent>
     </Card>
 
@@ -3869,36 +4097,130 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
             Catat distribusi tingkat ekonomi orang tua siswa per kelas (P1 paling rendah)
           </CardDescription>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        {!showFormEkonomi && (
           <Button
             type="button"
-            onClick={() => setEkonomiRows((prev) => [...prev, createEkonomiRow("")])}
-            variant="outline"
-            className="rounded-full border border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
+            onClick={() => setShowFormEkonomi(true)}
+            className="w-full sm:w-auto rounded-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-4 md:px-5 py-2.5 md:py-2 text-sm font-semibold text-white shadow-md transition hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 hover:shadow-lg"
           >
             <Plus className="mr-2 size-4" />
-            Tambah Kelas
+            {formData.profil_siswa?.ekonomi_orang_tua?.per_kelas?.length > 0 ? "Edit Data" : "Tambah Data"}
           </Button>
-          <Button
-            onClick={handleEkonomiSave}
-            disabled={isSavingEkonomi}
-            className="rounded-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isSavingEkonomi ? (
-              <>
-                <Loader2 className="mr-2 size-4 animate-spin" />
-                Menyimpan...
-              </>
-            ) : (
-              <>
-                <Save className="mr-2 size-4" />
-                Simpan Data
-              </>
-            )}
-          </Button>
-        </div>
+        )}
       </CardHeader>
       <CardContent>
+        {!showFormEkonomi ? (
+          formData.profil_siswa?.ekonomi_orang_tua?.per_kelas?.length > 0 ? (
+            <div className="space-y-4">
+              {/* Mobile Card View */}
+              <div className="block md:hidden space-y-3">
+                {formData.profil_siswa.ekonomi_orang_tua.per_kelas.map((row: any, index: number) => (
+                  <div key={index} className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
+                    <div className="font-semibold text-base text-slate-900 mb-3 pb-2 border-b border-slate-200">
+                      {row.kelas || "-"}
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <div className="text-slate-500 text-xs mb-1">P1</div>
+                        <div className="font-medium text-slate-900">{formatNumber(row.p1)}</div>
+                      </div>
+                      <div>
+                        <div className="text-slate-500 text-xs mb-1">P2</div>
+                        <div className="font-medium text-slate-900">{formatNumber(row.p2)}</div>
+                      </div>
+                      <div>
+                        <div className="text-slate-500 text-xs mb-1">P3</div>
+                        <div className="font-medium text-slate-900">{formatNumber(row.p3)}</div>
+                      </div>
+                      <div>
+                        <div className="text-slate-500 text-xs mb-1">&gt; P3</div>
+                        <div className="font-medium text-slate-900">{formatNumber(row.lebih_p3)}</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full border-collapse min-w-[560px]">
+                  <thead>
+                    <tr className="border-b-2 border-slate-200 bg-slate-50">
+                      <th className="px-4 py-3 text-left text-xs font-bold text-slate-900">Kelas</th>
+                      <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">P1</th>
+                      <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">P2</th>
+                      <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">P3</th>
+                      <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">&gt; P3</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {formData.profil_siswa.ekonomi_orang_tua.per_kelas.map((row: any, index: number) => (
+                      <tr key={index} className="bg-white">
+                        <td className="px-4 py-3 text-sm font-semibold text-slate-900">{row.kelas || "-"}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.p1)}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.p2)}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.p3)}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.lebih_p3)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12 px-4">
+              <div className="p-4 rounded-full bg-gradient-to-br from-green-100 to-emerald-100 mb-4">
+                <Briefcase className="size-8 text-green-600" />
+              </div>
+              <p className="text-sm font-medium text-slate-600 mb-2">Belum ada data</p>
+              <p className="text-xs text-slate-500 text-center max-w-md mb-4">
+                Klik tombol "Tambah Data" di atas untuk menambahkan data ekonomi orang tua
+              </p>
+            </div>
+          )
+        ) : (
+          <div className="space-y-4">
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowFormEkonomi(false)}
+                className="rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-100"
+              >
+                <X className="mr-2 size-4" />
+                Tutup Form
+              </Button>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+              <Button
+                type="button"
+                onClick={() => setEkonomiRows((prev) => [...prev, createEkonomiRow("")])}
+                variant="outline"
+                className="rounded-full border border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
+              >
+                <Plus className="mr-2 size-4" />
+                Tambah Kelas
+              </Button>
+              <Button
+                onClick={async () => {
+                  await handleEkonomiSave();
+                  setShowFormEkonomi(false);
+                }}
+                disabled={isSavingEkonomi}
+                className="rounded-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSavingEkonomi ? (
+                  <>
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                    Menyimpan...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 size-4" />
+                    Simpan Data
+                  </>
+                )}
+              </Button>
+            </div>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse min-w-[560px]">
             <thead>
@@ -3979,6 +4301,8 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
             </tbody>
           </table>
         </div>
+          </div>
+        )}
       </CardContent>
     </Card>
 
@@ -3991,88 +4315,164 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
             Data jenis pekerjaan orang tua siswa untuk identifikasi kebutuhan dukungan
           </CardDescription>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        {!showFormPekerjaan && (
           <Button
             type="button"
-            onClick={() =>
-              setPekerjaanRows((prev) => [...prev, { id: generateRowId(), jenis: "", jumlah: null }])
-            }
-            variant="outline"
-            className="rounded-full border border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
+            onClick={() => setShowFormPekerjaan(true)}
+            className="w-full sm:w-auto rounded-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-4 md:px-5 py-2.5 md:py-2 text-sm font-semibold text-white shadow-md transition hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 hover:shadow-lg"
           >
             <Plus className="mr-2 size-4" />
-            Tambah Jenis Pekerjaan
+            {formData.profil_siswa?.pekerjaan_orang_tua?.length > 0 ? "Edit Data" : "Tambah Data"}
           </Button>
-          <Button
-            onClick={handlePekerjaanSave}
-            disabled={isSavingPekerjaan}
-            className="rounded-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isSavingPekerjaan ? (
-              <>
-                <Loader2 className="mr-2 size-4 animate-spin" />
-                Menyimpan...
-              </>
-            ) : (
-              <>
-                <Save className="mr-2 size-4" />
-                Simpan Data
-              </>
-            )}
-          </Button>
-        </div>
+        )}
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse min-w-[420px]">
-            <thead>
-              <tr className="border-b-2 border-slate-200 bg-slate-50">
-                <th className="px-4 py-3 text-left text-xs font-bold text-slate-900">Jenis Pekerjaan</th>
-                <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">Jumlah Orang Tua</th>
-                <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {pekerjaanRows.map((row) => (
-                <tr key={row.id} className="bg-white">
-                  <td className="px-4 py-3 text-sm">
-                    <input
-                      type="text"
-                      value={row.jenis}
-                      onChange={(e) => updatePekerjaanRow(row.id, "jenis", e.target.value)}
-                      placeholder="Contoh: Wirausaha"
-                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
-                    />
-                  </td>
-                  <td className="px-4 py-3 text-sm text-center">
-                    <input
-                      type="number"
-                      min={0}
-                      value={row.jumlah ?? ""}
-                      onChange={(e) => updatePekerjaanRow(row.id, "jumlah", e.target.value)}
-                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
-                    />
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() =>
-                        setPekerjaanRows((prev) =>
-                          prev.length > 1 ? prev.filter((item) => item.id !== row.id) : prev,
-                        )
-                      }
-                      className="h-9 w-9 rounded-full border border-red-100 bg-red-50 text-red-600 shadow-sm transition hover:bg-red-100 hover:text-red-700"
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {!showFormPekerjaan ? (
+          formData.profil_siswa?.pekerjaan_orang_tua?.length > 0 ? (
+            <div className="space-y-4">
+              {/* Mobile Card View */}
+              <div className="block md:hidden space-y-3">
+                {formData.profil_siswa.pekerjaan_orang_tua.map((row: any, index: number) => (
+                  <div key={index} className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
+                    <div className="flex justify-between items-center">
+                      <div className="font-semibold text-base text-slate-900">{row.jenis || "-"}</div>
+                      <div className="text-right">
+                        <div className="text-slate-500 text-xs mb-1">Jumlah</div>
+                        <div className="font-bold text-lg text-slate-900">{formatNumber(row.jumlah)}</div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full border-collapse min-w-[420px]">
+                  <thead>
+                    <tr className="border-b-2 border-slate-200 bg-slate-50">
+                      <th className="px-4 py-3 text-left text-xs font-bold text-slate-900">Jenis Pekerjaan</th>
+                      <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">Jumlah Orang Tua</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {formData.profil_siswa.pekerjaan_orang_tua.map((row: any, index: number) => (
+                      <tr key={index} className="bg-white">
+                        <td className="px-4 py-3 text-sm font-semibold text-slate-900">{row.jenis || "-"}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.jumlah)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12 px-4">
+              <div className="p-4 rounded-full bg-gradient-to-br from-green-100 to-emerald-100 mb-4">
+                <User className="size-8 text-green-600" />
+              </div>
+              <p className="text-sm font-medium text-slate-600 mb-2">Belum ada data</p>
+              <p className="text-xs text-slate-500 text-center max-w-md mb-4">
+                Klik tombol "Tambah Data" di atas untuk menambahkan data pekerjaan orang tua
+              </p>
+            </div>
+          )
+        ) : (
+          <div className="space-y-4">
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowFormPekerjaan(false)}
+                className="rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-100"
+              >
+                <X className="mr-2 size-4" />
+                Tutup Form
+              </Button>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+              <Button
+                type="button"
+                onClick={() =>
+                  setPekerjaanRows((prev) => [...prev, { id: generateRowId(), jenis: "", jumlah: null }])
+                }
+                variant="outline"
+                className="rounded-full border border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
+              >
+                <Plus className="mr-2 size-4" />
+                Tambah Jenis Pekerjaan
+              </Button>
+              <Button
+                onClick={async () => {
+                  await handlePekerjaanSave();
+                  setShowFormPekerjaan(false);
+                }}
+                disabled={isSavingPekerjaan}
+                className="rounded-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSavingPekerjaan ? (
+                  <>
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                    Menyimpan...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 size-4" />
+                    Simpan Data
+                  </>
+                )}
+              </Button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse min-w-[420px]">
+                <thead>
+                  <tr className="border-b-2 border-slate-200 bg-slate-50">
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-900">Jenis Pekerjaan</th>
+                    <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">Jumlah Orang Tua</th>
+                    <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {pekerjaanRows.map((row) => (
+                    <tr key={row.id} className="bg-white">
+                      <td className="px-4 py-3 text-sm">
+                        <input
+                          type="text"
+                          value={row.jenis}
+                          onChange={(e) => updatePekerjaanRow(row.id, "jenis", e.target.value)}
+                          placeholder="Contoh: Wirausaha"
+                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                        />
+                      </td>
+                      <td className="px-4 py-3 text-sm text-center">
+                        <input
+                          type="number"
+                          min={0}
+                          value={row.jumlah ?? ""}
+                          onChange={(e) => updatePekerjaanRow(row.id, "jumlah", e.target.value)}
+                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                        />
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            setPekerjaanRows((prev) =>
+                              prev.length > 1 ? prev.filter((item) => item.id !== row.id) : prev,
+                            )
+                          }
+                          className="h-9 w-9 rounded-full border border-red-100 bg-red-50 text-red-600 shadow-sm transition hover:bg-red-100 hover:text-red-700"
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
 
@@ -4085,39 +4485,241 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
             Catat kelanjutan studi dan penempatan lulusan per tahun lulusan
           </CardDescription>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        {!showFormProfilLulusan && (
           <Button
             type="button"
-            onClick={() =>
-              setProfilLulusanRows((prev) => [...prev, createProfilLulusanRow("")])
-            }
-            variant="outline"
-            className="rounded-full border border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
+            onClick={() => setShowFormProfilLulusan(true)}
+            className="w-full sm:w-auto rounded-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-4 md:px-5 py-2.5 md:py-2 text-sm font-semibold text-white shadow-md transition hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 hover:shadow-lg"
           >
             <Plus className="mr-2 size-4" />
-            Tambah Tahun
+            {formData.profil_siswa?.profil_lulusan?.per_tahun?.length > 0 ? "Edit Data" : "Tambah Data"}
           </Button>
-          <Button
-            onClick={handleProfilLulusanSave}
-            disabled={isSavingProfilLulusan}
-            className="rounded-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isSavingProfilLulusan ? (
-              <>
-                <Loader2 className="mr-2 size-4 animate-spin" />
-                Menyimpan...
-              </>
-            ) : (
-              <>
-                <Save className="mr-2 size-4" />
-                Simpan Data
-              </>
-            )}
-          </Button>
-        </div>
+        )}
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
+        {!showFormProfilLulusan ? (
+          formData.profil_siswa?.profil_lulusan?.per_tahun?.length > 0 ? (
+            <div className="space-y-4">
+              {/* Mobile Card View */}
+              <div className="block md:hidden space-y-4">
+                {formData.profil_siswa.profil_lulusan.per_tahun.map((row: any, index: number) => (
+                  <div key={index} className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
+                    <div className="font-bold text-lg text-slate-900 mb-4 pb-2 border-b-2 border-slate-300">
+                      Tahun {row.tahun || "-"}
+                    </div>
+                    <div className="space-y-4">
+                      <div>
+                        <div className="font-semibold text-sm text-slate-700 mb-2">PTN</div>
+                        <div className="grid grid-cols-3 gap-2 text-xs">
+                          <div>
+                            <div className="text-slate-500 mb-1">SNBP</div>
+                            <div className="font-medium text-slate-900">{formatNumber(row.ptn_snbp)}</div>
+                          </div>
+                          <div>
+                            <div className="text-slate-500 mb-1">SNBT</div>
+                            <div className="font-medium text-slate-900">{formatNumber(row.ptn_snbt)}</div>
+                          </div>
+                          <div>
+                            <div className="text-slate-500 mb-1">UM</div>
+                            <div className="font-medium text-slate-900">{formatNumber(row.ptn_um)}</div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <div className="font-semibold text-sm text-slate-700 mb-2">UIN</div>
+                          <div className="font-medium text-base text-slate-900">{formatNumber(row.uin_jumlah)}</div>
+                        </div>
+                        <div>
+                          <div className="font-semibold text-sm text-slate-700 mb-2">PTS</div>
+                          <div className="font-medium text-base text-slate-900">{formatNumber(row.pts_jumlah)}</div>
+                        </div>
+                      </div>
+                      <div>
+                        <div className="font-semibold text-sm text-slate-700 mb-2">Kedinasan</div>
+                        <div className="grid grid-cols-3 gap-2 text-xs">
+                          <div>
+                            <div className="text-slate-500 mb-1">Akmil</div>
+                            <div className="font-medium text-slate-900">{formatNumber(row.kedinasan_akmil)}</div>
+                          </div>
+                          <div>
+                            <div className="text-slate-500 mb-1">Akpol</div>
+                            <div className="font-medium text-slate-900">{formatNumber(row.kedinasan_akpol)}</div>
+                          </div>
+                          <div>
+                            <div className="text-slate-500 mb-1">STAN</div>
+                            <div className="font-medium text-slate-900">{formatNumber(row.kedinasan_stan)}</div>
+                          </div>
+                          <div>
+                            <div className="text-slate-500 mb-1">STPDN</div>
+                            <div className="font-medium text-slate-900">{formatNumber(row.kedinasan_stpdn)}</div>
+                          </div>
+                          <div>
+                            <div className="text-slate-500 mb-1">STTD</div>
+                            <div className="font-medium text-slate-900">{formatNumber(row.kedinasan_sttd)}</div>
+                          </div>
+                          <div>
+                            <div className="text-slate-500 mb-1">STIS</div>
+                            <div className="font-medium text-slate-900">{formatNumber(row.kedinasan_stis)}</div>
+                          </div>
+                          <div className="col-span-3">
+                            <div className="text-slate-500 mb-1">Lainnya</div>
+                            <div className="font-medium text-slate-900">{formatNumber(row.kedinasan_lainnya)}</div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-200">
+                        <div>
+                          <div className="font-semibold text-sm text-slate-700 mb-2">Bekerja</div>
+                          <div className="font-bold text-lg text-slate-900">{formatNumber(row.bekerja)}</div>
+                        </div>
+                        <div>
+                          <div className="font-semibold text-sm text-slate-700 mb-2">Belum Bekerja/Melanjutkan</div>
+                          <div className="font-bold text-lg text-slate-900">{formatNumber(row.belum_bekerja)}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full border-collapse min-w-[960px]">
+                  <thead>
+                    <tr className="border-b-2 border-slate-200 bg-slate-50">
+                      <th rowSpan={2} className="px-4 py-3 text-left text-xs font-bold text-slate-900 align-middle border-r border-slate-200">
+                        Tahun
+                      </th>
+                      <th colSpan={3} className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
+                        PTN
+                      </th>
+                      <th className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
+                        UIN
+                      </th>
+                      <th className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
+                        PTS
+                      </th>
+                      <th colSpan={7} className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
+                        Kedinasan
+                      </th>
+                      <th className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
+                        Bekerja
+                      </th>
+                      <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">
+                        Belum Bekerja/Melanjutkan
+                      </th>
+                    </tr>
+                    <tr className="border-b border-slate-200 bg-slate-50">
+                      <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">SNBP</th>
+                      <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">SNBT</th>
+                      <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">
+                        UM
+                      </th>
+                      <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">
+                        Jumlah
+                      </th>
+                      <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">
+                        Jumlah
+                      </th>
+                      <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">Akmil</th>
+                      <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">Akpol</th>
+                      <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">STAN</th>
+                      <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">STPDN</th>
+                      <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">STTD</th>
+                      <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">STIS</th>
+                      <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">
+                        Lainnya
+                      </th>
+                      <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">
+                        Jumlah
+                      </th>
+                      <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">
+                        Jumlah
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {formData.profil_siswa.profil_lulusan.per_tahun.map((row: any, index: number) => (
+                      <tr key={index} className="bg-white">
+                        <td className="px-4 py-3 text-sm font-semibold text-slate-900 border-r border-slate-200">{row.tahun || "-"}</td>
+                        <td className="px-2 py-3 text-sm text-slate-700 text-center">{formatNumber(row.ptn_snbp)}</td>
+                        <td className="px-2 py-3 text-sm text-slate-700 text-center">{formatNumber(row.ptn_snbt)}</td>
+                        <td className="px-2 py-3 text-sm text-slate-700 text-center border-r border-slate-200">{formatNumber(row.ptn_um)}</td>
+                        <td className="px-2 py-3 text-sm text-slate-700 text-center border-r border-slate-200">{formatNumber(row.uin_jumlah)}</td>
+                        <td className="px-2 py-3 text-sm text-slate-700 text-center border-r border-slate-200">{formatNumber(row.pts_jumlah)}</td>
+                        <td className="px-2 py-3 text-sm text-slate-700 text-center">{formatNumber(row.kedinasan_akmil)}</td>
+                        <td className="px-2 py-3 text-sm text-slate-700 text-center">{formatNumber(row.kedinasan_akpol)}</td>
+                        <td className="px-2 py-3 text-sm text-slate-700 text-center">{formatNumber(row.kedinasan_stan)}</td>
+                        <td className="px-2 py-3 text-sm text-slate-700 text-center">{formatNumber(row.kedinasan_stpdn)}</td>
+                        <td className="px-2 py-3 text-sm text-slate-700 text-center">{formatNumber(row.kedinasan_sttd)}</td>
+                        <td className="px-2 py-3 text-sm text-slate-700 text-center">{formatNumber(row.kedinasan_stis)}</td>
+                        <td className="px-2 py-3 text-sm text-slate-700 text-center border-r border-slate-200">{formatNumber(row.kedinasan_lainnya)}</td>
+                        <td className="px-2 py-3 text-sm text-slate-700 text-center border-r border-slate-200">{formatNumber(row.bekerja)}</td>
+                        <td className="px-2 py-3 text-sm text-slate-700 text-center">{formatNumber(row.belum_bekerja)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12 px-4">
+              <div className="p-4 rounded-full bg-gradient-to-br from-green-100 to-emerald-100 mb-4">
+                <Award className="size-8 text-green-600" />
+              </div>
+              <p className="text-sm font-medium text-slate-600 mb-2">Belum ada data</p>
+              <p className="text-xs text-slate-500 text-center max-w-md mb-4">
+                Klik tombol "Tambah Data" di atas untuk menambahkan data profil lulusan
+              </p>
+            </div>
+          )
+        ) : (
+          <div className="space-y-4">
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowFormProfilLulusan(false)}
+                className="rounded-full border border-slate-200 bg-white text-slate-600 hover:bg-slate-100"
+              >
+                <X className="mr-2 size-4" />
+                Tutup Form
+              </Button>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+              <Button
+                type="button"
+                onClick={() =>
+                  setProfilLulusanRows((prev) => [...prev, createProfilLulusanRow("")])
+                }
+                variant="outline"
+                className="rounded-full border border-green-200 bg-green-50 text-green-700 hover:bg-green-100"
+              >
+                <Plus className="mr-2 size-4" />
+                Tambah Tahun
+              </Button>
+              <Button
+                onClick={async () => {
+                  await handleProfilLulusanSave();
+                  setShowFormProfilLulusan(false);
+                }}
+                disabled={isSavingProfilLulusan}
+                className="rounded-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSavingProfilLulusan ? (
+                  <>
+                    <Loader2 className="mr-2 size-4 animate-spin" />
+                    Menyimpan...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 size-4" />
+                    Simpan Data
+                  </>
+                )}
+              </Button>
+            </div>
+            <div className="overflow-x-auto">
           <table className="w-full border-collapse min-w-[960px]">
             <thead>
               <tr className="border-b-2 border-slate-200 bg-slate-50">
@@ -4333,6 +4935,8 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
             </tbody>
           </table>
         </div>
+          </div>
+        )}
       </CardContent>
     </Card>
 
