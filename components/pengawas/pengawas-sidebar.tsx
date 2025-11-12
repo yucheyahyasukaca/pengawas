@@ -16,7 +16,7 @@ export function PengawasSidebar({ sections = pengawasNavigation, onNavigate }: P
   const pathname = usePathname();
 
   return (
-    <aside className="relative flex h-full w-full max-w-[280px] flex-col overflow-hidden border-0 bg-white text-slate-700 lg:w-72 lg:overflow-visible lg:rounded-none lg:border-r lg:border-indigo-100 lg:shadow-[0_18px_36px_rgba(99,102,241,0.12)] lg:max-h-screen lg:sticky lg:top-0 lg:self-start">
+    <aside className="relative flex h-full w-full max-w-[280px] flex-col border-0 bg-white text-slate-700 lg:h-screen lg:w-72 lg:rounded-none lg:border-r lg:border-indigo-100 lg:shadow-[0_18px_36px_rgba(99,102,241,0.12)] lg:sticky lg:top-0 lg:self-start lg:overflow-hidden">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-40 hidden lg:block bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.25),_transparent_70%)]" />
       <div className="pointer-events-none absolute -left-16 bottom-10 h-48 w-48 rounded-full hidden lg:block bg-[rgba(99,102,241,0.2)] blur-3xl" />
 
@@ -43,7 +43,7 @@ export function PengawasSidebar({ sections = pengawasNavigation, onNavigate }: P
       </div>
 
       {/* Navigation */}
-      <nav className="relative z-10 flex flex-1 flex-col gap-3 overflow-y-auto px-3 py-3 lg:flex-initial lg:gap-4 lg:px-4 lg:py-4 lg:overflow-visible">
+      <nav className="relative z-10 flex flex-1 flex-col gap-3 overflow-y-auto overflow-x-hidden px-3 py-3 lg:gap-4 lg:px-4 lg:py-4 lg:min-h-0">
         <div className="flex flex-col gap-4 lg:gap-6">
           {sections.map((section) => (
             <div key={section.title} className="flex flex-col gap-1.5 lg:gap-2">

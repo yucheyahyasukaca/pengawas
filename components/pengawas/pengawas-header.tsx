@@ -144,7 +144,7 @@ export function PengawasHeader({ className }: PengawasHeaderProps) {
                 <span className="sr-only">Menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="flex flex-col gap-0 p-0 border-r border-slate-200 bg-white">
+            <SheetContent side="left" className="flex flex-col gap-0 p-0 border-r border-slate-200 bg-white w-full max-w-[280px] sm:max-w-[320px]">
               <SheetHeader className="sr-only">
                 <SheetTitle>Navigasi Panel Pengawas</SheetTitle>
               </SheetHeader>
@@ -247,7 +247,7 @@ export function PengawasHeader({ className }: PengawasHeaderProps) {
                 <span className="sr-only">Buka navigasi</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="flex flex-col gap-0 p-0 border-r border-slate-200 bg-white">
+            <SheetContent side="left" className="flex flex-col gap-0 p-0 border-r border-slate-200 bg-white w-full max-w-[280px] sm:max-w-[320px]">
               <SheetHeader className="sr-only">
                 <SheetTitle>Navigasi Panel Pengawas</SheetTitle>
               </SheetHeader>
