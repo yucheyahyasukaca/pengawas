@@ -563,17 +563,51 @@ export default function MonitoringDetailPage() {
         }
       }
 
-      // Initialize indikator data
-      const initialData: Record<string, IndikatorData> = {};
-      const currentIndikatorList = getIndikatorList(instrumenId);
-      currentIndikatorList.forEach((ind) => {
-        initialData[ind.id] = {
-          id: ind.id,
-          skor: null,
-          catatan: "",
-        };
-      });
-      setIndikatorData(initialData);
+      // Load existing data jika ada ID (setelah sekolah di-load)
+      const monitoringIdParam = searchParams.get("id");
+      let dataLoaded = false;
+      
+      if (monitoringIdParam && targetSekolahId) {
+        try {
+          const stored = localStorage.getItem("monitoring_list");
+          if (stored) {
+            const data = JSON.parse(stored);
+            const existing = data.find((d: any) => d.id === monitoringIdParam);
+            if (existing) {
+              // Load identitas dari data yang sudah ada
+              setIdentitas((prev) => ({
+                ...prev,
+                namaSekolah: existing.identitas?.namaSekolah || prev.namaSekolah,
+                namaKepalaSekolah: existing.identitas?.namaKepalaSekolah || prev.namaKepalaSekolah,
+                nip: existing.identitas?.nip || prev.nip,
+                kabupatenKota: existing.identitas?.kabupatenKota || prev.kabupatenKota,
+                tanggalSupervisi: existing.identitas?.tanggalSupervisi || prev.tanggalSupervisi,
+              }));
+              // Load indikator data
+              if (existing.indikatorData) {
+                setIndikatorData(existing.indikatorData);
+                dataLoaded = true;
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Error loading existing monitoring:", err);
+        }
+      }
+
+      // Initialize indikator data untuk data baru (hanya jika belum ada data yang di-load)
+      if (!dataLoaded) {
+        const initialData: Record<string, IndikatorData> = {};
+        const currentIndikatorList = getIndikatorList(instrumenId);
+        currentIndikatorList.forEach((ind) => {
+          initialData[ind.id] = {
+            id: ind.id,
+            skor: null,
+            catatan: "",
+          };
+        });
+        setIndikatorData(initialData);
+      }
     } catch (err) {
       console.error("Error loading data:", err);
       toast({
@@ -633,13 +667,77 @@ export default function MonitoringDetailPage() {
         return;
       }
 
-      // Simulate save - nanti bisa diintegrasikan dengan API
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (!selectedSekolah) {
+        toast({
+          title: "Peringatan",
+          description: "Sekolah tidak ditemukan",
+          variant: "error",
+        });
+        return;
+      }
+
+      // Simpan data monitoring
+      const monitoringData = {
+        id: searchParams.get("id") || `monitoring-${Date.now()}`,
+        monitoringId,
+        monitoringTitle: monitoringType.title,
+        instrumenId,
+        instrumenNama: judulInstrumen,
+        sekolahId: selectedSekolah.id,
+        sekolahNama: identitas.namaSekolah,
+        tanggalSupervisi: identitas.tanggalSupervisi,
+        identitas,
+        indikatorData,
+        saranGlobal: generateSaranGlobal(indikatorData, instrumenId),
+        createdAt: searchParams.get("id") 
+          ? (() => {
+              // Load existing data untuk mendapatkan createdAt
+              try {
+                const stored = localStorage.getItem("monitoring_list");
+                if (stored) {
+                  const data = JSON.parse(stored);
+                  const existing = data.find((d: any) => d.id === searchParams.get("id"));
+                  return existing?.createdAt || new Date().toISOString();
+                }
+              } catch {}
+              return new Date().toISOString();
+            })()
+          : new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Simpan ke localStorage (nanti bisa diganti dengan API)
+      const stored = localStorage.getItem("monitoring_list");
+      let monitoringList: any[] = [];
+      
+      if (stored) {
+        monitoringList = JSON.parse(stored);
+      }
+
+      // Update atau insert
+      const existingIndex = monitoringList.findIndex((m) => m.id === monitoringData.id);
+      if (existingIndex >= 0) {
+        monitoringList[existingIndex] = monitoringData;
+      } else {
+        monitoringList.push(monitoringData);
+      }
+
+      localStorage.setItem("monitoring_list", JSON.stringify(monitoringList));
+
+      // Trigger custom event untuk refresh list di halaman lain
+      window.dispatchEvent(new Event("monitoring-saved"));
 
       toast({
         title: "Berhasil",
-        description: "Data monitoring berhasil disimpan",
+        description: searchParams.get("id") 
+          ? "Data monitoring berhasil diperbarui"
+          : "Data monitoring berhasil disimpan",
       });
+
+      // Redirect ke halaman pelaksanaan setelah 1 detik
+      setTimeout(() => {
+        router.push("/pengawas/pelaksanaan");
+      }, 1000);
     } catch (err) {
       toast({
         title: "Error",
@@ -686,50 +784,66 @@ export default function MonitoringDetailPage() {
   return (
     <div className="flex flex-col gap-6 pb-6">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.push(`/pengawas/pelaksanaan/monitoring/${monitoringId}`)}
-            className="text-slate-600 hover:text-slate-900"
-          >
-            <ArrowLeft className="size-4 mr-2" />
-            Kembali
-          </Button>
-          <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-full border-2 border-green-200 bg-green-50">
+      <div className="flex flex-col gap-4">
+        {/* Tombol Kembali - di atas untuk mobile */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push(`/pengawas/pelaksanaan/monitoring/${monitoringId}`)}
+          className="self-start text-slate-600 hover:text-slate-900 sm:hidden"
+        >
+          <ArrowLeft className="size-4 mr-2" />
+          Kembali
+        </Button>
+
+        {/* Header Content */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start gap-3 sm:items-center">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-full border-2 border-green-200 bg-green-50">
               <MonitoringIcon className="size-5 text-green-600" />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">
                 {judulInstrumen}
               </h1>
-              <p className="text-sm text-slate-600">
+              <p className="mt-1 text-sm text-slate-600">
                 {instrumenId === "pelaksanaan-kebiasaan" 
                   ? "Form monitoring pelaksanaan kebiasaan"
                   : "Form monitoring persiapan kebiasaan"}
               </p>
             </div>
           </div>
+          
+          {/* Tombol Actions */}
+          <div className="flex items-center gap-3 sm:flex-shrink-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => router.push(`/pengawas/pelaksanaan/monitoring/${monitoringId}`)}
+              className="hidden text-slate-600 hover:text-slate-900 sm:flex"
+            >
+              <ArrowLeft className="size-4 mr-2" />
+              Kembali
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={isSaving}
+              className="bg-indigo-600 text-white hover:bg-indigo-700"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="size-4 mr-2 animate-spin" />
+                  Menyimpan...
+                </>
+              ) : (
+                <>
+                  <Save className="size-4 mr-2" />
+                  Simpan
+                </>
+              )}
+            </Button>
+          </div>
         </div>
-        <Button
-          onClick={handleSave}
-          disabled={isSaving}
-          className="bg-indigo-600 text-white hover:bg-indigo-700"
-        >
-          {isSaving ? (
-            <>
-              <Loader2 className="size-4 mr-2 animate-spin" />
-              Menyimpan...
-            </>
-          ) : (
-            <>
-              <Save className="size-4 mr-2" />
-              Simpan
-            </>
-          )}
-        </Button>
       </div>
 
       {/* Pilih Sekolah (jika ada multiple sekolah) */}

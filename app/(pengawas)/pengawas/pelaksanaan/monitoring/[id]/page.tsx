@@ -292,23 +292,39 @@ export default function MonitoringPage() {
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col gap-4">
+        {/* Tombol Kembali - di atas untuk mobile */}
         <Button
           variant="ghost"
           size="sm"
           onClick={() => router.push("/pengawas/pelaksanaan")}
-          className="text-slate-600 hover:text-slate-900"
+          className="self-start text-slate-600 hover:text-slate-900 sm:hidden"
         >
           <ArrowLeft className="size-4 mr-2" />
           Kembali
         </Button>
-        <div className="flex items-center gap-3">
-          <div className="flex size-10 items-center justify-center rounded-full border-2 border-green-200 bg-green-50">
+
+        {/* Header Content */}
+        <div className="flex items-start gap-3 sm:items-center">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-full border-2 border-green-200 bg-green-50">
             <MonitoringIcon className="size-5 text-green-600" />
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">{monitoringType.title}</h1>
-            <p className="text-sm text-slate-600">Pilih sekolah binaan dan instrumen monitoring</p>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => router.push("/pengawas/pelaksanaan")}
+                className="hidden text-slate-600 hover:text-slate-900 sm:flex"
+              >
+                <ArrowLeft className="size-4 mr-2" />
+                Kembali
+              </Button>
+              <div className="min-w-0 flex-1">
+                <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">{monitoringType.title}</h1>
+                <p className="mt-1 text-sm text-slate-600">Pilih sekolah binaan dan instrumen monitoring</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

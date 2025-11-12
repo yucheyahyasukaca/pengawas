@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -10,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Hash, Users, Heart, Activity, Plus, Upload, FileText, School, Calendar } from "lucide-react";
+import { Hash, Users, Heart, Activity, Upload, FileText, School, Calendar, Eye, Edit, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const monitoringItems = [
@@ -34,49 +35,125 @@ const monitoringItems = [
   },
 ];
 
-const kegiatanTerbaru = [
-  {
-    id: "keg-001",
-    jenis: "Supervisi Akademik",
-    sekolah: "SMA Negeri 1 Semarang",
-    tanggal: "10 November 2025",
-    status: "Selesai",
-  },
-  {
-    id: "keg-002",
-    jenis: "Pendampingan Pengembangan KSP",
-    sekolah: "SLB Negeri Ungaran",
-    tanggal: "8 November 2025",
-    status: "Selesai",
-  },
-  {
-    id: "keg-003",
-    jenis: "Supervisi Manajerial",
-    sekolah: "SMA Negeri 2 Semarang",
-    tanggal: "5 November 2025",
-    status: "Selesai",
-  },
-];
+interface MonitoringData {
+  id: string;
+  monitoringId: string;
+  monitoringTitle: string;
+  instrumenId: string;
+  instrumenNama: string;
+  sekolahId: string | number;
+  sekolahNama: string;
+  tanggalSupervisi: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const getMonitoringIcon = (monitoringId: string) => {
+  const icons: Record<string, any> = {
+    "7-kebiasaan-hebat": Hash,
+    "8-profil-lulusan": Users,
+    "penguatan-karakter": Heart,
+  };
+  return icons[monitoringId] || Activity;
+};
+
+const getMonitoringTitle = (monitoringId: string) => {
+  const titles: Record<string, string> = {
+    "7-kebiasaan-hebat": "7 Kebiasaan Hebat",
+    "8-profil-lulusan": "8 Profil Lulusan",
+    "penguatan-karakter": "Penguatan Karakter",
+  };
+  return titles[monitoringId] || "Monitoring";
+};
+
+const getInstrumenNama = (instrumenId: string) => {
+  const names: Record<string, string> = {
+    "persiapan-kebiasaan": "Instrumen Persiapan Kebiasaan Anak Indonesia Hebat",
+    "pelaksanaan-kebiasaan": "Instrumen Pelaksanaan Kebiasaan Anak Indonesia Hebat",
+  };
+  return names[instrumenId] || instrumenId;
+};
 
 export default function PelaksanaanPage() {
+  const [monitoringList, setMonitoringList] = useState<MonitoringData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadMonitoringList(true);
+
+    // Listen untuk perubahan di localStorage (dari halaman lain)
+    const handleStorageChange = () => {
+      loadMonitoringList(false); // Tidak show loading saat refresh
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    
+    // Juga listen untuk custom event jika save dilakukan di tab yang sama
+    window.addEventListener("monitoring-saved", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("monitoring-saved", handleStorageChange);
+    };
+  }, []);
+
+  const loadMonitoringList = (showLoading = false) => {
+    try {
+      if (showLoading) {
+        setIsLoading(true);
+      }
+      // Load dari localStorage (nanti bisa diganti dengan API)
+      const stored = localStorage.getItem("monitoring_list");
+      if (stored) {
+        const data = JSON.parse(stored) as MonitoringData[];
+        // Sort by tanggal terbaru
+        const sorted = data.sort((a, b) => 
+          new Date(b.tanggalSupervisi).getTime() - new Date(a.tanggalSupervisi).getTime()
+        );
+        setMonitoringList(sorted);
+      } else {
+        setMonitoringList([]);
+      }
+    } catch (err) {
+      console.error("Error loading monitoring list:", err);
+    } finally {
+      if (showLoading) {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString("id-ID", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm("Apakah Anda yakin ingin menghapus monitoring ini?")) {
+      try {
+        const updated = monitoringList.filter((m) => m.id !== id);
+        localStorage.setItem("monitoring_list", JSON.stringify(updated));
+        setMonitoringList(updated);
+      } catch (err) {
+        console.error("Error deleting monitoring:", err);
+      }
+    }
+  };
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Pelaksanaan Pendampingan & Supervisi</h1>
-          <p className="text-sm text-slate-600 mt-1">
-            Entri data pendampingan dan supervisi, upload bukti kegiatan, dan rekap hasil
-          </p>
-        </div>
-        <Button
-          className="rounded-full border-0 bg-indigo-600 px-6 font-semibold text-white shadow-md transition hover:bg-indigo-700 hover:text-white"
-          asChild
-        >
-          <Link href="/pengawas/pelaksanaan/buat">
-            <Plus className="size-4 mr-2" />
-            Entri Kegiatan Baru
-          </Link>
-        </Button>
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900">Pelaksanaan Pendampingan & Supervisi</h1>
+        <p className="text-sm text-slate-600 mt-1">
+          Entri data pendampingan dan supervisi, upload bukti kegiatan, dan rekap hasil
+        </p>
       </div>
 
       <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
@@ -114,60 +191,106 @@ export default function PelaksanaanPage() {
         </CardContent>
       </Card>
 
+      {/* List Monitoring yang Sudah Dilakukan */}
       <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-slate-900 font-bold">
             <Calendar className="size-5 text-indigo-600" />
-            Kegiatan Terbaru
+            Monitoring yang Sudah Dilakukan
           </CardTitle>
           <CardDescription className="text-slate-700">
-            Daftar kegiatan pendampingan dan supervisi yang telah dilakukan
+            Daftar monitoring yang telah dilakukan sebelumnya
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {kegiatanTerbaru.map((kegiatan) => (
-            <div
-              key={kegiatan.id}
-              className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-indigo-100 bg-white p-4 shadow-sm transition hover:-translate-y-[1px] hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-100"
-            >
-              <div className="flex items-start gap-3 flex-1">
-                <div className="flex size-10 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 via-indigo-400 to-blue-400 text-white shadow-md">
-                  <Activity className="size-5" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-base font-semibold text-slate-900 mb-1">
-                    {kegiatan.jenis}
-                  </h3>
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
-                    <span className="flex items-center gap-1">
-                      <School className="size-3" />
-                      {kegiatan.sekolah}
-                    </span>
-                    <span>•</span>
-                    <span className="flex items-center gap-1">
-                      <Calendar className="size-3" />
-                      {kegiatan.tanggal}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge className="rounded-full border-0 bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-600">
-                  {kegiatan.status}
-                </Badge>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="rounded-full border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300"
-                  asChild
-                >
-                  <Link href={`/pengawas/pelaksanaan/${kegiatan.id}`}>
-                    Lihat Detail
-                  </Link>
-                </Button>
-              </div>
+        <CardContent>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-sm text-slate-600">Memuat data...</div>
             </div>
-          ))}
+          ) : monitoringList.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Calendar className="size-12 text-slate-300 mb-3" />
+              <p className="text-sm font-semibold text-slate-900 mb-1">
+                Belum ada monitoring
+              </p>
+              <p className="text-xs text-slate-600">
+                Mulai monitoring baru dengan memilih jenis monitoring di atas
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {monitoringList.map((monitoring) => {
+                const Icon = getMonitoringIcon(monitoring.monitoringId);
+                return (
+                  <div
+                    key={monitoring.id}
+                    className="flex flex-col gap-3 rounded-xl border border-indigo-100 bg-white p-4 shadow-sm transition hover:-translate-y-[1px] hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-100 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-green-500 via-green-400 to-emerald-400 text-white shadow-md">
+                        <Icon className="size-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-base font-semibold text-slate-900 mb-1 truncate">
+                          {getMonitoringTitle(monitoring.monitoringId)}
+                        </h3>
+                        <p className="text-sm text-slate-600 mb-2">
+                          {getInstrumenNama(monitoring.instrumenId)}
+                        </p>
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                          <span className="flex items-center gap-1">
+                            <School className="size-3" />
+                            <span className="truncate">{monitoring.sekolahNama}</span>
+                          </span>
+                          <span>•</span>
+                          <span className="flex items-center gap-1">
+                            <Calendar className="size-3" />
+                            {formatDate(monitoring.tanggalSupervisi)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 sm:flex-shrink-0">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300"
+                        asChild
+                      >
+                        <Link
+                          href={`/pengawas/pelaksanaan/monitoring/${monitoring.monitoringId}/${monitoring.instrumenId}?sekolah=${monitoring.sekolahId}&id=${monitoring.id}`}
+                        >
+                          <Eye className="size-3 mr-1.5" />
+                          Lihat
+                        </Link>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full border-green-200 text-green-600 hover:bg-green-50 hover:border-green-300"
+                        asChild
+                      >
+                        <Link
+                          href={`/pengawas/pelaksanaan/monitoring/${monitoring.monitoringId}/${monitoring.instrumenId}?sekolah=${monitoring.sekolahId}&id=${monitoring.id}&edit=true`}
+                        >
+                          <Edit className="size-3 mr-1.5" />
+                          Edit
+                        </Link>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+                        onClick={() => handleDelete(monitoring.id)}
+                      >
+                        <Trash2 className="size-3" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
 
