@@ -10,64 +10,27 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Activity, Plus, Upload, FileText, School, Calendar } from "lucide-react";
+import { Hash, Users, Heart, Activity, Plus, Upload, FileText, School, Calendar } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-const jenisKegiatan = [
+const monitoringItems = [
   {
-    id: "pendampingan-ksp",
-    title: "Pendampingan Pengembangan KSP",
-    description: "Pendampingan dalam pengembangan Kurikulum Satuan Pendidikan",
-    icon: Activity,
-    color: "indigo",
+    id: "7-kebiasaan-hebat",
+    title: "7 Kebiasaan Hebat",
+    description: "7 Kebiasaan Hebat",
+    icon: Hash,
   },
   {
-    id: "pendampingan-pembelajaran",
-    title: "Pendampingan Pembelajaran Mendalam",
-    description: "Pendampingan pada kegiatan kurikuler",
-    icon: Activity,
-    color: "blue",
+    id: "8-profil-lulusan",
+    title: "8 Profil Lulusan",
+    description: "8 Profil Lulusan",
+    icon: Users,
   },
   {
-    id: "pendampingan-program",
-    title: "Pendampingan Program Prioritas",
-    description: "Program Prioritas Kementerian Pendidikan dan Dinas Pendidikan Provinsi Jawa Tengah",
-    icon: Activity,
-    color: "indigo",
-  },
-  {
-    id: "supervisi-akademik",
-    title: "Supervisi Akademik",
-    description: "Supervisi kegiatan pembelajaran dan akademik",
-    icon: FileText,
-    color: "blue",
-  },
-  {
-    id: "supervisi-manajerial",
-    title: "Supervisi Manajerial",
-    description: "Supervisi manajemen sekolah dan administrasi",
-    icon: FileText,
-    color: "indigo",
-  },
-  {
-    id: "supervisi-snp",
-    title: "Supervisi Pemenuhan 8 SNP",
-    description: "Supervisi Standar Nasional Pendidikan",
-    icon: FileText,
-    color: "blue",
-  },
-  {
-    id: "supervisi-tematik",
-    title: "Supervisi Tematik",
-    description: "AKM, TKA, Penilaian Sumatif, Ekstrakurikuler, PPK, dll.",
-    icon: FileText,
-    color: "indigo",
-  },
-  {
-    id: "pkks",
-    title: "Pengelolaan Kinerja (PKKS)",
-    description: "Sebelum melakukan penilaian akhir sebagai anggota Tim Kerja",
-    icon: Activity,
-    color: "blue",
+    id: "penguatan-karakter",
+    title: "Penguatan Karakter",
+    description: "Penguatan Karakter",
+    icon: Heart,
   },
 ];
 
@@ -120,37 +83,30 @@ export default function PelaksanaanPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-slate-900 font-bold">
             <Activity className="size-5 text-indigo-600" />
-            Jenis Kegiatan
+            Monitoring
           </CardTitle>
           <CardDescription className="text-slate-700">
-            Pilih jenis kegiatan untuk melakukan entri data
+            Pilih jenis monitoring yang akan dilakukan
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {jenisKegiatan.map((kegiatan) => (
+          <div className="space-y-3">
+            {monitoringItems.map((item) => (
               <Link
-                key={kegiatan.id}
-                href={`/pengawas/pelaksanaan/${kegiatan.id}`}
-                className="block rounded-xl border border-indigo-100 bg-white p-4 shadow-sm transition hover:-translate-y-[1px] hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-100"
+                key={item.id}
+                href={`/pengawas/pelaksanaan/monitoring/${item.id}`}
+                className="flex items-center gap-4 rounded-xl border border-green-100 bg-white p-4 shadow-sm transition hover:-translate-y-[1px] hover:border-green-200 hover:shadow-lg hover:shadow-green-100"
               >
-                <div className="flex items-start gap-3">
-                  <div className={cn(
-                    "flex size-10 items-center justify-center rounded-lg text-white shadow-md",
-                    kegiatan.color === "indigo" 
-                      ? "bg-gradient-to-br from-indigo-500 to-indigo-400"
-                      : "bg-gradient-to-br from-blue-500 to-blue-400"
-                  )}>
-                    <kegiatan.icon className="size-5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-semibold text-slate-900 mb-1">
-                      {kegiatan.title}
-                    </h3>
-                    <p className="text-xs text-slate-600 line-clamp-2">
-                      {kegiatan.description}
-                    </p>
-                  </div>
+                <div className="flex size-12 items-center justify-center rounded-full border-2 border-green-200 bg-green-50">
+                  <item.icon className="size-6 text-green-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-base font-semibold text-slate-900 mb-1">
+                    {item.title}
+                  </h3>
+                  <p className="text-sm text-slate-600">
+                    {item.description}
+                  </p>
                 </div>
               </Link>
             ))}
@@ -246,7 +202,4 @@ export default function PelaksanaanPage() {
   );
 }
 
-function cn(...classes: (string | undefined | null | false)[]): string {
-  return classes.filter(Boolean).join(" ");
-}
 
