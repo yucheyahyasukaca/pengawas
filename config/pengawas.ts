@@ -22,6 +22,7 @@ import {
   Download,
   PenTool,
   Settings,
+  MessageSquare,
 } from "lucide-react";
 
 export type PengawasNavItem = {
@@ -116,6 +117,17 @@ export const pengawasNavigation: PengawasNavSection[] = [
         href: "/pengawas/pelaporan/tahunan",
         icon: FileCheck,
         description: "Laporan tahunan otomatis merekap seluruh kegiatan",
+      },
+    ],
+  },
+  {
+    title: "Komunikasi",
+    items: [
+      {
+        title: "Forum Komunikasi",
+        href: "/pengawas/forum",
+        icon: MessageSquare,
+        description: "Diskusikan topik dengan sesama pengawas",
       },
     ],
   },
