@@ -8,7 +8,7 @@ import type { CookieOptions } from "@supabase/ssr";
  */
 export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
-  
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -17,7 +17,7 @@ export async function createSupabaseServerClient() {
       "Missing Supabase environment variables. Please ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set."
     );
   }
-  
+
   return createServerClient(
     supabaseUrl,
     supabaseKey,
@@ -35,14 +35,14 @@ export async function createSupabaseServerClient() {
           try {
             // Detect if running in production (HTTPS)
             const isProduction = process.env.NODE_ENV === 'production';
-            const isSecure = options.secure !== undefined 
-              ? options.secure 
+            const isSecure = options.secure !== undefined
+              ? options.secure
               : isProduction;
-            
+
             // Set cookie with proper production settings
-            cookieStore.set({ 
-              name, 
-              value, 
+            cookieStore.set({
+              name,
+              value,
               ...options,
               // Ensure sameSite is set for security
               // Use 'lax' for production, allows cookies in same-site and top-level navigation
@@ -55,17 +55,23 @@ export async function createSupabaseServerClient() {
               httpOnly: options.httpOnly !== undefined ? options.httpOnly : true,
             });
           } catch (error) {
-            // Log cookie errors in development, ignore in production to avoid noise
+            // Log cookie errors in development, but ignore the specific error about 
+            // modifying cookies in Server Components (which is expected in layout/page)
             if (process.env.NODE_ENV === 'development') {
-              console.error('Cookie set error:', error);
+              const isServerComponentError = error instanceof Error &&
+                error.message.includes("Cookies can only be modified");
+
+              if (!isServerComponentError) {
+                console.error('Cookie set error:', error);
+              }
             }
           }
         },
         remove(name: string, options: CookieOptions) {
           try {
-            cookieStore.set({ 
-              name, 
-              value: '', 
+            cookieStore.set({
+              name,
+              value: '',
               ...options,
               maxAge: 0,
             });

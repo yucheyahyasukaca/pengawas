@@ -48,7 +48,7 @@ export async function GET() {
             .select('role, nama, nip, status_approval, metadata')
             .eq('id', user.id)
             .single();
-          
+
           if (!adminError && adminData) {
             userData = adminData;
           } else {
@@ -59,19 +59,20 @@ export async function GET() {
               .select('role, nama, nip, status_approval, metadata')
               .eq('id', user.id)
               .single();
-            
+
             userData = regularData;
             userError = regularError;
           }
         } catch (adminErr) {
           console.error("Admin client error:", adminErr);
           // Fallback to regular client
+          console.warn("Falling back to regular client due to admin error");
           const { data: regularData, error: regularError } = await supabase
             .from('users')
             .select('role, nama, nip, status_approval, metadata')
             .eq('id', user.id)
             .single();
-          
+
           userData = regularData;
           userError = regularError;
         }
@@ -83,7 +84,7 @@ export async function GET() {
           .select('role, nama, nip, status_approval, metadata')
           .eq('id', user.id)
           .single();
-        
+
         userData = regularData;
         userError = regularError;
       }
@@ -96,7 +97,7 @@ export async function GET() {
     }
 
     if (userError) {
-      console.error("User data query error:", userError);
+      console.error("User data query error (final attempt):", userError);
     }
 
     if (userError || !userData) {

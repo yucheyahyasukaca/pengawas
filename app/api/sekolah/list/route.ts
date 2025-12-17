@@ -8,22 +8,31 @@ export async function GET(request: Request) {
     // Get authenticated user from session
     const supabase = await createSupabaseServerClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
+
     if (authError || !user) {
       return NextResponse.json(
         { error: "Unauthorized: Authentication required" },
         { status: 401 }
       );
     }
-    
+
     // Get search query from URL params
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search') || '';
-    
+
     // Use admin client to bypass RLS for pending pengawas
     // This allows pending pengawas to select schools during registration
-    const adminClient = createSupabaseAdminClient();
-    
+    let adminClient;
+    try {
+      adminClient = createSupabaseAdminClient();
+    } catch (adminClientError) {
+      console.error("Critical: Failed to create admin client:", adminClientError);
+      return NextResponse.json(
+        { error: "Configuration Error: Admin client creation failed" },
+        { status: 500 }
+      );
+    }
+
     // Always load all data (no search filter on server)
     // Client-side filtering is much faster than server-side search
     let query = adminClient
@@ -31,28 +40,22 @@ export async function GET(request: Request) {
       .select('id, npsn, nama_sekolah, status, jenjang, kabupaten_kota, kcd_wilayah, alamat')
       .order('nama_sekolah', { ascending: true })
       .limit(500); // Increased limit to allow more data for client-side filtering
-    
+
     const { data, error } = await query;
 
     if (error) {
-      console.error("Error loading sekolah:", error);
+      console.error("Error loading sekolah from DB:", error);
       return NextResponse.json(
         { error: error.message || "Gagal memuat data sekolah" },
         { status: 400 }
       );
     }
 
-    // Log sample data to verify alamat is included
-    if (data && data.length > 0) {
-      console.log("Sample sekolah data (first item):", {
-        nama: data[0].nama_sekolah,
-        alamat: data[0].alamat,
-        hasAlamat: !!data[0].alamat
-      });
-    }
+    // Log success
+    // console.log(`Successfully fetched ${data?.length} schools`);
 
     return NextResponse.json(
-      { 
+      {
         success: true,
         sekolah: data || [],
         count: (data || []).length

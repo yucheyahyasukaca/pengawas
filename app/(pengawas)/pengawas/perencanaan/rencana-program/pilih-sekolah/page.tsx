@@ -56,7 +56,7 @@ export default function PilihSekolahPage() {
       const userResponse = await fetch("/api/auth/get-current-user");
 
       if (!userResponse.ok) {
-        throw new Error("Gagal memuat data pengawas");
+        throw new Error(`Gagal memuat data pengawas (${userResponse.status}: ${userResponse.statusText})`);
       }
 
       const userData = await userResponse.json();
@@ -146,7 +146,7 @@ export default function PilihSekolahPage() {
     // Store selected schools in sessionStorage and redirect to buat page
     const selectedIds = Array.from(selectedSekolah);
     sessionStorage.setItem("rencana_program_selected_sekolah", JSON.stringify(selectedIds));
-    
+
     router.push("/pengawas/perencanaan/rencana-program/buat");
   };
 
@@ -233,7 +233,7 @@ export default function PilihSekolahPage() {
                 Pilih Sekolah untuk Rencana Program
               </h3>
               <p className="text-xs sm:text-sm text-slate-600">
-                Pilih satu atau lebih sekolah binaan yang akan menjadi target rencana program kepengawasan ini. 
+                Pilih satu atau lebih sekolah binaan yang akan menjadi target rencana program kepengawasan ini.
                 Rencana program akan berlaku untuk semua sekolah yang dipilih.
               </p>
             </div>

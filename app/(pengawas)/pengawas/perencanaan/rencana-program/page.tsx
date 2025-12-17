@@ -9,9 +9,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardList, Plus, Eye, FileText, Calendar, Loader2, Edit, Send, School, AlertCircle } from "lucide-react";
+import { ClipboardList, Plus, Eye, FileText, Calendar, Loader2, Edit, Send, School, AlertCircle, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface Sekolah {
@@ -35,8 +43,11 @@ interface RencanaProgram {
 export default function RencanaProgramPage() {
   const { toast } = useToast();
   const [rencanaProgram, setRencanaProgram] = useState<RencanaProgram[]>([]);
+
   const [sekolahBelumRencana, setSekolahBelumRencana] = useState<Sekolah[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     loadRencanaProgram();
@@ -45,10 +56,10 @@ export default function RencanaProgramPage() {
   const loadRencanaProgram = async () => {
     try {
       setIsLoading(true);
-      
+
       // Fetch from database via API
       const response = await fetch("/api/pengawas/rencana-program");
-      
+
       if (!response.ok) {
         throw new Error("Gagal memuat rencana program");
       }
@@ -67,6 +78,39 @@ export default function RencanaProgramPage() {
       setSekolahBelumRencana([]);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
+
+    try {
+      setIsDeleting(true);
+      const response = await fetch(`/api/pengawas/rencana-program/${deleteId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Gagal menghapus rencana program");
+      }
+
+      toast({
+        title: "Berhasil",
+        description: "Rencana program berhasil dihapus",
+      });
+
+      // Refresh list
+      loadRencanaProgram();
+    } catch (error) {
+      console.error("Error deleting rencana program:", error);
+      toast({
+        title: "Error",
+        description: "Gagal menghapus rencana program",
+        variant: "error",
+      });
+    } finally {
+      setIsDeleting(false);
+      setDeleteId(null);
     }
   };
   if (isLoading) {
@@ -213,7 +257,7 @@ export default function RencanaProgramPage() {
                       className="flex-1 rounded-xl bg-gradient-to-r from-indigo-500 to-blue-500 px-4 py-2 font-semibold text-white shadow-md transition-all hover:from-indigo-600 hover:to-blue-600 hover:shadow-lg hover:scale-105"
                       asChild
                     >
-                      <Link href={`/pengawas/perencanaan/rencana-program/${rencana.id}/edit`}>
+                      <Link href="/pengawas/perencanaan/rencana-program/buat">
                         <Edit className="size-4 mr-2" />
                         Edit
                       </Link>
@@ -228,9 +272,19 @@ export default function RencanaProgramPage() {
                       </Link>
                     </Button>
                   </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1 rounded-xl border-red-200 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 hover:border-red-300 transition-all"
+                    onClick={() => setDeleteId(rencana.id)}
+                  >
+                    <Trash2 className="size-4 mr-2" />
+                    Hapus
+                  </Button>
                   {rencana.status === "Draft" && (
                     <Button
-                      className="w-full rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-2 font-semibold text-white shadow-md transition-all hover:from-emerald-600 hover:to-teal-600 hover:shadow-lg hover:scale-105"
+                      className="flex-1 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-2 font-semibold text-white shadow-md transition-all hover:from-emerald-600 hover:to-teal-600 hover:shadow-lg hover:scale-105"
                       onClick={async () => {
                         try {
                           const response = await fetch(`/api/pengawas/rencana-program/${rencana.id}`, {
@@ -264,11 +318,13 @@ export default function RencanaProgramPage() {
                     </Button>
                   )}
                 </div>
+
               </CardContent>
             </Card>
           ))}
         </div>
-      )}
+      )
+      }
 
       <Card className="border border-slate-200 bg-white shadow-sm">
         <CardHeader>
@@ -306,7 +362,43 @@ export default function RencanaProgramPage() {
           </div>
         </CardContent>
       </Card>
-    </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-slate-900">Hapus Rencana Program?</DialogTitle>
+            <DialogDescription className="text-slate-600">
+              Tindakan ini tidak dapat dibatalkan. Data rencana program akan dihapus permanen.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              className="border-slate-300 text-slate-700 hover:bg-slate-50"
+              onClick={() => setDeleteId(null)}
+              disabled={isDeleting}
+            >
+              Batal
+            </Button>
+            <Button
+              className="bg-red-600 text-white hover:bg-red-700 shadow-sm border border-red-700"
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Menghapus...
+                </>
+              ) : (
+                "Hapus"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div >
   );
 }
 
