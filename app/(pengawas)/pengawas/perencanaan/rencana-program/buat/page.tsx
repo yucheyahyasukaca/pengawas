@@ -38,7 +38,8 @@ export default function BuatRencanaProgramPage() {
             if (draft.form_data.step >= 3) completed.push(3);
 
             // Step 4 (Method) is done if selectedMethod exists
-            if (draft.form_data.selectedMethod) completed.push(4);
+            // Step 4 (Method) is done if selectedMethod exists or selectedMethods array has items
+            if (draft.form_data.selectedMethod || (draft.form_data.selectedMethods && draft.form_data.selectedMethods.length > 0)) completed.push(4);
 
             setCompletedSteps(completed);
           }
@@ -92,7 +93,7 @@ export default function BuatRencanaProgramPage() {
       title: "Merancang Lembar Perencanaan Pendampingan",
       description: "Finalisasi rencana program dan jadwal kegiatan pendampingan.",
       icon: FileText,
-      href: "#", // Placeholder
+      href: "/pengawas/perencanaan/rencana-program/buat/dokumen", // Placeholder
       color: "slate",
       active: completedSteps.includes(4)
     }

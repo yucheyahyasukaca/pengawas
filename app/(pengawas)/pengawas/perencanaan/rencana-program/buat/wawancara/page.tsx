@@ -84,12 +84,19 @@ export default function WawancaraPage() {
         }));
     };
 
-    // Allow me to rewrite the load/save to be safer.
     const [fullDraftData, setFullDraftData] = useState<any>({});
+    const [sekolahIds, setSekolahIds] = useState<string[]>([]);
 
     useEffect(() => {
         const loadDraft = async () => {
             try {
+                // Try from session storage first (for new drafts)
+                let sessionIds: string[] = [];
+                if (typeof window !== 'undefined') {
+                    const stored = sessionStorage.getItem("rencana_program_selected_sekolah");
+                    if (stored) sessionIds = JSON.parse(stored);
+                }
+
                 const response = await fetch("/api/pengawas/rencana-program/draft");
                 if (response.ok) {
                     const { draft } = await response.json();
@@ -99,10 +106,36 @@ export default function WawancaraPage() {
                         if (draft.form_data && draft.form_data.selectedAnswers) {
                             setSelectedAnswers(draft.form_data.selectedAnswers);
                         }
+                        // Use draft IDs if available, otherwise session IDs
+                        let draftSekolahIds = draft.sekolah_ids;
+                        if (typeof draftSekolahIds === "string") {
+                            try {
+                                draftSekolahIds = JSON.parse(draftSekolahIds);
+                            } catch (e) {
+                                draftSekolahIds = [];
+                            }
+                        }
+
+                        if (Array.isArray(draftSekolahIds) && draftSekolahIds.length > 0) {
+                            setSekolahIds(draftSekolahIds);
+                        } else if (sessionIds.length > 0) {
+                            setSekolahIds(sessionIds);
+                        }
+                    } else if (sessionIds.length > 0) {
+                        // New draft case
+                        setSekolahIds(sessionIds);
                     }
+                } else if (sessionIds.length > 0) {
+                    // Fallback if API fails but we have session data
+                    setSekolahIds(sessionIds);
                 }
             } catch (error) {
                 console.error("Failed to load draft:", error);
+                // Fallback to session storage only
+                if (typeof window !== 'undefined') {
+                    const stored = sessionStorage.getItem("rencana_program_selected_sekolah");
+                    if (stored) setSekolahIds(JSON.parse(stored));
+                }
             }
         };
         loadDraft();
@@ -115,10 +148,10 @@ export default function WawancaraPage() {
                 id: draftId,
                 formData: {
                     ...fullDraftData, // Keep existing data
-                    selectedAnswers: answers // Update this part
+                    selectedAnswers: answers, // Update this part
+                    step: 1 // Mark step 1 as active/done
                 },
-                sekolah_ids: [] // We should probably keep this too? 
-                // If the API requires sekolah_ids, we need to load them too.
+                sekolah_ids: sekolahIds // Send correct IDs
             };
 
             const response = await fetch("/api/pengawas/rencana-program/draft", {
@@ -131,6 +164,9 @@ export default function WawancaraPage() {
                 const { draft } = await response.json();
                 setDraftId(draft.id);
                 setFullDraftData(draft.form_data || {}); // Update our local full reference
+                // Also update local IDs if server returns something different (unlikely but safe)
+                if (draft.sekolah_ids) setSekolahIds(draft.sekolah_ids);
+
                 setSaveStatus("saved");
                 if (isManual) {
                     toast({ title: "Berhasil Disimpan", description: "Wawancara tersimpan." });

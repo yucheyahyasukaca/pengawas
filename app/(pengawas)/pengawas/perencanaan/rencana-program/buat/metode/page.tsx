@@ -117,7 +117,7 @@ const METHOD_OPTIONS = [
 export default function MetodePage() {
     const router = useRouter();
     const { toast } = useToast();
-    const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
+    const [selectedMethods, setSelectedMethods] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [draftData, setDraftData] = useState<any>(null); // Store full draft
@@ -130,8 +130,11 @@ export default function MetodePage() {
                     const { draft } = await response.json();
                     setDraftData(draft); // Save full draft for update
                     if (draft && draft.form_data) {
-                        if (draft.form_data.selectedMethod) {
-                            setSelectedMethod(draft.form_data.selectedMethod);
+                        // Handle backward compatibility or new array format
+                        if (Array.isArray(draft.form_data.selectedMethods)) {
+                            setSelectedMethods(draft.form_data.selectedMethods);
+                        } else if (draft.form_data.selectedMethod) {
+                            setSelectedMethods([draft.form_data.selectedMethod]);
                         }
                     }
                 }
@@ -144,19 +147,52 @@ export default function MetodePage() {
         fetchDraft();
     }, []);
 
+    const toggleMethod = (id: string) => {
+        setSelectedMethods(prev =>
+            prev.includes(id)
+                ? prev.filter(m => m !== id)
+                : [...prev, id]
+        );
+    };
+
     const handleSave = async () => {
-        if (!selectedMethod) return;
+        if (selectedMethods.length === 0) return;
         setIsSaving(true);
         try {
             // Prepare payload
             const currentFormData = draftData?.form_data || {};
+            // Recover schools from session if missing in draft
+            let schoolsToSave = draftData?.sekolah_ids;
+
+            // Normalize sekolah_ids if it comes as string
+            if (typeof schoolsToSave === "string") {
+                try {
+                    schoolsToSave = JSON.parse(schoolsToSave);
+                } catch (e) {
+                    schoolsToSave = [];
+                }
+            }
+            if (!Array.isArray(schoolsToSave)) schoolsToSave = [];
+
+            if (schoolsToSave.length === 0 && typeof window !== 'undefined') {
+                const stored = sessionStorage.getItem("rencana_program_selected_sekolah");
+                if (stored) {
+                    try {
+                        schoolsToSave = JSON.parse(stored);
+                    } catch (e) {
+                        console.error("Failed to parse stored schools", e);
+                    }
+                }
+            }
+
             const payload = {
                 id: draftData?.id, // Pass ID if it exists
                 formData: {
                     ...currentFormData,
-                    selectedMethod,
+                    selectedMethods, // Save as array
                     step: 4 // Mark step
-                }
+                },
+                sekolah_ids: schoolsToSave
             };
 
             const response = await fetch("/api/pengawas/rencana-program/draft", {
@@ -198,7 +234,9 @@ export default function MetodePage() {
         );
     }
 
-    const methodDetail = selectedMethod ? METHOD_OPTIONS.find(m => m.id === selectedMethod) : null;
+    // Use the last selected method for detail view, or null
+    const lastSelectedId = selectedMethods.length > 0 ? selectedMethods[selectedMethods.length - 1] : null;
+    const methodDetail = lastSelectedId ? METHOD_OPTIONS.find(m => m.id === lastSelectedId) : null;
 
     return (
         <div className="min-h-screen bg-slate-50/50">
@@ -214,7 +252,7 @@ export default function MetodePage() {
                             Metode Pendampingan
                         </h1>
                         <p className="text-lg text-slate-500 max-w-xl">
-                            Pilih pendekatan yang paling efektif sesuai kebutuhan sekolah.
+                            Pilih satu atau lebih pendekatan yang paling efektif.
                         </p>
                     </div>
                     <Button
@@ -231,11 +269,11 @@ export default function MetodePage() {
                     <div className="w-full lg:w-1/3 grid grid-cols-2 lg:grid-cols-1 gap-4">
                         {METHOD_OPTIONS.map((method) => {
                             const Icon = method.icon;
-                            const isSelected = selectedMethod === method.id;
+                            const isSelected = selectedMethods.includes(method.id);
                             return (
                                 <button
                                     key={method.id}
-                                    onClick={() => setSelectedMethod(method.id)}
+                                    onClick={() => toggleMethod(method.id)}
                                     className={cn(
                                         "group relative w-full text-left p-4 rounded-2xl border-2 transition-all duration-300 ease-out overflow-hidden hover:scale-[1.02]",
                                         isSelected

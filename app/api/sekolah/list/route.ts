@@ -18,7 +18,7 @@ export async function GET(request: Request) {
 
     // Get search query from URL params
     const { searchParams } = new URL(request.url);
-    const search = searchParams.get('search') || '';
+    const ids = searchParams.get('ids');
 
     // Use admin client to bypass RLS for pending pengawas
     // This allows pending pengawas to select schools during registration
@@ -33,13 +33,21 @@ export async function GET(request: Request) {
       );
     }
 
-    // Always load all data (no search filter on server)
-    // Client-side filtering is much faster than server-side search
+    // Build query
     let query = adminClient
       .from('sekolah')
-      .select('id, npsn, nama_sekolah, status, jenjang, kabupaten_kota, kcd_wilayah, alamat')
-      .order('nama_sekolah', { ascending: true })
-      .limit(500); // Increased limit to allow more data for client-side filtering
+      .select('id, npsn, nama_sekolah, status, jenjang, kabupaten_kota, kcd_wilayah, alamat');
+
+    // Apply filtering
+    if (ids) {
+      const idList = ids.split(',').map(id => id.trim());
+      if (idList.length > 0) {
+        query = query.in('id', idList);
+      }
+    } else {
+      // Only limit if loading all (no specific IDs requested)
+      query = query.order('nama_sekolah', { ascending: true }).limit(500);
+    }
 
     const { data, error } = await query;
 

@@ -80,12 +80,38 @@ export default function StrategiPage() {
         try {
             // Save progress (Step 3 done)
             const currentFormData = draftData?.form_data || {};
+
+            // Recover schools from session if missing in draft (fix for "missing schools" bug)
+            let schoolsToSave = draftData?.sekolah_ids;
+
+            // Normalize sekolah_ids if it comes as string
+            if (typeof schoolsToSave === "string") {
+                try {
+                    schoolsToSave = JSON.parse(schoolsToSave);
+                } catch (e) {
+                    schoolsToSave = [];
+                }
+            }
+            if (!Array.isArray(schoolsToSave)) schoolsToSave = [];
+
+            if (schoolsToSave.length === 0 && typeof window !== 'undefined') {
+                const stored = sessionStorage.getItem("rencana_program_selected_sekolah");
+                if (stored) {
+                    try {
+                        schoolsToSave = JSON.parse(stored);
+                    } catch (e) {
+                        console.error("Failed to parse stored schools", e);
+                    }
+                }
+            }
+
             const payload = {
                 id: draftData?.id,
                 formData: {
                     ...currentFormData,
                     step: 3 // Mark step 3 as done
-                }
+                },
+                sekolah_ids: schoolsToSave
             };
 
             await fetch("/api/pengawas/rencana-program/draft", {
