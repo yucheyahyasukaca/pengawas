@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardList, Plus, Eye, FileText, Calendar, Loader2, Edit, Send, School, AlertCircle, Trash2 } from "lucide-react";
+import { ClipboardList, Plus, Eye, FileText, Calendar, Loader2, Edit, Send, School, AlertCircle, Trash2, Printer } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -207,18 +207,31 @@ export default function RencanaProgramPage() {
               className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70"
             >
               <CardHeader className="bg-gradient-to-r from-indigo-50 to-blue-50/30 border-b border-indigo-100/50 pb-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex size-10 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-sm">
-                    <ClipboardList className="size-6" />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex size-10 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-sm">
+                      <ClipboardList className="size-6" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg font-bold text-slate-900">
+                        {periode}
+                      </CardTitle>
+                      <CardDescription className="text-xs text-slate-500 mt-1">
+                        {documents.length} Dokumen Perencanaan
+                      </CardDescription>
+                    </div>
                   </div>
-                  <div>
-                    <CardTitle className="text-lg font-bold text-slate-900">
-                      {periode}
-                    </CardTitle>
-                    <CardDescription className="text-xs text-slate-500 mt-1">
-                      {documents.length} Dokumen Perencanaan
-                    </CardDescription>
-                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800 bg-white shadow-sm"
+                    asChild
+                  >
+                    <Link href={`/pengawas/perencanaan/rencana-program/rekap/${encodeURIComponent(periode)}`}>
+                      <Printer className="size-4" />
+                      <span className="hidden sm:inline">Cetak Rekap</span>
+                    </Link>
+                  </Button>
                 </div>
               </CardHeader>
               <CardContent className="p-0">
