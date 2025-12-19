@@ -75,7 +75,7 @@ export function StepAnalisis({ baseUrl, mode, id }: StepAnalisisProps) {
         <div className="container mx-auto max-w-5xl py-8 px-4 sm:px-6 space-y-10">
             {/* Header */}
             <div className="flex items-center gap-4">
-                <Button variant="ghost" className="rounded-full text-slate-600 hover:text-slate-900 hover:bg-slate-100 -ml-3" onClick={() => router.push(baseUrl)}>
+                <Button variant="outline" className="rounded-full border-slate-300 bg-white text-slate-900 hover:bg-slate-100 shadow-sm -ml-3 font-medium" onClick={() => router.push(baseUrl)}>
                     <ArrowLeft className="size-5 mr-2" /> Kembali
                 </Button>
             </div>

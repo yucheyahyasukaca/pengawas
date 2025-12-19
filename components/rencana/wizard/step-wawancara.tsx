@@ -191,7 +191,7 @@ export function StepWawancara({ baseUrl, mode, id }: StepWawancaraProps) {
     return (
         <div className="container mx-auto max-w-4xl py-6 px-4 sm:px-6 space-y-8">
             <div className="flex items-center gap-4">
-                <Button variant="ghost" className="rounded-full text-slate-700 hover:text-slate-900 hover:bg-slate-100" onClick={() => router.push(baseUrl)}>
+                <Button variant="outline" className="rounded-full border-slate-200 bg-white text-slate-700 hover:text-slate-900 hover:bg-slate-50 shadow-sm" onClick={() => router.push(baseUrl)}>
                     <ArrowLeft className="size-5 mr-2" /> Kembali
                 </Button>
                 <h1 className="text-2xl font-bold text-slate-900">1. Melakukan Wawancara</h1>

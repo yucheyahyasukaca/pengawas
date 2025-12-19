@@ -119,7 +119,7 @@ export default function RencanaProgramRecapPage() {
         <div className="min-h-screen bg-slate-50 p-6 print:p-0 print:bg-white">
             {/* Header Controls */}
             <div className="max-w-[1400px] mx-auto mb-6 flex justify-between items-center print:hidden">
-                <Button variant="ghost" onClick={() => router.back()}>
+                <Button variant="outline" className="rounded-full border-slate-300 bg-white text-slate-900 hover:bg-slate-100 shadow-sm font-medium" onClick={() => router.back()}>
                     <ArrowLeft className="size-4 mr-2" /> Kembali
                 </Button>
                 <Button onClick={handlePrint} className="bg-indigo-600 text-white hover:bg-indigo-700">

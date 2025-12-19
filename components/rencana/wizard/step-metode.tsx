@@ -187,7 +187,7 @@ export function StepMetode({ baseUrl, mode, id }: StepMetodeProps) {
         }
     ];
 
-    const extendedDetail = methodDetail ? { ...methodDetail, ...EXTENDED_OPTIONS.find(e => e.id === methodDetail.id) } : null;
+    const extendedDetail: any = methodDetail ? { ...methodDetail, ...EXTENDED_OPTIONS.find(e => e.id === methodDetail.id) } : null;
 
     return (
         <div className="min-h-screen bg-slate-50/50">
@@ -208,7 +208,7 @@ export function StepMetode({ baseUrl, mode, id }: StepMetodeProps) {
                     </div>
                     <Button
                         variant="outline"
-                        className="rounded-full border-slate-300 text-slate-600 hover:bg-white hover:text-indigo-600 transition-all hover:shadow-md"
+                        className="rounded-full border-slate-300 bg-white text-slate-900 hover:bg-slate-100 shadow-sm font-medium"
                         onClick={() => router.push(`${baseUrl}/strategi`)}
                     >
                         <ArrowLeft className="size-4 mr-2" /> Kembali

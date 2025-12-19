@@ -179,8 +179,8 @@ export function StepDokumen({ baseUrl, mode, id }: StepDokumenProps) {
             <div className="print:hidden">
                 <div className="container mx-auto max-w-[1400px] py-4 px-4 sm:px-6">
                     <Button
-                        variant="ghost"
-                        className="-ml-3 text-slate-600 hover:text-slate-900"
+                        variant="outline"
+                        className="-ml-3 rounded-full border-slate-300 bg-white text-slate-900 hover:bg-slate-100 shadow-sm font-medium"
                         onClick={() => router.push(baseUrl)}
                     >
                         <ArrowLeft className="size-4 mr-2" /> Kembali ke Hub

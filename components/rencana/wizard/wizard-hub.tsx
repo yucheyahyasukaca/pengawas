@@ -1,9 +1,10 @@
 "use client";
 
-import { ArrowRight, CheckCircle2, ChevronRight, FileText, Layout, Target, Users, Zap } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, ChevronRight, FileText, Layout, Target, Users, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface WizardHubProps {
     baseUrl: string;
@@ -129,6 +130,16 @@ export function WizardHub({ baseUrl, mode, id }: WizardHubProps) {
     return (
         <div className="container mx-auto max-w-5xl py-8 px-4 sm:px-6 lg:px-8">
             {/* Header */}
+            <div className="mb-6">
+                <Button
+                    variant="outline"
+                    className="rounded-full border-slate-300 bg-white text-slate-900 hover:bg-slate-100 shadow-sm font-medium"
+                    onClick={() => router.push("/pengawas/perencanaan/rencana-program")}
+                >
+                    <ArrowLeft className="size-4 mr-2" /> Kembali
+                </Button>
+            </div>
+
             <div className="mb-8 sm:mb-12 text-center">
                 <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mb-4">
                     {mode === 'create' ? 'Buat Rencana Program' : 'Edit Rencana Program'}
