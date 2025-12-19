@@ -204,27 +204,39 @@ export default function RencanaProgramPage() {
           ).map(([periode, documents]) => (
             <Card
               key={periode}
-              className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70"
+              className="group overflow-hidden border-0 bg-white shadow-lg shadow-indigo-100/50 ring-1 ring-slate-200 transition-all duration-300 hover:shadow-xl hover:shadow-indigo-200/50 hover:ring-indigo-300 p-0 gap-0"
             >
-              <CardHeader className="bg-gradient-to-r from-indigo-50 to-blue-50/30 border-b border-indigo-100/50 pb-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex size-10 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-sm">
-                      <ClipboardList className="size-6" />
+              <CardHeader className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-blue-600 to-indigo-700 p-6 sm:p-8">
+                {/* Decorative background elements */}
+                <div className="absolute top-0 right-0 -mr-16 -mt-16 h-64 w-64 rounded-full bg-white/10 blur-3xl transition-transform duration-700 group-hover:scale-110" />
+                <div className="absolute bottom-0 left-0 -ml-16 -mb-16 h-64 w-64 rounded-full bg-indigo-500/30 blur-3xl" />
+
+                {/* Grid pattern overlay */}
+                <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-10" />
+
+                <div className="relative z-10 flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex items-start gap-5">
+                    <div className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-white/20 text-white shadow-inner backdrop-blur-md ring-1 ring-white/30 transition-transform duration-300 group-hover:scale-105 group-hover:rotate-3">
+                      <ClipboardList className="size-8" />
                     </div>
-                    <div>
-                      <CardTitle className="text-lg font-bold text-slate-900">
+                    <div className="space-y-2">
+                      <CardTitle className="text-3xl font-bold tracking-tight text-white drop-shadow-sm">
                         {periode}
                       </CardTitle>
-                      <CardDescription className="text-xs text-slate-500 mt-1">
-                        {documents.length} Dokumen Perencanaan
-                      </CardDescription>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant="secondary" className="bg-white/15 text-white hover:bg-white/25 backdrop-blur-md border-0 px-3 py-1 text-xs font-medium ring-1 ring-white/20">
+                          <FileText className="mr-1.5 size-3.5" />
+                          {documents.length} Dokumen
+                        </Badge>
+                        <Badge variant="secondary" className="bg-emerald-500/20 text-emerald-50 hover:bg-emerald-500/30 backdrop-blur-md border-0 px-3 py-1 text-xs font-medium ring-1 ring-emerald-400/30">
+                          Tersedia
+                        </Badge>
+                      </div>
                     </div>
                   </div>
                   <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-9 gap-2 border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800 bg-white shadow-sm"
+                    variant="secondary"
+                    className="h-10 shrink-0 gap-2 border-0 bg-white text-indigo-700 hover:bg-indigo-50 shadow-lg shadow-indigo-900/10 font-semibold transition-all duration-300 hover:-translate-y-0.5"
                     asChild
                   >
                     <Link href={`/pengawas/perencanaan/rencana-program/rekap/${encodeURIComponent(periode)}`}>
@@ -239,98 +251,84 @@ export default function RencanaProgramPage() {
                   <div
                     key={rencana.id}
                     className={cn(
-                      "p-4 flex flex-col gap-4",
-                      index !== documents.length - 1 && "border-b border-slate-100"
+                      "group/item relative flex flex-col gap-5 p-5 transition-colors hover:bg-slate-50/50",
+                      index !== documents.length - 1 && "border-b border-indigo-100/50"
                     )}
                   >
                     {/* Header Item: Date & Status */}
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-xs text-slate-500">
-                        <Calendar className="size-3.5" />
-                        <span>Dibuat: {rencana.tanggal}</span>
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex size-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100">
+                          <Calendar className="size-4" />
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Dibuat Pada</span>
+                          <span className="text-sm font-medium text-slate-700">{rencana.tanggal}</span>
+                        </div>
                       </div>
                       <Badge
                         variant="outline"
                         className={cn(
-                          "rounded-full px-2.5 py-0.5 text-xs font-semibold border-0",
+                          "px-3 py-1 text-xs font-semibold shadow-sm transition-colors",
                           rencana.status === "Terbit"
-                            ? "bg-emerald-100 text-emerald-700"
-                            : "bg-indigo-100 text-indigo-600"
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                            : "border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
                         )}
                       >
                         {rencana.status}
                       </Badge>
                     </div>
 
-                    {/* Schools List */}
+                    {/* Schools List - Simplified */}
                     {rencana.sekolah && rencana.sekolah.length > 0 ? (
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-1.5">
-                          <School className="size-3.5 text-slate-500" />
-                          <span className="text-xs font-medium text-slate-600">Sekolah Binaan ({rencana.sekolah.length})</span>
-                        </div>
-                        <div className="flex flex-wrap gap-1.5">
-                          {rencana.sekolah.map((sekolah) => (
-                            <span
-                              key={sekolah.id}
-                              className="inline-flex items-center rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-700/10"
-                            >
-                              {sekolah.nama}
-                            </span>
-                          ))}
-                        </div>
+                      <div className="flex flex-wrap gap-2">
+                        {rencana.sekolah.map((sekolah) => (
+                          <div
+                            key={sekolah.id}
+                            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white pl-2 pr-3 py-1.5 shadow-sm transition-shadow hover:shadow-md hover:border-indigo-200"
+                          >
+                            <div className="flex size-6 items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
+                              <School className="size-3.5" />
+                            </div>
+                            <span className="text-xs font-semibold text-slate-700">{sekolah.nama}</span>
+                          </div>
+                        ))}
                       </div>
                     ) : (
-                      <div className="text-xs text-slate-400 italic flex items-center gap-1.5">
-                        <AlertCircle className="size-3.5" />
+                      <div className="flex items-center gap-2 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
+                        <AlertCircle className="size-4" />
                         Belum ada sekolah dipilih
                       </div>
                     )}
 
-                    {/* Actions */}
-                    <div className="flex items-center gap-2 mt-1">
+                    {/* Actions - Beautified */}
+                    <div className="flex items-center gap-3 pt-1">
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
-                        className="flex-1 h-8 text-xs border-indigo-200 text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800"
+                        className="h-9 flex-1 gap-2 rounded-lg bg-slate-100 font-semibold text-slate-600 transition-all hover:bg-slate-200 hover:text-slate-900"
                         asChild
                       >
                         <Link href={`/pengawas/perencanaan/rencana-program/${rencana.id}/edit`}>
-                          <Edit className="size-3.5 mr-1.5" /> Edit
+                          <Edit className="size-3.5" /> Edit
                         </Link>
-                        {/* Note: The 'buat' link assumes it loads draft, but here we are editing specific ID. 
-                              The original code linked 'buat' for edit, which might process draft? 
-                              Actually, standard edit should point to [id]/edit. 
-                              Let's correct this path to be more explicit if possible, 
-                              or keep it consistent with previous logic which seemed to use 'buat' for editing draft? 
-                              Wait, original code used `/pengawas/perencanaan/rencana-program/buat` for EDIT button 
-                              and `/pengawas/perencanaan/rencana-program/${rencana.id}` for VIEW. 
-                              However, `buat` typically works on the SINGLE draft.
-                              If we have multiple items, editing one might require loading IT into draft first.
-                              For now, I'll point to `[id]/edit` if that page exists and works (which we saw earlier).
-                              Re-checking previous logic:
-                              Original Edit button: href="/pengawas/perencanaan/rencana-program/buat"
-                              This implies the system only supports ONE active draft editing at a time via 'buat'.
-                              But the user has multiple items. 
-                              I will change Edit to point to `[id]/edit` for safety, as user wants "masing-masing edit".
-                           */}
                       </Button>
                       <Button
                         size="sm"
-                        className="flex-1 h-8 text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-sm hover:from-purple-600 hover:to-pink-600 border-0"
+                        className="h-9 flex-1 gap-2 rounded-lg border-0 bg-gradient-to-r from-indigo-600 to-purple-600 font-semibold text-white shadow-md shadow-indigo-200 transition-all hover:shadow-lg hover:shadow-indigo-300 hover:scale-[1.02]"
                         asChild
                       >
                         <Link href={`/pengawas/perencanaan/rencana-program/${rencana.id}`}>
-                          <Eye className="size-3.5 mr-1.5" /> Lihat
+                          <Eye className="size-3.5" /> Lihat
                         </Link>
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                        className="h-9 w-9 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600"
                         onClick={() => setDeleteId(rencana.id)}
                       >
-                        <Trash2 className="size-3.5" />
+                        <Trash2 className="size-4" />
                       </Button>
                     </div>
 

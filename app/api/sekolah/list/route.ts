@@ -16,9 +16,9 @@ export async function GET(request: Request) {
       );
     }
 
-    // Get search query from URL params
     const { searchParams } = new URL(request.url);
     const ids = searchParams.get('ids');
+    const search = searchParams.get('q');
 
     // Use admin client to bypass RLS for pending pengawas
     // This allows pending pengawas to select schools during registration
@@ -44,6 +44,8 @@ export async function GET(request: Request) {
       if (idList.length > 0) {
         query = query.in('id', idList);
       }
+    } else if (search) {
+      query = query.ilike('nama_sekolah', `%${search}%`).limit(20);
     } else {
       // Only limit if loading all (no specific IDs requested)
       query = query.order('nama_sekolah', { ascending: true }).limit(500);

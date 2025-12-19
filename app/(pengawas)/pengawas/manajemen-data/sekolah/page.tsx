@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { School, Search, Plus, Filter, MapPin, Building2, FileText, Loader2 } from "lucide-react";
+import { School, Search, Plus, Filter, MapPin, Building2, FileText, Loader2, Info } from "lucide-react";
 
 interface Sekolah {
   id: string | number;
@@ -41,7 +41,7 @@ export default function DataSekolahPage() {
 
       // First, get current user to get sekolah_binaan from metadata
       const userResponse = await fetch('/api/auth/get-current-user');
-      
+
       if (!userResponse.ok) {
         throw new Error('Gagal memuat data pengawas');
       }
@@ -54,8 +54,8 @@ export default function DataSekolahPage() {
       }
 
       // Get sekolah_binaan names from metadata
-      const sekolahBinaanNames = Array.isArray(pengawas.metadata?.sekolah_binaan) 
-        ? pengawas.metadata.sekolah_binaan 
+      const sekolahBinaanNames = Array.isArray(pengawas.metadata?.sekolah_binaan)
+        ? pengawas.metadata.sekolah_binaan
         : [];
 
       if (sekolahBinaanNames.length === 0) {
@@ -66,7 +66,7 @@ export default function DataSekolahPage() {
 
       // Fetch sekolah details from sekolah table
       const sekolahResponse = await fetch('/api/sekolah/list');
-      
+
       if (!sekolahResponse.ok) {
         throw new Error('Gagal memuat data sekolah');
       }
@@ -155,6 +155,13 @@ export default function DataSekolahPage() {
         </div>
       </div>
 
+      <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+        <Info className="size-4 shrink-0" />
+        <p>
+          Ingin menambah sekolah binaan? <Link href="/pengawas/lengkapi-profil?mode=edit" className="font-semibold underline hover:text-blue-800">Klik disini</Link>
+        </p>
+      </div>
+
       <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-slate-900 font-bold">
@@ -195,64 +202,64 @@ export default function DataSekolahPage() {
       ) : (
         <div className="grid gap-6 md:grid-cols-2">
           {filteredSekolah.map((sekolah) => (
-          <Link key={sekolah.id} href={`/pengawas/manajemen-data/sekolah/${sekolah.id}`}>
-          <Card
-            className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70 transition hover:shadow-lg hover:shadow-indigo-200 cursor-pointer"
-          >
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex items-start gap-3 flex-1">
-                  <div className="flex size-12 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 via-indigo-400 to-blue-400 text-white shadow-md shrink-0">
-                    <School className="size-6" />
+            <Link key={sekolah.id} href={`/pengawas/manajemen-data/sekolah/${sekolah.id}`}>
+              <Card
+                className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70 transition hover:shadow-lg hover:shadow-indigo-200 cursor-pointer"
+              >
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-3 flex-1">
+                      <div className="flex size-12 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 via-indigo-400 to-blue-400 text-white shadow-md shrink-0">
+                        <School className="size-6" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-lg font-bold text-slate-900">
+                          {sekolah.nama}
+                        </CardTitle>
+                        <CardDescription className="text-sm font-medium text-slate-700 mt-1">
+                          NPSN: {sekolah.npsn}
+                        </CardDescription>
+                      </div>
+                    </div>
+                    <Badge className="rounded-full border-2 border-indigo-300 bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-700 shrink-0">
+                      {sekolah.status}
+                    </Badge>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <CardTitle className="text-lg font-bold text-slate-900">
-                      {sekolah.nama}
-                    </CardTitle>
-                    <CardDescription className="text-sm font-medium text-slate-700 mt-1">
-                      NPSN: {sekolah.npsn}
-                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-start gap-3 text-sm">
+                    <Building2 className="size-5 text-indigo-600 mt-0.5 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <span className="font-bold text-slate-900 block mb-0.5">Jenjang:</span>
+                      <span className="font-medium text-slate-700 block">{sekolah.jenjang}</span>
+                    </div>
                   </div>
-                </div>
-                <Badge className="rounded-full border-2 border-indigo-300 bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-700 shrink-0">
-                  {sekolah.status}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-start gap-3 text-sm">
-                <Building2 className="size-5 text-indigo-600 mt-0.5 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <span className="font-bold text-slate-900 block mb-0.5">Jenjang:</span>
-                  <span className="font-medium text-slate-700 block">{sekolah.jenjang}</span>
-                </div>
-              </div>
-              <div className="flex items-start gap-3 text-sm">
-                <MapPin className="size-5 text-indigo-600 mt-0.5 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <span className="font-bold text-slate-900 block mb-0.5">Alamat:</span>
-                  <span className="font-medium text-slate-700 block break-words leading-relaxed">
-                    {sekolah.alamat && sekolah.alamat.trim() !== '' ? sekolah.alamat : 'Alamat belum diisi'}
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-start gap-3 text-sm">
-                <MapPin className="size-5 text-indigo-600 mt-0.5 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <span className="font-bold text-slate-900 block mb-0.5">Kabupaten/Kota:</span>
-                  <span className="font-medium text-slate-700 block">{sekolah.kabupaten}</span>
-                </div>
-              </div>
-              <div className="flex items-start gap-3 text-sm">
-                <FileText className="size-5 text-indigo-600 mt-0.5 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <span className="font-bold text-slate-900 block mb-0.5">Cabang Dinas:</span>
-                  <span className="font-medium text-slate-700 block">{sekolah.cabangDinas}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          </Link>
+                  <div className="flex items-start gap-3 text-sm">
+                    <MapPin className="size-5 text-indigo-600 mt-0.5 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <span className="font-bold text-slate-900 block mb-0.5">Alamat:</span>
+                      <span className="font-medium text-slate-700 block break-words leading-relaxed">
+                        {sekolah.alamat && sekolah.alamat.trim() !== '' ? sekolah.alamat : 'Alamat belum diisi'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 text-sm">
+                    <MapPin className="size-5 text-indigo-600 mt-0.5 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <span className="font-bold text-slate-900 block mb-0.5">Kabupaten/Kota:</span>
+                      <span className="font-medium text-slate-700 block">{sekolah.kabupaten}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3 text-sm">
+                    <FileText className="size-5 text-indigo-600 mt-0.5 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <span className="font-bold text-slate-900 block mb-0.5">Cabang Dinas:</span>
+                      <span className="font-medium text-slate-700 block">{sekolah.cabangDinas}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       )}
