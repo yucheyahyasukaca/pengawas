@@ -4,6 +4,14 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Loader2, ArrowLeft, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
 import { calculateLevels, getStrategy, METHOD_OPTIONS, STRATEGIES } from "@/lib/rencana-utils";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +38,20 @@ export default function RencanaProgramRecapPage() {
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<RencanaRecap[]>([]);
     const [periode, setPeriode] = useState("");
+    const [isPrintOpen, setIsPrintOpen] = useState(false);
+    const [paperSize, setPaperSize] = useState<"A4" | "F4">("A4");
+    const [isPrinting, setIsPrinting] = useState(false);
+
+    useEffect(() => {
+        if (isPrinting) {
+            // Allow DOM to update style first
+            const timer = setTimeout(() => {
+                window.print();
+                setIsPrinting(false);
+            }, 100);
+            return () => clearTimeout(timer);
+        }
+    }, [isPrinting]);
 
     useEffect(() => {
         const p = params?.periode;
@@ -103,8 +125,19 @@ export default function RencanaProgramRecapPage() {
         fetchRecap();
     }, [params?.periode]);
 
-    const handlePrint = () => {
-        window.print();
+    const handlePrintRequest = () => {
+        setIsPrintOpen(true);
+    };
+
+    const executePrint = (size: "A4" | "F4") => {
+        setPaperSize(size);
+        setIsPrintOpen(false);
+        setIsPrinting(true);
+    };
+
+    const getPageSize = () => {
+        if (paperSize === "F4") return "330mm 215mm"; // F4 Landscape (approx)
+        return "landscape"; // A4 Landscape default
     };
 
     if (loading) {
@@ -116,30 +149,87 @@ export default function RencanaProgramRecapPage() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 p-6 print:p-0 print:bg-white">
+        <div className="min-h-screen bg-slate-50 p-4 md:p-6 print:p-0 print:bg-white">
+            <style dangerouslySetInnerHTML={{
+                __html: `
+                @media print {
+                    @page {
+                        margin: 15mm;
+                        size: ${getPageSize()};
+                    }
+                    body {
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                    }
+                    body * {
+                        visibility: hidden;
+                    }
+                    #printable-area, #printable-area * {
+                        visibility: visible;
+                    }
+                    #printable-area {
+                        position: absolute;
+                        left: 0;
+                        top: 0;
+                        width: 100%;
+                        padding: 0;
+                    }
+                    tr {
+                        break-inside: avoid;
+                        page-break-inside: avoid;
+                    }
+                }
+            `}} />
+
+            <Dialog open={isPrintOpen} onOpenChange={setIsPrintOpen}>
+                <DialogContent className="sm:max-w-md bg-white">
+                    <DialogHeader>
+                        <DialogTitle className="text-slate-900 text-lg font-bold">Pilih Ukuran Kertas</DialogTitle>
+                        <DialogDescription className="text-slate-500">
+                            Pilih ukuran kertas yang akan digunakan untuk mencetak dokumen ini.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid grid-cols-2 gap-4 py-4">
+                        <Button
+                            variant="outline"
+                            className="h-24 flex flex-col gap-2 bg-white border-2 border-slate-200 text-slate-900 hover:bg-indigo-50 hover:border-indigo-500 hover:text-indigo-700 transition-all"
+                            onClick={() => executePrint("A4")}
+                        >
+                            <span className="text-3xl font-extrabold text-slate-900">A4</span>
+                            <span className="text-sm text-slate-500 font-medium">210 x 297 mm</span>
+                        </Button>
+                        <Button
+                            variant="outline"
+                            className="h-24 flex flex-col gap-2 bg-white border-2 border-slate-200 text-slate-900 hover:bg-indigo-50 hover:border-indigo-500 hover:text-indigo-700 transition-all"
+                            onClick={() => executePrint("F4")}
+                        >
+                            <span className="text-3xl font-extrabold text-slate-900">F4</span>
+                            <span className="text-sm text-slate-500 font-medium">215 x 330 mm</span>
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
             {/* Header Controls */}
             <div className="max-w-[1400px] mx-auto mb-6 flex justify-between items-center print:hidden">
                 <Button variant="outline" className="rounded-full border-slate-300 bg-white text-slate-900 hover:bg-slate-100 shadow-sm font-medium" onClick={() => router.back()}>
                     <ArrowLeft className="size-4 mr-2" /> Kembali
                 </Button>
-                <Button onClick={handlePrint} className="bg-indigo-600 text-white hover:bg-indigo-700">
+                <Button onClick={handlePrintRequest} className="bg-indigo-600 text-white hover:bg-indigo-700">
                     <Printer className="size-4 mr-2" /> Cetak PDF
                 </Button>
             </div>
 
             {/* Document Content */}
-            <div className="max-w-[1400px] mx-auto bg-white p-8 shadow-sm print:shadow-none print:p-0">
+            <div id="printable-area" className="max-w-[1400px] mx-auto bg-transparent shadow-none p-0 md:bg-white md:p-8 md:shadow-sm print:shadow-none print:p-0">
                 {/* Title / Header */}
                 <div className="mb-0">
                     {/* Desktop View (Table) */}
                     <div className="hidden md:block print:block overflow-x-auto">
-                        <table className="w-full border-collapse">
+                        <div className="bg-[#005a8f] text-white p-4 text-center font-bold text-lg border-x border-t border-[#005a8f]">
+                            RENCANA PENDAMPINGAN SATUAN PENDIDIKAN
+                        </div>
+                        <table className="w-full border-collapse border-x border-b border-slate-200">
                             <thead>
-                                <tr className="bg-[#005a8f] text-white print:bg-[#005a8f] print:text-white">
-                                    <th colSpan={6} className="py-4 px-4 text-center font-bold text-lg border border-[#005a8f]">
-                                        RENCANA PENDAMPINGAN SATUAN PENDIDIKAN
-                                    </th>
-                                </tr>
                                 <tr className="bg-[#004872] text-white print:bg-[#004872] print:text-white">
                                     <th className="py-3 px-2 text-center text-sm font-bold border border-white w-[120px]">
                                         PRIORITAS

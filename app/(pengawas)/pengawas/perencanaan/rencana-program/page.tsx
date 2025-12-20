@@ -193,7 +193,7 @@ export default function RencanaProgramPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+        <div className="flex flex-col gap-8">
           {Object.entries(
             rencanaProgram.reduce((acc, curr) => {
               const key = curr.periode || "Tanpa Periode";
@@ -204,172 +204,293 @@ export default function RencanaProgramPage() {
           ).map(([periode, documents]) => (
             <Card
               key={periode}
-              className="group overflow-hidden border-0 bg-white shadow-lg shadow-indigo-100/50 ring-1 ring-slate-200 transition-all duration-300 hover:shadow-xl hover:shadow-indigo-200/50 hover:ring-indigo-300 p-0 gap-0"
+              className="group overflow-hidden border-0 bg-white shadow-lg shadow-indigo-100/50 ring-1 ring-slate-200 py-0 gap-0"
             >
-              <CardHeader className="relative overflow-hidden bg-gradient-to-br from-indigo-600 via-blue-600 to-indigo-700 p-6 sm:p-8">
+              <CardHeader className="relative overflow-hidden bg-gradient-to-r from-indigo-600 to-blue-600 p-6">
                 {/* Decorative background elements */}
                 <div className="absolute top-0 right-0 -mr-16 -mt-16 h-64 w-64 rounded-full bg-white/10 blur-3xl transition-transform duration-700 group-hover:scale-110" />
                 <div className="absolute bottom-0 left-0 -ml-16 -mb-16 h-64 w-64 rounded-full bg-indigo-500/30 blur-3xl" />
-
-                {/* Grid pattern overlay */}
                 <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-10" />
 
-                <div className="relative z-10 flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="flex items-start gap-5">
-                    <div className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-white/20 text-white shadow-inner backdrop-blur-md ring-1 ring-white/30 transition-transform duration-300 group-hover:scale-105 group-hover:rotate-3">
-                      <ClipboardList className="size-8" />
+                <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-white/20 text-white backdrop-blur-md ring-1 ring-white/30">
+                      <Calendar className="size-6" />
                     </div>
-                    <div className="space-y-2">
-                      <CardTitle className="text-3xl font-bold tracking-tight text-white drop-shadow-sm">
+                    <div>
+                      <CardTitle className="text-2xl font-bold text-white">
                         {periode}
                       </CardTitle>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant="secondary" className="bg-white/15 text-white hover:bg-white/25 backdrop-blur-md border-0 px-3 py-1 text-xs font-medium ring-1 ring-white/20">
-                          <FileText className="mr-1.5 size-3.5" />
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge variant="secondary" className="bg-white/15 text-white hover:bg-white/25 border-0 backdrop-blur-md">
                           {documents.length} Dokumen
-                        </Badge>
-                        <Badge variant="secondary" className="bg-emerald-500/20 text-emerald-50 hover:bg-emerald-500/30 backdrop-blur-md border-0 px-3 py-1 text-xs font-medium ring-1 ring-emerald-400/30">
-                          Tersedia
                         </Badge>
                       </div>
                     </div>
                   </div>
                   <Button
                     variant="secondary"
-                    className="h-10 shrink-0 gap-2 border-0 bg-white text-indigo-700 hover:bg-indigo-50 shadow-lg shadow-indigo-900/10 font-semibold transition-all duration-300 hover:-translate-y-0.5"
+                    className="gap-2 bg-white text-indigo-700 hover:bg-slate-50 font-semibold shadow-sm"
                     asChild
                   >
                     <Link href={`/pengawas/perencanaan/rencana-program/rekap/${encodeURIComponent(periode)}`}>
                       <Printer className="size-4" />
-                      <span className="hidden sm:inline">Cetak Rekap</span>
+                      Cetak Rekap
                     </Link>
                   </Button>
                 </div>
               </CardHeader>
               <CardContent className="p-0">
-                {documents.map((rencana, index) => (
-                  <div
-                    key={rencana.id}
-                    className={cn(
-                      "group/item relative flex flex-col gap-5 p-5 transition-colors hover:bg-slate-50/50",
-                      index !== documents.length - 1 && "border-b border-indigo-100/50"
-                    )}
-                  >
-                    {/* Header Item: Date & Status */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <div className="flex size-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100">
-                          <Calendar className="size-4" />
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Dibuat Pada</span>
-                          <span className="text-sm font-medium text-slate-700">{rencana.tanggal}</span>
-                        </div>
-                      </div>
-                      <Badge
-                        variant="outline"
-                        className={cn(
-                          "px-3 py-1 text-xs font-semibold shadow-sm transition-colors",
-                          rencana.status === "Terbit"
-                            ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                            : "border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
-                        )}
-                      >
-                        {rencana.status}
-                      </Badge>
-                    </div>
-
-                    {/* Schools List - Simplified */}
-                    {rencana.sekolah && rencana.sekolah.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {rencana.sekolah.map((sekolah) => (
-                          <div
-                            key={sekolah.id}
-                            className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white pl-2 pr-3 py-1.5 shadow-sm transition-shadow hover:shadow-md hover:border-indigo-200"
-                          >
-                            <div className="flex size-6 items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
-                              <School className="size-3.5" />
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-left text-sm text-slate-600">
+                    <thead className="bg-slate-50 text-xs uppercase text-slate-500 font-semibold">
+                      <tr>
+                        <th className="px-6 py-4">Sekolah Binaan</th>
+                        <th className="px-6 py-4 w-[200px]">Dibuat Pada</th>
+                        <th className="px-6 py-4 w-[150px]">Status</th>
+                        <th className="px-6 py-4 w-[300px] text-center">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {documents.map((rencana) => (
+                        <tr key={rencana.id} className="group/row hover:bg-slate-50/80 transition-colors">
+                          <td className="px-6 py-4 align-top">
+                            <div className="flex flex-wrap gap-2">
+                              {rencana.sekolah && rencana.sekolah.length > 0 ? (
+                                rencana.sekolah.map((sekolah) => (
+                                  <div
+                                    key={sekolah.id}
+                                    className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 shadow-sm"
+                                  >
+                                    <School className="size-3 text-indigo-500" />
+                                    {sekolah.nama}
+                                  </div>
+                                ))
+                              ) : (
+                                <span className="flex items-center gap-1.5 font-medium text-amber-600 text-xs bg-amber-50 px-2 py-1 rounded-md mb-2 w-fit">
+                                  <AlertCircle className="size-3" />
+                                  Belum ada sekolah
+                                </span>
+                              )}
                             </div>
-                            <span className="text-xs font-semibold text-slate-700">{sekolah.nama}</span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
-                        <AlertCircle className="size-4" />
-                        Belum ada sekolah dipilih
-                      </div>
-                    )}
+                          </td>
+                          <td className="px-6 py-4 align-top">
+                            <div className="flex flex-col">
+                              <span className="font-medium text-slate-900">{rencana.tanggal}</span>
+                              <span className="text-xs text-slate-500">
+                                Update: {rencana.updated_at ? new Date(rencana.updated_at).toLocaleDateString('id-ID') : '-'}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 align-top">
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                "px-2.5 py-0.5 text-xs font-semibold border-0",
+                                rencana.status === "Terbit"
+                                  ? "bg-emerald-100 text-emerald-700"
+                                  : "bg-indigo-100 text-indigo-700"
+                              )}
+                            >
+                              {rencana.status}
+                            </Badge>
+                          </td>
+                          <td className="px-6 py-4 align-top">
+                            <div className="flex items-center justify-center gap-2">
+                              {/* Publish Button if Draft */}
+                              {rencana.status === "Draft" && (
+                                <Button
+                                  size="sm"
+                                  className="h-8 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm px-3"
+                                  onClick={async () => {
+                                    try {
+                                      const response = await fetch(`/api/pengawas/rencana-program/${rencana.id}`, {
+                                        method: "PUT",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({
+                                          status: "Terbit",
+                                        }),
+                                      });
 
-                    {/* Actions - Beautified */}
-                    <div className="flex items-center gap-3 pt-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-9 flex-1 gap-2 rounded-lg bg-slate-100 font-semibold text-slate-600 transition-all hover:bg-slate-200 hover:text-slate-900"
-                        asChild
-                      >
-                        <Link href={`/pengawas/perencanaan/rencana-program/${rencana.id}/edit`}>
-                          <Edit className="size-3.5" /> Edit
-                        </Link>
-                      </Button>
-                      <Button
-                        size="sm"
-                        className="h-9 flex-1 gap-2 rounded-lg border-0 bg-gradient-to-r from-indigo-600 to-purple-600 font-semibold text-white shadow-md shadow-indigo-200 transition-all hover:shadow-lg hover:shadow-indigo-300 hover:scale-[1.02]"
-                        asChild
-                      >
-                        <Link href={`/pengawas/perencanaan/rencana-program/${rencana.id}`}>
-                          <Eye className="size-3.5" /> Lihat
-                        </Link>
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-9 w-9 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-600"
-                        onClick={() => setDeleteId(rencana.id)}
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
+                                      if (response.ok) {
+                                        toast({
+                                          title: "Berhasil",
+                                          description: "Rencana program berhasil diterbitkan",
+                                        });
+                                        loadRencanaProgram();
+                                      } else {
+                                        throw new Error("Gagal menerbitkan");
+                                      }
+                                    } catch (error) {
+                                      toast({
+                                        title: "Error",
+                                        description: "Gagal menerbitkan rencana program",
+                                        variant: "error",
+                                      });
+                                    }
+                                  }}
+                                >
+                                  <Send className="size-3.5" />
+                                  <span className="sr-only sm:not-sr-only sm:inline-block">Terbit</span>
+                                </Button>
+                              )}
+
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 gap-1.5 border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-indigo-600"
+                                asChild
+                              >
+                                <Link href={`/pengawas/perencanaan/rencana-program/${rencana.id}/edit`}>
+                                  <Edit className="size-3.5" />
+                                  <span className="sr-only lg:not-sr-only lg:inline-block">Edit</span>
+                                </Link>
+                              </Button>
+
+                              <Button
+                                size="sm"
+                                className="h-8 gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm shadow-indigo-200"
+                                asChild
+                              >
+                                <Link href={`/pengawas/perencanaan/rencana-program/${rencana.id}`}>
+                                  <Eye className="size-3.5" />
+                                  <span className="sr-only lg:not-sr-only lg:inline-block">Lihat</span>
+                                </Link>
+                              </Button>
+
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 text-slate-400 hover:bg-red-50 hover:text-red-600"
+                                onClick={() => setDeleteId(rencana.id)}
+                              >
+                                <Trash2 className="size-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="md:hidden flex flex-col divide-y divide-slate-100">
+                  {documents.map((rencana) => (
+                    <div key={rencana.id} className="flex flex-col gap-4 p-5 hover:bg-slate-50/50 transition-colors">
+                      {/* Mobile Header: Date & Status */}
+                      <div className="flex items-start justify-between">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-sm font-semibold text-slate-900">{rencana.tanggal}</span>
+                          <span className="text-xs text-slate-500">
+                            Update: {rencana.updated_at ? new Date(rencana.updated_at).toLocaleDateString('id-ID') : '-'}
+                          </span>
+                        </div>
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "px-2.5 py-1 text-xs font-semibold border-0",
+                            rencana.status === "Terbit"
+                              ? "bg-emerald-100 text-emerald-700"
+                              : "bg-indigo-100 text-indigo-700"
+                          )}
+                        >
+                          {rencana.status}
+                        </Badge>
+                      </div>
+
+                      {/* Mobile: Schools */}
+                      <div>
+                        <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">Sekolah Binaan</p>
+                        <div className="flex flex-wrap gap-2">
+                          {rencana.sekolah && rencana.sekolah.length > 0 ? (
+                            rencana.sekolah.map((sekolah) => (
+                              <div
+                                key={sekolah.id}
+                                className="flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-sm"
+                              >
+                                <School className="size-3 text-indigo-500" />
+                                {sekolah.nama}
+                              </div>
+                            ))
+                          ) : (
+                            <span className="flex items-center gap-1.5 font-medium text-amber-600 text-xs bg-amber-50 px-2.5 py-1.5 rounded-md">
+                              <AlertCircle className="size-3" />
+                              Belum ada sekolah
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Mobile: Actions */}
+                      <div className="grid grid-cols-2 gap-3 pt-2">
+                        {rencana.status === "Draft" && (
+                          <Button
+                            size="sm"
+                            className="col-span-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+                            onClick={async () => {
+                              try {
+                                const response = await fetch(`/api/pengawas/rencana-program/${rencana.id}`, {
+                                  method: "PUT",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({
+                                    status: "Terbit",
+                                  }),
+                                });
+
+                                if (response.ok) {
+                                  toast({
+                                    title: "Berhasil",
+                                    description: "Rencana program berhasil diterbitkan",
+                                  });
+                                  loadRencanaProgram();
+                                } else {
+                                  throw new Error("Gagal menerbitkan");
+                                }
+                              } catch (error) {
+                                toast({
+                                  title: "Error",
+                                  description: "Gagal menerbitkan rencana program",
+                                  variant: "error",
+                                });
+                              }
+                            }}
+                          >
+                            <Send className="size-3.5 mr-2" /> Terbitkan
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full gap-2 border-slate-200 text-slate-600"
+                          asChild
+                        >
+                          <Link href={`/pengawas/perencanaan/rencana-program/${rencana.id}/edit`}>
+                            <Edit className="size-3.5" /> Edit
+                          </Link>
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="w-full gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm"
+                          asChild
+                        >
+                          <Link href={`/pengawas/perencanaan/rencana-program/${rencana.id}`}>
+                            <Eye className="size-3.5" /> Lihat
+                          </Link>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="col-span-2 w-full text-slate-400 hover:bg-red-50 hover:text-red-600"
+                          onClick={() => setDeleteId(rencana.id)}
+                        >
+                          <Trash2 className="size-4 mr-2" /> Hapus Program
+                        </Button>
+                      </div>
                     </div>
-
-                    {/* Publish Action (if Draft) */}
-                    {rencana.status === "Draft" && (
-                      <Button
-                        size="sm"
-                        className="w-full h-8 text-xs bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
-                        onClick={async () => {
-                          try {
-                            const response = await fetch(`/api/pengawas/rencana-program/${rencana.id}`, {
-                              method: "PUT",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({
-                                status: "Terbit",
-                              }),
-                            });
-
-                            if (response.ok) {
-                              toast({
-                                title: "Berhasil",
-                                description: "Rencana program berhasil diterbitkan",
-                              });
-                              loadRencanaProgram();
-                            } else {
-                              throw new Error("Gagal menerbitkan");
-                            }
-                          } catch (error) {
-                            toast({
-                              title: "Error",
-                              description: "Gagal menerbitkan rencana program",
-                              variant: "error",
-                            });
-                          }
-                        }}
-                      >
-                        <Send className="size-3.5 mr-1.5" /> Terbitkan
-                      </Button>
-                    )}
-                  </div>
-                ))}
+                  ))}
+                </div>
               </CardContent>
             </Card>
           ))}
