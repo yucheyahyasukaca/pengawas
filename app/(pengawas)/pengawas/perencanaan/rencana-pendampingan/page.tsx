@@ -1358,7 +1358,7 @@ export default function RencanaPendampinganPage() {
 
       {/* Form Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full mx-2 sm:mx-0 bg-gradient-to-br from-white to-indigo-50/30">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full mx-2 sm:mx-0 bg-white">
           <DialogHeader className="border-b border-slate-200 pb-4 mb-4">
             <DialogTitle className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
               <div className="p-2 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 text-white">
@@ -1396,7 +1396,7 @@ export default function RencanaPendampinganPage() {
                         newDate.setDate(newDay);
                         setSelectedDate(newDate);
                       }}
-                      className="w-full appearance-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      className="w-full appearance-none rounded-xl border-2 border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 hover:border-indigo-300 transition-all"
                     >
                       {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
                         <option key={d} value={d}>{d}</option>
@@ -1418,7 +1418,7 @@ export default function RencanaPendampinganPage() {
                         newDate.setMonth(newMonth);
                         setSelectedDate(newDate);
                       }}
-                      className="w-full appearance-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      className="w-full appearance-none rounded-xl border-2 border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 hover:border-indigo-300 transition-all"
                     >
                       {monthNames.map((m, i) => (
                         <option key={i} value={i}>{m}</option>
@@ -1440,7 +1440,7 @@ export default function RencanaPendampinganPage() {
                         newDate.setFullYear(newYear);
                         setSelectedDate(newDate);
                       }}
-                      className="w-full appearance-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      className="w-full appearance-none rounded-xl border-2 border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 hover:border-indigo-300 transition-all"
                     >
                       {Array.from({ length: 11 }, (_, i) => new Date().getFullYear() - 5 + i).map((y) => (
                         <option key={y} value={y}>{y}</option>
@@ -1467,7 +1467,7 @@ export default function RencanaPendampinganPage() {
                     setIsSekolahDropdownOpen(!isSekolahDropdownOpen);
                     setIsIndikatorDropdownOpen(false);
                   }}
-                  className="flex w-full items-center justify-between gap-4 rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-900 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  className="flex w-full items-center justify-between gap-4 rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-base text-slate-900 font-bold shadow-sm transition-all focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 hover:border-indigo-300"
                 >
                   <span className={formSekolahId ? "" : "text-slate-400"}>
                     {formSekolahId
@@ -1600,7 +1600,7 @@ export default function RencanaPendampinganPage() {
                     setIsIndikatorDropdownOpen(!isIndikatorDropdownOpen);
                     setIsSekolahDropdownOpen(false);
                   }}
-                  className="flex w-full items-center justify-between gap-4 rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-900 shadow-sm transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  className="flex w-full items-center justify-between gap-4 rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-base text-slate-900 font-bold shadow-sm transition-all focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 hover:border-indigo-300"
                 >
                   <span className={formIndikatorUtama ? "" : "text-slate-400"}>
                     {formIndikatorUtama

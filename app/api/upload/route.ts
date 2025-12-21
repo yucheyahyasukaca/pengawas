@@ -69,14 +69,6 @@ export async function POST(request: Request) {
 
         if (error) {
             console.error("Storage upload error:", error);
-            return NextResponse.json(
-                { error: "Upload failed", details: error.message || JSON.stringify(error) },
-                { status: 500 }
-            );
-        }
-
-        if (error) {
-            console.error("Storage upload error:", error);
             // Check if bucket exists error
             if (error.message.includes("Bucket not found")) {
                 return NextResponse.json(
