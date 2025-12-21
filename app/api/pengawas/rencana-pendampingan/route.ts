@@ -5,12 +5,12 @@ import { NextResponse } from "next/server";
 export async function GET(request: Request) {
   try {
     console.log("GET /api/pengawas/rencana-pendampingan - Starting");
-    
+
     const supabase = await createSupabaseServerClient();
-    
+
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
+
     if (authError || !user) {
       console.error("Auth error:", authError);
       return NextResponse.json(
@@ -28,7 +28,7 @@ export async function GET(request: Request) {
     } catch (clientError: any) {
       console.error("Error creating admin client:", clientError);
       return NextResponse.json(
-        { 
+        {
           error: "Server configuration error",
           details: clientError.message || "Failed to create admin client"
         },
@@ -45,8 +45,8 @@ export async function GET(request: Request) {
     if (userError) {
       console.error("Error fetching user data:", userError);
       return NextResponse.json(
-        { 
-          error: "Gagal memuat data pengguna", 
+        {
+          error: "Gagal memuat data pengguna",
           details: userError.message,
           code: userError.code
         },
@@ -83,7 +83,7 @@ export async function GET(request: Request) {
     if (year) {
       const yearNum = parseInt(year);
       const monthNum = month ? parseInt(month) : null;
-      
+
       if (monthNum && monthNum >= 1 && monthNum <= 12) {
         // Get the last day of the month
         // monthNum is 1-indexed (1-12) from frontend
@@ -101,13 +101,13 @@ export async function GET(request: Request) {
         //   - new Date(2025, 12, 0) = last day of December = 31
         // So we use: new Date(yearNum, monthNum, 0).getDate() to get last day of monthNum
         const lastDay = new Date(yearNum, monthNum, 0).getDate();
-        
+
         // Double-check: verify the calculated date is correct
         // Parse the month and day from the calculated date
         const testDate = new Date(yearNum, monthNum - 1, lastDay);
         const actualMonth = testDate.getMonth() + 1; // Convert back to 1-indexed
         const actualDay = testDate.getDate();
-        
+
         if (actualMonth !== monthNum || actualDay !== lastDay) {
           console.error("Date calculation mismatch:", {
             yearNum,
@@ -122,10 +122,10 @@ export async function GET(request: Request) {
             { status: 500 }
           );
         }
-        
+
         const startDate = `${year}-${String(monthNum).padStart(2, "0")}-01`;
         const endDate = `${year}-${String(monthNum).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
-        
+
         // Validate that endDate string matches the expected format
         const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
         if (!dateRegex.test(endDate)) {
@@ -135,13 +135,13 @@ export async function GET(request: Request) {
             { status: 500 }
           );
         }
-        
+
         // Validate that the date is actually valid (not like 2025-11-31)
         const [yearStr, monthStr, dayStr] = endDate.split('-');
         const parsedYear = parseInt(yearStr);
         const parsedMonth = parseInt(monthStr);
         const parsedDay = parseInt(dayStr);
-        
+
         if (parsedMonth !== monthNum || parsedDay !== lastDay || parsedYear !== yearNum) {
           console.error("Date validation failed:", {
             endDate,
@@ -153,9 +153,9 @@ export async function GET(request: Request) {
             { status: 500 }
           );
         }
-        
+
         console.log("Date filter:", { yearNum, monthNum, lastDay, startDate, endDate });
-        
+
         query = query.gte("tanggal", startDate).lte("tanggal", endDate);
       } else {
         const startDate = `${year}-01-01`;
@@ -170,7 +170,7 @@ export async function GET(request: Request) {
     if (error) {
       console.error("Error fetching rencana pendampingan:", error);
       console.error("Error details:", JSON.stringify(error, null, 2));
-      
+
       // If table doesn't exist, return empty array instead of error
       if (error.code === "42P01" || error.message?.includes("does not exist")) {
         console.warn("Table rencana_pendampingan does not exist yet, returning empty array");
@@ -179,10 +179,10 @@ export async function GET(request: Request) {
           rencanaPendampingan: [],
         });
       }
-      
+
       return NextResponse.json(
-        { 
-          error: "Gagal memuat rencana pendampingan", 
+        {
+          error: "Gagal memuat rencana pendampingan",
           details: error.message || "Unknown error",
           code: error.code || "UNKNOWN",
           hint: error.hint || null
@@ -196,14 +196,14 @@ export async function GET(request: Request) {
     // Fetch sekolah data for all sekolah_ids
     const sekolahIds = [...new Set((rencanaPendampingan || []).map((r: any) => r.sekolah_id).filter(Boolean))];
     let sekolahMap: Record<string, any> = {};
-    
+
     if (sekolahIds.length > 0) {
       try {
         const { data: sekolahData, error: sekolahError } = await adminClient
           .from("sekolah")
           .select("id, nama_sekolah, npsn")
           .in("id", sekolahIds);
-        
+
         if (sekolahError) {
           console.error("Error fetching sekolah data:", sekolahError);
         } else if (sekolahData) {
@@ -231,6 +231,7 @@ export async function GET(request: Request) {
         ? item.penjelasan_implementasi
         : [],
       apakah_kegiatan: item.apakah_kegiatan,
+      dokumentasi: Array.isArray(item.dokumentasi) ? item.dokumentasi : [],
       created_at: item.created_at,
       updated_at: item.updated_at,
     }));
@@ -243,7 +244,7 @@ export async function GET(request: Request) {
     console.error("Error in GET /api/pengawas/rencana-pendampingan:", error);
     console.error("Error stack:", error?.stack);
     return NextResponse.json(
-      { 
+      {
         error: "Terjadi kesalahan saat memuat rencana pendampingan",
         details: error?.message || "Unknown error",
         type: error?.name || "Unknown"
@@ -256,10 +257,10 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const supabase = await createSupabaseServerClient();
-    
+
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
+
     if (authError || !user) {
       return NextResponse.json(
         { error: "Unauthorized: Authentication required" },
@@ -416,10 +417,10 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const supabase = await createSupabaseServerClient();
-    
+
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
+
     if (authError || !user) {
       return NextResponse.json(
         { error: "Unauthorized: Authentication required" },
@@ -459,6 +460,7 @@ export async function PUT(request: Request) {
       kegiatan_benahi,
       penjelasan_implementasi,
       apakah_kegiatan,
+      dokumentasi, // Add this
     } = body;
 
     if (!id) {
@@ -543,6 +545,7 @@ export async function PUT(request: Request) {
         kegiatan_benahi: kegiatan_benahi.trim(),
         penjelasan_implementasi: penjelasan_implementasi.filter((p: string) => p.trim()),
         apakah_kegiatan: apakah_kegiatan ?? true,
+        dokumentasi: dokumentasi || [],
         updated_at: new Date().toISOString(),
       })
       .eq("id", id)
@@ -588,6 +591,7 @@ export async function PUT(request: Request) {
           ? updatedRencanaPendampingan.penjelasan_implementasi
           : [],
         apakah_kegiatan: updatedRencanaPendampingan.apakah_kegiatan,
+        dokumentasi: Array.isArray(updatedRencanaPendampingan.dokumentasi) ? updatedRencanaPendampingan.dokumentasi : [],
         created_at: updatedRencanaPendampingan.created_at,
         updated_at: updatedRencanaPendampingan.updated_at,
       },
@@ -604,10 +608,10 @@ export async function PUT(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const supabase = await createSupabaseServerClient();
-    
+
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
+
     if (authError || !user) {
       return NextResponse.json(
         { error: "Unauthorized: Authentication required" },
