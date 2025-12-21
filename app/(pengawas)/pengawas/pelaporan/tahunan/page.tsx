@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -39,14 +40,56 @@ const laporanTahunan = [
   },
 ];
 
-const statistikTahunan = [
-  { label: "Total Kegiatan", value: "119", change: "+15 dari tahun lalu", icon: BarChart3 },
-  { label: "Sekolah Binaan", value: "31", change: "+3 sekolah baru", icon: TrendingUp },
-  { label: "Pelaporan Triwulan", value: "75%", change: "3 dari 4 triwulan", icon: FileCheck },
-  { label: "Tingkat Penyelesaian", value: "85%", change: "Kegiatan tuntas", icon: CheckCircle2 },
-];
-
 export default function LaporanTahunanPage() {
+  const [statistik, setStatistik] = useState([
+    { label: "Total Kegiatan", value: "...", change: "...", icon: BarChart3 },
+    { label: "Sekolah Binaan", value: "...", change: "...", icon: TrendingUp },
+    { label: "Pelaporan Triwulan", value: "...", change: "...", icon: FileCheck },
+    { label: "Tingkat Penyelesaian", value: "...", change: "...", icon: CheckCircle2 },
+  ]);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const currentYear = new Date().getFullYear();
+        const res = await fetch(`/api/pengawas/laporan/tahunan/stats?year=${currentYear}`);
+        if (res.ok) {
+          const data = await res.json();
+          setStatistik([
+            {
+              label: "Total Kegiatan",
+              value: data.totalKegiatan.value.toString(),
+              change: data.totalKegiatan.text,
+              icon: BarChart3
+            },
+            {
+              label: "Sekolah Binaan",
+              value: data.sekolahBinaan.value.toString(),
+              change: data.sekolahBinaan.text,
+              icon: TrendingUp
+            },
+            {
+              label: "Pelaporan Triwulan",
+              value: data.pelaporanTriwulan.value,
+              change: data.pelaporanTriwulan.text,
+              icon: FileCheck
+            },
+            {
+              label: "Tingkat Penyelesaian",
+              value: data.tingkatPenyelesaian.value,
+              change: data.tingkatPenyelesaian.text,
+              icon: CheckCircle2
+            },
+          ]);
+        }
+      } catch (error) {
+        console.error("Failed to fetch stats:", error);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -65,7 +108,7 @@ export default function LaporanTahunanPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {statistikTahunan.map((stat) => (
+        {statistik.map((stat) => (
           <Card
             key={stat.label}
             className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70"

@@ -60,19 +60,27 @@ export default function RencanaProgramPage() {
 
       // Fetch from database via API
       const response = await fetch("/api/pengawas/rencana-program");
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error("Gagal memuat rencana program");
+        throw new Error(data.details || data.error || "Gagal memuat rencana program");
       }
 
-      const data = await response.json();
       setRencanaProgram(data.rencanaProgram || []);
       setSekolahBelumRencana(data.sekolahBelumRencana || []);
-    } catch (error) {
+
+      if (data.warning) {
+        toast({
+          title: "Peringatan",
+          description: data.warning,
+          variant: "warning",
+        });
+      }
+    } catch (error: any) {
       console.error("Error loading rencana program:", error);
       toast({
         title: "Error",
-        description: "Gagal memuat rencana program",
+        description: error.message || "Gagal memuat rencana program",
         variant: "error",
       });
       setRencanaProgram([]);

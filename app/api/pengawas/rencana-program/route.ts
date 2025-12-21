@@ -5,10 +5,10 @@ import { NextResponse } from "next/server";
 export async function GET(request: Request) {
   try {
     const supabase = await createSupabaseServerClient();
-    
+
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
+
     if (authError || !user) {
       return NextResponse.json(
         { error: "Unauthorized" },
@@ -33,6 +33,7 @@ export async function GET(request: Request) {
     }
 
     // Fetch rencana program for this pengawas using admin client to bypass RLS
+    console.log("Fetching rencana_program for user:", user.id);
     const { data: rencanaProgram, error } = await adminClient
       .from("rencana_program")
       .select("*")
@@ -41,11 +42,29 @@ export async function GET(request: Request) {
 
     if (error) {
       console.error("Error fetching rencana program:", error);
+
+      // If table doesn't exist, return empty array instead of 500 error
+      if (error.code === "42P01") {
+        console.warn("Table 'rencana_program' does not exist. Returning empty results.");
+        return NextResponse.json({
+          rencanaProgram: [],
+          sekolahBinaan: [],
+          sekolahBelumRencana: [],
+          warning: "Tabel rencana_program belum dibuat"
+        });
+      }
+
       return NextResponse.json(
-        { error: "Gagal memuat rencana program" },
+        {
+          error: "Gagal memuat rencana program",
+          details: error.message,
+          code: error.code
+        },
         { status: 500 }
       );
     }
+
+    console.log("Rencana program found:", rencanaProgram?.length || 0);
 
     // Get all sekolah_ids from rencana programs
     const allSekolahIds: string[] = [];
@@ -69,12 +88,15 @@ export async function GET(request: Request) {
     let sekolahMap: Record<string, any> = {};
     if (allSekolahIds.length > 0) {
       const uniqueSekolahIds = [...new Set(allSekolahIds)];
+      console.log("Fetching sekolah details for IDs:", uniqueSekolahIds);
       const { data: sekolahData, error: sekolahError } = await adminClient
         .from("sekolah")
         .select("id, npsn, nama_sekolah")
         .in("id", uniqueSekolahIds);
 
-      if (!sekolahError && sekolahData) {
+      if (sekolahError) {
+        console.error("Error fetching sekolah details:", sekolahError);
+      } else if (sekolahData) {
         sekolahData.forEach((sekolah: any) => {
           sekolahMap[String(sekolah.id)] = {
             id: sekolah.id,
@@ -86,6 +108,7 @@ export async function GET(request: Request) {
     }
 
     // Get current pengawas sekolah binaan from metadata
+    console.log("Fetching user metadata for binaan check");
     const { data: userMetadata, error: userMetadataError } = await adminClient
       .from("users")
       .select("metadata")
@@ -98,13 +121,17 @@ export async function GET(request: Request) {
         ? userMetadata.metadata.sekolah_binaan
         : [];
 
+      console.log("Found sekolah binaan in metadata:", sekolahBinaanNames);
+
       if (sekolahBinaanNames.length > 0) {
         const { data: sekolahBinaanData, error: sekolahBinaanError } = await adminClient
           .from("sekolah")
           .select("id, npsn, nama_sekolah")
           .in("nama_sekolah", sekolahBinaanNames);
 
-        if (!sekolahBinaanError && sekolahBinaanData) {
+        if (sekolahBinaanError) {
+          console.error("Error fetching sekolah binaan details:", sekolahBinaanError);
+        } else if (sekolahBinaanData) {
           sekolahBinaan = sekolahBinaanData.map((s: any) => ({
             id: s.id,
             npsn: s.npsn,
@@ -112,6 +139,8 @@ export async function GET(request: Request) {
           }));
         }
       }
+    } else if (userMetadataError) {
+      console.error("Error fetching user metadata:", userMetadataError);
     }
 
     // Transform data to match interface
@@ -138,10 +167,10 @@ export async function GET(request: Request) {
         periode: item.periode || `Tahun ${new Date(item.created_at).getFullYear()}`,
         tanggal: item.created_at
           ? new Date(item.created_at).toLocaleDateString("id-ID", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })
           : "-",
         status: item.status || "Draft",
         file: item.file,
@@ -158,15 +187,19 @@ export async function GET(request: Request) {
       (s) => !sekolahIdsWithRencana.has(String(s.id))
     );
 
+    console.log("GET /api/pengawas/rencana-program - Success");
     return NextResponse.json({
       rencanaProgram: transformedData,
       sekolahBinaan: sekolahBinaan,
       sekolahBelumRencana: sekolahBelumRencana,
     });
-  } catch (error) {
-    console.error("Error in GET /api/pengawas/rencana-program:", error);
+  } catch (error: any) {
+    console.error("Critical error in GET /api/pengawas/rencana-program:", error);
     return NextResponse.json(
-      { error: "Terjadi kesalahan saat memuat rencana program" },
+      {
+        error: "Terjadi kesalahan sistem saat memuat rencana program",
+        details: error.message
+      },
       { status: 500 }
     );
   }
@@ -175,10 +208,10 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const supabase = await createSupabaseServerClient();
-    
+
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
+
     if (authError || !user) {
       console.error("Auth error:", authError);
       return NextResponse.json(

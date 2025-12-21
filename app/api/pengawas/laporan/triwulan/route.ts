@@ -46,8 +46,7 @@ export async function GET(request: Request) {
             .select("*")
             .eq("pengawas_id", user.id)
             .eq("status", "Terbit") // Only published ones
-            .gte("updated_at", startDate.toISOString())
-            .lte("updated_at", endDate.toISOString());
+            .ilike("periode", `%${year}%`); // Match period string (e.g. "Tahun 2025")
 
         if (progError) throw progError;
 
