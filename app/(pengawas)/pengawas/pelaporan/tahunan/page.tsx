@@ -9,9 +9,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { FileCheck, Download, CheckCircle2, BarChart3, TrendingUp } from "lucide-react";
+import { FileCheck, Download, CheckCircle2, BarChart3, TrendingUp, ArrowRight, Trash2, Send } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const laporanTahunan = [
   {
@@ -41,6 +50,79 @@ const laporanTahunan = [
 ];
 
 export default function LaporanTahunanPage() {
+  const { toast } = useToast();
+  const [reports, setReports] = useState(laporanTahunan);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  // Load state from localStorage on client mount
+  useEffect(() => {
+    const storedDeleted = localStorage.getItem("laporan_deleted");
+    const storedPublished = localStorage.getItem("laporan_published");
+
+    let updatedReports = [...laporanTahunan];
+
+    // Filter deleted
+    if (storedDeleted) {
+      const deletedIds = JSON.parse(storedDeleted);
+      updatedReports = updatedReports.filter(r => !deletedIds.includes(r.id));
+    }
+
+    // Update published status
+    if (storedPublished) {
+      const publishedIds = JSON.parse(storedPublished);
+      updatedReports = updatedReports.map(r =>
+        publishedIds.includes(r.id) ? { ...r, status: "Selesai" } : r
+      );
+    }
+
+    setReports(updatedReports);
+  }, []);
+
+  const handleDelete = (id: string) => {
+    setDeleteId(id);
+  };
+
+  const confirmDelete = () => {
+    if (deleteId) {
+      setReports((prev) => {
+        const newState = prev.filter((item) => item.id !== deleteId);
+
+        // Persist deletion
+        const currentDeleted = JSON.parse(localStorage.getItem("laporan_deleted") || "[]");
+        localStorage.setItem("laporan_deleted", JSON.stringify([...currentDeleted, deleteId]));
+
+        return newState;
+      });
+
+      toast({
+        title: "Laporan Dihapus",
+        description: "Laporan tahunan berhasil dihapus dari daftar.",
+        variant: "success",
+      });
+      setDeleteId(null);
+    }
+  };
+
+  const handlePublish = (id: string) => {
+    setReports((prev) => {
+      const updated = prev.map((r) =>
+        r.id === id ? { ...r, status: "Selesai" } : r
+      );
+
+      // Persist status
+      const currentPublished = JSON.parse(localStorage.getItem("laporan_published") || "[]");
+      localStorage.setItem("laporan_published", JSON.stringify([...currentPublished, id]));
+
+      return updated;
+    });
+
+    toast({
+      title: "Laporan Diterbitkan",
+      description: "Laporan tahunan berhasil diterbitkan.",
+      variant: "success",
+    });
+  };
+
   const [statistik, setStatistik] = useState([
     { label: "Total Kegiatan", value: "...", change: "...", icon: BarChart3 },
     { label: "Sekolah Binaan", value: "...", change: "...", icon: TrendingUp },
@@ -128,7 +210,7 @@ export default function LaporanTahunanPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {laporanTahunan.map((laporan) => (
+        {reports.map((laporan) => (
           <Card
             key={laporan.id}
             className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70 transition hover:shadow-lg hover:shadow-indigo-200"
@@ -163,21 +245,35 @@ export default function LaporanTahunanPage() {
                 <FileCheck className="size-4 text-indigo-500" />
                 <span className="text-xs truncate">{laporan.file}</span>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-3 pt-2">
                 <Button
-                  variant="outline"
-                  className="flex-1 rounded-full border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300"
+                  className="flex-1 rounded-full bg-indigo-600 text-white shadow-md shadow-indigo-200 hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-300 transition-all duration-300 group"
                   asChild
                 >
                   <Link href={`/pengawas/pelaporan/tahunan/${laporan.id}`}>
-                    Lihat Detail
+                    <span className="mr-2">Lihat Detail</span>
+                    <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
                   </Link>
                 </Button>
+                {laporan.status === "Draft" && (
+                  <Button
+                    className="size-10 rounded-full border-0 bg-green-50 text-green-600 shadow-sm hover:bg-green-100 hover:text-green-700 transition-all duration-300"
+                    title="Terbitkan Laporan"
+                    onClick={() => handlePublish(laporan.id)}
+                  >
+                    <Send className="size-4" />
+                  </Button>
+                )}
                 <Button
-                  variant="outline"
-                  className="rounded-full border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300"
+                  className="size-10 rounded-full border-0 bg-indigo-50 text-indigo-600 shadow-sm hover:bg-indigo-100 hover:text-indigo-700 transition-all duration-300"
                 >
                   <Download className="size-4" />
+                </Button>
+                <Button
+                  className="size-10 rounded-full border-0 bg-rose-50 text-rose-600 shadow-sm hover:bg-rose-100 hover:text-rose-700 transition-all duration-300"
+                  onClick={() => handleDelete(laporan.id)}
+                >
+                  <Trash2 className="size-4" />
                 </Button>
               </div>
             </CardContent>
@@ -218,6 +314,29 @@ export default function LaporanTahunanPage() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-slate-900 font-bold">Hapus Laporan?</DialogTitle>
+            <DialogDescription className="text-slate-600">
+              Apakah Anda yakin ingin menghapus laporan ini? Tindakan ini tidak dapat dibatalkan.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteId(null)} className="border-2 border-slate-200 bg-transparent text-slate-900 font-medium hover:bg-slate-50 hover:border-slate-300 transition-colors">
+              Batal
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700 text-white shadow-sm"
+            >
+              Hapus
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -35,15 +35,15 @@ export async function GET() {
         .order('nama_sekolah', { ascending: true });
 
       if (!sekolahError && sekolahData) {
-      sekolahBinaanDetails = sekolahData.map((sekolah) => ({
-        id: sekolah.id,
-        nama: sekolah.nama_sekolah,
-        npsn: sekolah.npsn,
-        jenis: sekolah.status, // Negeri/Swasta
-        jenjang: sekolah.jenjang, // SMA/SLB/SMK
-        status: 'Aktif', // Default status
-        pelaporan: 'Triwulan 3 selesai', // Placeholder - will be updated when pelaporan table exists
-      }));
+        sekolahBinaanDetails = sekolahData.map((sekolah) => ({
+          id: sekolah.id,
+          nama: sekolah.nama_sekolah,
+          npsn: sekolah.npsn,
+          jenis: sekolah.status, // Negeri/Swasta
+          jenjang: sekolah.jenjang, // SMA/SLB/SMK
+          status: 'Aktif', // Default status
+          pelaporan: 'Triwulan 3 selesai', // Placeholder - will be updated when pelaporan table exists
+        }));
       }
     }
 
@@ -87,8 +87,66 @@ export async function GET() {
       percentage: Math.round((completedQuarters / 4) * 100),
     };
 
-    // Placeholder data for jadwal kegiatan (will be updated when agenda/supervisi table exists)
-    const jadwalKegiatan: any[] = [];
+    // Fetch upcoming activities (rencana_pendampingan)
+    let jadwalKegiatan: any[] = [];
+    try {
+      // Get today's date in YYYY-MM-DD format for comparison
+      // We want to show activities from today onwards
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+      const { data: rencanaData, error: rencanaError } = await adminClient
+        .from('rencana_pendampingan')
+        .select('id, tanggal, sekolah_id, indikator_utama, apakah_kegiatan')
+        .eq('pengawas_id', pengawasUser.id)
+        .gte('tanggal', todayStr)
+        .order('tanggal', { ascending: true })
+        .limit(5);
+
+      if (!rencanaError && rencanaData && rencanaData.length > 0) {
+        // Fetch sekolah names for these activities
+        const sekolahIds = [...new Set(rencanaData.map((r: any) => r.sekolah_id))];
+        let sekolahMap: Record<string, string> = {};
+
+        if (sekolahIds.length > 0) {
+          const { data: sekolahData } = await adminClient
+            .from('sekolah')
+            .select('id, nama_sekolah')
+            .in('id', sekolahIds);
+
+          if (sekolahData) {
+            sekolahData.forEach((s: any) => {
+              sekolahMap[s.id] = s.nama_sekolah;
+            });
+          }
+        }
+
+        // Map to dashboard format
+        jadwalKegiatan = rencanaData.map((r: any) => {
+          const sekolahNama = sekolahMap[r.sekolah_id] || 'Sekolah';
+          // Format date for display (e.g., "Senin, 12 Jan 2025")
+          const dateObj = new Date(r.tanggal);
+          const dateDisplay = dateObj.toLocaleDateString('id-ID', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+          });
+
+          return {
+            id: r.id,
+            title: `${sekolahNama}`,
+            date: dateDisplay,
+            type: r.apakah_kegiatan ? 'Pendampingan' : 'Non-Pendampingan',
+            status: 'Terjadwal'
+          };
+        });
+      }
+    } catch (err) {
+      console.error("Error fetching jadwal kegiatan:", err);
+      // Continue with empty array if error
+    }
 
     // Placeholder data for notifikasi (will be updated when notifications table exists)
     const notifikasi: any[] = [];
@@ -109,7 +167,7 @@ export async function GET() {
         },
         supervisiTerjadwal: {
           value: jadwalKegiatan.length.toString(),
-          change: "Bulan ini",
+          change: jadwalKegiatan.length > 0 ? "Akan datang" : "Tidak ada jadwal",
         },
         tenggatWaktu: {
           value: tenggatWaktu.toString(),
@@ -117,7 +175,7 @@ export async function GET() {
         },
       },
       sekolahBinaan: sekolahBinaanDetails.slice(0, 3), // Limit to 3 for preview
-      jadwalKegiatan: jadwalKegiatan.slice(0, 3), // Limit to 3 for preview
+      jadwalKegiatan: jadwalKegiatan,
       notifikasi: notifikasi.slice(0, 3), // Limit to 3 for preview
       pelaporanTriwulan: {
         year: currentYear,
