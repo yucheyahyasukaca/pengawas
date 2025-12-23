@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -10,36 +11,64 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { GraduationCap, Plus, Download, FileText, Calendar, Award } from "lucide-react";
+import { GraduationCap, Plus, Download, FileText, Award, MoreVertical, Loader2, Calendar } from "lucide-react";
+import { format } from "date-fns";
+import { id } from "date-fns/locale";
 
-const pengembanganDiri = [
-  {
-    id: "pd-001",
-    nama: "Workshop Supervisi Akademik Berbasis Digital",
-    tanggal: "15 Oktober 2025",
-    materi: "Penggunaan teknologi dalam supervisi akademik",
-    sertifikat: "Sertifikat_Pengembangan_Diri_001.pdf",
-    status: "Disetujui",
-  },
-  {
-    id: "pd-002",
-    nama: "Pelatihan Pendampingan Kurikulum Merdeka",
-    tanggal: "1 Oktober 2025",
-    materi: "Strategi pendampingan implementasi Kurikulum Merdeka",
-    sertifikat: "Sertifikat_Pengembangan_Diri_002.pdf",
-    status: "Disetujui",
-  },
-  {
-    id: "pd-003",
-    nama: "Seminar Nasional Kepengawasan",
-    tanggal: "20 September 2025",
-    materi: "Best practice kepengawasan di era digital",
-    sertifikat: "Sertifikat_Pengembangan_Diri_003.pdf",
-    status: "Selesai",
-  },
-];
+interface PengembanganDiri {
+  id: string;
+  nama_kegiatan: string;
+  tanggal_kegiatan: string;
+  materi_kegiatan: string;
+  sertifikat_url: string | null;
+  status: string;
+}
 
 export default function PengembanganDiriPage() {
+  const [data, setData] = useState<PengembanganDiri[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState("semua");
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch("/api/pengawas/pengembangan-diri");
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || `Gagal mengambil data (${response.status})`);
+      }
+      const result = await response.json();
+      setData(result);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "disetujui":
+        return "bg-green-100 text-green-700 hover:bg-green-200";
+      case "selesai":
+        return "bg-blue-100 text-blue-700 hover:bg-blue-200";
+      case "ditolak":
+        return "bg-red-100 text-red-700 hover:bg-red-200";
+      default:
+        return "bg-yellow-100 text-yellow-700 hover:bg-yellow-200";
+    }
+  };
+
+  const filteredData = data.filter((item) => {
+    if (filter === "semua") return true;
+    return item.status === filter;
+  });
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -60,64 +89,119 @@ export default function PengembanganDiriPage() {
         </Button>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {pengembanganDiri.map((pd) => (
-          <Card
-            key={pd.id}
-            className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70 transition hover:shadow-lg hover:shadow-indigo-200"
+      <div className="flex gap-2 overflow-x-auto pb-2">
+        {["semua", "diajukan", "disetujui", "selesai"].map((status) => (
+          <Button
+            key={status}
+            variant={filter === status ? "default" : "outline"}
+            className={`rounded-full capitalize ${filter === status
+              ? "bg-indigo-600 text-white hover:bg-indigo-700"
+              : "border-indigo-200 text-indigo-600 hover:bg-indigo-50"
+              }`}
+            onClick={() => setFilter(status)}
           >
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex size-12 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 via-indigo-400 to-blue-400 text-white shadow-md">
-                    <GraduationCap className="size-6" />
-                  </div>
-                  <div className="flex-1">
-                    <CardTitle className="text-base font-semibold text-slate-900">
-                      {pd.nama}
-                    </CardTitle>
-                    <CardDescription className="text-xs text-slate-500 mt-1">
-                      Tanggal: {pd.tanggal}
-                    </CardDescription>
-                  </div>
-                </div>
-                <Badge className="rounded-full border-0 bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-600">
-                  {pd.status}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-start gap-2 text-sm text-slate-600">
-                <FileText className="size-4 text-indigo-500 mt-0.5 shrink-0" />
-                <div>
-                  <span className="font-medium">Materi:</span> {pd.materi}
-                </div>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-slate-600">
-                <Award className="size-3 text-indigo-500" />
-                <span className="truncate">{pd.sertifikat}</span>
-              </div>
-              <div className="flex gap-2 pt-2">
-                <Button
-                  variant="outline"
-                  className="flex-1 rounded-full border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300"
-                  asChild
-                >
-                  <Link href={`/pengawas/pengembangan-diri/${pd.id}`}>
-                    Lihat Detail
-                  </Link>
-                </Button>
-                <Button
-                  variant="outline"
-                  className="rounded-full border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300"
-                >
-                  <Download className="size-4" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+            {status}
+          </Button>
         ))}
       </div>
+
+      {loading ? (
+        <div className="flex justify-center py-10">
+          <Loader2 className="animate-spin h-8 w-8 text-indigo-600" />
+        </div>
+      ) : error ? (
+        <div className="text-center text-red-500 py-10">Error: {error}</div>
+      ) : filteredData.length === 0 ? (
+        <Card className="border border-dashed border-slate-300 bg-slate-50 shadow-none">
+          <CardContent className="flex flex-col items-center justify-center py-10 text-center">
+            <div className="rounded-full bg-slate-100 p-4 mb-3">
+              <GraduationCap className="h-8 w-8 text-slate-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-slate-900">
+              {filter === "semua" ? "Belum ada kegiatan" : "Tidak ada kegiatan dengan status ini"}
+            </h3>
+            <p className="text-slate-500 max-w-sm mt-1 mb-4">
+              {filter === "semua" ? "Anda belum menambahkan kegiatan pengembangan diri. Silakan tambahkan kegiatan baru." : "Cobalah ubah filter status atau tambahkan kegiatan baru."}
+            </p>
+            {filter === "semua" && (
+              <Button
+                className="rounded-full border-0 bg-indigo-600 px-6 font-semibold text-white shadow-md transition hover:bg-indigo-700 hover:text-white"
+                asChild
+              >
+                <Link href="/pengawas/pengembangan-diri/buat">
+                  <Plus className="size-4 mr-2" />
+                  Tambah Kegiatan
+                </Link>
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {filteredData.map((pd) => (
+            <Card
+              key={pd.id}
+              className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70 transition hover:shadow-lg hover:shadow-indigo-200"
+            >
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex size-12 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 via-indigo-400 to-blue-400 text-white shadow-md">
+                      <GraduationCap className="size-6" />
+                    </div>
+                    <div className="flex-1">
+                      <CardTitle className="text-base font-semibold text-slate-900 line-clamp-2">
+                        {pd.nama_kegiatan}
+                      </CardTitle>
+                      <CardDescription className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                        <Calendar className="size-3" />
+                        {format(new Date(pd.tanggal_kegiatan), "d MMMM yyyy", { locale: id })}
+                      </CardDescription>
+                    </div>
+                  </div>
+                  <Badge className={`rounded-full border-0 px-3 py-1 text-xs font-semibold ${getStatusColor(pd.status)}`}>
+                    {pd.status}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-start gap-2 text-sm text-slate-600">
+                  <FileText className="size-4 text-indigo-500 mt-0.5 shrink-0" />
+                  <div className="line-clamp-2">
+                    <span className="font-medium">Materi:</span> {pd.materi_kegiatan}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-slate-600">
+                  <Award className="size-3 text-indigo-500" />
+                  <span className="truncate">{pd.sertifikat_url ? "Sertifikat tersedia" : "Belum ada sertifikat"}</span>
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1 rounded-full border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300"
+                    asChild
+                  >
+                    <Link href={`/pengawas/pengembangan-diri/${pd.id}`}>
+                      Lihat Detail
+                    </Link>
+                  </Button>
+                  {pd.sertifikat_url && (
+                    <Button
+                      variant="outline"
+                      className="rounded-full border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300"
+                      asChild
+                    >
+                      <a href={pd.sertifikat_url} target="_blank" rel="noopener noreferrer">
+                        <Download className="size-4" />
+                      </a>
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
         <CardHeader>
@@ -164,4 +248,3 @@ export default function PengembanganDiriPage() {
     </div>
   );
 }
-
