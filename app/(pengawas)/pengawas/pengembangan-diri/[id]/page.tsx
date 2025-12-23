@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Calendar, FileText, Download, Edit, Trash2, Loader2 } from "lucide-react";
+import { ArrowLeft, Calendar, FileText, Download, Edit, Trash2, Loader2, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -45,6 +45,7 @@ export default function DetailPengembanganDiriPage({ params }: { params: Promise
     const [deleting, setDeleting] = useState(false);
     const [idParam, setIdParam] = useState<string>("");
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [viewDialogOpen, setViewDialogOpen] = useState(false);
 
     useEffect(() => {
         params.then((resolvedParams) => {
@@ -204,7 +205,7 @@ export default function DetailPengembanganDiriPage({ params }: { params: Promise
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            className="rounded-full border-indigo-200 text-indigo-600 hover:bg-indigo-100 hover:border-indigo-300 shrink-0"
+                                            className="rounded-full border-indigo-200 text-indigo-600 bg-white hover:bg-indigo-50 hover:text-indigo-700 shrink-0 shadow-sm"
                                             asChild
                                         >
                                             <a href={data.sertifikat_url} target="_blank" rel="noopener noreferrer">
@@ -212,6 +213,38 @@ export default function DetailPengembanganDiriPage({ params }: { params: Promise
                                                 Unduh
                                             </a>
                                         </Button>
+                                    </div>
+
+                                    <div className="mt-2">
+                                        <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
+                                            <DialogTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="w-full text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50"
+                                                >
+                                                    <Eye className="size-4 mr-2" />
+                                                    Lihat Dokumen
+                                                </Button>
+                                            </DialogTrigger>
+                                            <DialogContent className="max-w-4xl w-full h-[80vh] flex flex-col p-6 bg-white overflow-hidden">
+                                                <DialogHeader>
+                                                    <DialogTitle className="text-slate-900">Preview Dokumen</DialogTitle>
+                                                    <DialogDescription className="text-slate-600">Dokumen bukti kegiatan pengembangan diri</DialogDescription>
+                                                </DialogHeader>
+                                                <div className="flex-1 w-full h-full relative bg-slate-100 rounded-lg overflow-hidden border border-slate-200 mt-2 flex items-center justify-center">
+                                                    {data.sertifikat_url.toLowerCase().endsWith('.pdf') ? (
+                                                        <iframe src={data.sertifikat_url} className="w-full h-full" title="Dokumen Preview"></iframe>
+                                                    ) : (
+                                                        // eslint-disable-next-line @next/next/no-img-element
+                                                        <img src={data.sertifikat_url} alt="Dokumen Bukti" className="max-w-full max-h-full object-contain" />
+                                                    )}
+                                                </div>
+                                                <DialogFooter className="mt-4">
+                                                    <Button variant="outline" onClick={() => setViewDialogOpen(false)} className="border-slate-300 text-slate-700">Tutup</Button>
+                                                </DialogFooter>
+                                            </DialogContent>
+                                        </Dialog>
                                     </div>
                                 </div>
                             )}
@@ -226,8 +259,8 @@ export default function DetailPengembanganDiriPage({ params }: { params: Promise
                         </CardHeader>
                         <CardContent className="flex flex-col gap-3">
                             <Button
-                                variant="outline"
-                                className="w-full justify-start rounded-xl border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300"
+                                variant="default"
+                                className="w-full justify-start rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border-0 shadow-none font-medium"
                                 onClick={() => router.push(`/pengawas/pengembangan-diri/${idParam}/edit`)}
                             >
                                 <Edit className="size-4 mr-2" />
@@ -237,36 +270,38 @@ export default function DetailPengembanganDiriPage({ params }: { params: Promise
                             <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
                                 <DialogTrigger asChild>
                                     <Button
-                                        variant="destructive"
-                                        className="w-full justify-start rounded-xl bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 hover:border-red-200 shadow-none hover:shadow-sm"
+                                        variant="default"
+                                        className="w-full justify-start rounded-xl bg-red-50 text-red-600 hover:bg-red-100 border-0 shadow-none font-medium"
                                     >
                                         <Trash2 className="size-4 mr-2" />
                                         Hapus Kegiatan
                                     </Button>
                                 </DialogTrigger>
                                 <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle>Apakah Anda yakin?</DialogTitle>
-                                        <DialogDescription>
-                                            Tindakan ini tidak dapat dibatalkan. Data kegiatan ini akan dihapus permanen dari sistem.
-                                        </DialogDescription>
-                                    </DialogHeader>
-                                    <DialogFooter className="gap-2 sm:gap-0">
-                                        <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Batal</Button>
-                                        <Button
-                                            onClick={handleDelete}
-                                            disabled={deleting}
-                                            className="bg-red-600 hover:bg-red-700 text-white"
-                                        >
-                                            {deleting ? "Menghapus..." : "Ya, Hapus"}
-                                        </Button>
-                                    </DialogFooter>
+                                    <div className="bg-white p-6 rounded-lg">
+                                        <DialogHeader>
+                                            <DialogTitle className="text-slate-900">Apakah Anda yakin?</DialogTitle>
+                                            <DialogDescription className="text-slate-600">
+                                                Tindakan ini tidak dapat dibatalkan. Data kegiatan ini akan dihapus permanen dari sistem.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <DialogFooter className="gap-2 sm:gap-0 mt-4">
+                                            <Button variant="outline" className="text-slate-700 border-slate-300" onClick={() => setDeleteDialogOpen(false)}>Batal</Button>
+                                            <Button
+                                                onClick={handleDelete}
+                                                disabled={deleting}
+                                                className="bg-red-600 hover:bg-red-700 text-white"
+                                            >
+                                                {deleting ? "Menghapus..." : "Ya, Hapus"}
+                                            </Button>
+                                        </DialogFooter>
+                                    </div>
                                 </DialogContent>
                             </Dialog>
                         </CardContent>
                     </Card>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

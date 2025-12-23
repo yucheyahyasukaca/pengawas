@@ -64,7 +64,7 @@ export async function POST(request: Request) {
                 tanggal_kegiatan,
                 materi_kegiatan,
                 sertifikat_url,
-                status: "diajukan",
+                status: "disetujui",
             })
             .select()
             .single();

@@ -93,10 +93,10 @@ export default function PengembanganDiriPage() {
         {["semua", "diajukan", "disetujui", "selesai"].map((status) => (
           <Button
             key={status}
-            variant={filter === status ? "default" : "outline"}
-            className={`rounded-full capitalize ${filter === status
-              ? "bg-indigo-600 text-white hover:bg-indigo-700"
-              : "border-indigo-200 text-indigo-600 hover:bg-indigo-50"
+            variant={filter === status ? "default" : "ghost"}
+            className={`rounded-full capitalize px-6 transition-all duration-200 ${filter === status
+              ? "bg-indigo-600 text-white shadow-md shadow-indigo-200 hover:bg-indigo-700 hover:shadow-lg"
+              : "bg-slate-100 text-slate-600 hover:bg-white hover:text-indigo-600 border border-slate-200 hover:border-indigo-200 shadow-sm"
               }`}
             onClick={() => setFilter(status)}
           >
@@ -177,8 +177,8 @@ export default function PengembanganDiriPage() {
                 </div>
                 <div className="flex gap-2 pt-2">
                   <Button
-                    variant="outline"
-                    className="flex-1 rounded-full border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300"
+                    variant="default"
+                    className="flex-1 rounded-full bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border-0 shadow-none font-medium"
                     asChild
                   >
                     <Link href={`/pengawas/pengembangan-diri/${pd.id}`}>
@@ -188,7 +188,7 @@ export default function PengembanganDiriPage() {
                   {pd.sertifikat_url && (
                     <Button
                       variant="outline"
-                      className="rounded-full border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300"
+                      className="rounded-full border-indigo-200 text-indigo-600 bg-white hover:bg-indigo-50 hover:text-indigo-700"
                       asChild
                     >
                       <a href={pd.sertifikat_url} target="_blank" rel="noopener noreferrer">
@@ -236,8 +236,7 @@ export default function PengembanganDiriPage() {
               </p>
             </div>
             <Button
-              variant="outline"
-              className="w-full rounded-full border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300"
+              className="w-full rounded-full bg-indigo-600 text-white shadow-md hover:bg-indigo-700 hover:shadow-lg transition-all"
             >
               <Download className="size-4 mr-2" />
               Unduh Laporan Pengembangan Diri
