@@ -7,7 +7,7 @@ export function AdminFooter() {
       {/* Mobile: Just version and hosted */}
       <div className="mx-auto flex w-full max-w-6xl items-center justify-center gap-2 text-[10px] text-slate-500 md:hidden">
         <span className="rounded-full bg-rose-50 px-1.5 py-0.5 text-[10px] font-medium text-rose-600">
-          v1.0.0
+          v1.1.0
         </span>
         <span className="text-rose-200">•</span>
         <span className="text-slate-500">
@@ -29,7 +29,7 @@ export function AdminFooter() {
         </p>
         <div className="flex flex-wrap items-center gap-2">
           <span className="rounded-full bg-white px-1.5 py-0.5 text-[10px] font-medium text-rose-600 ring-1 ring-rose-100">
-            Versi 1.0.0
+            Versi 1.1.0
           </span>
           <span className="text-rose-200">•</span>
           <span className="text-slate-600">

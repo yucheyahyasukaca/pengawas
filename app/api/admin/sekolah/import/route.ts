@@ -17,6 +17,8 @@ export async function POST(request: Request) {
   try {
     // Check admin authentication
     const adminUser = await getAdminUser();
+    console.log('[DEBUG] Import Route - Admin User:', adminUser ? { id: adminUser.id, role: adminUser.role } : 'null');
+
     if (!adminUser) {
       return NextResponse.json(
         { error: "Unauthorized: Admin access required" },
@@ -83,7 +85,7 @@ export async function POST(request: Request) {
 
     if (validData.length === 0) {
       return NextResponse.json(
-        { 
+        {
           error: "Tidak ada data valid untuk diimport",
           errors
         },
@@ -94,21 +96,21 @@ export async function POST(request: Request) {
     // Filter duplicate NPSN in incoming data (keep first occurrence, skip duplicates)
     const npsnSet = new Set<string>();
     const duplicateNPSN: string[] = [];
-    const uniqueValidData: SekolahData[] = [];
-    
+    const dataToInsert: SekolahData[] = [];
+
     validData.forEach((data, index) => {
       if (npsnSet.has(data.npsn)) {
         duplicateNPSN.push(data.npsn);
         errors.push(`Baris ${index + 2}: NPSN ${data.npsn} duplikat dalam data import (dilewati)`);
       } else {
         npsnSet.add(data.npsn);
-        uniqueValidData.push(data);
+        dataToInsert.push(data);
       }
     });
 
-    if (uniqueValidData.length === 0) {
+    if (dataToInsert.length === 0) {
       return NextResponse.json(
-        { 
+        {
           error: "Semua data memiliki NPSN duplikat atau tidak valid",
           errors
         },
@@ -116,53 +118,25 @@ export async function POST(request: Request) {
       );
     }
 
-    // Check existing NPSN in database and filter them out
-    const npsnList = uniqueValidData.map(d => d.npsn);
-    const { data: existing } = await adminClient
+    // Insert or Update data (Upsert)
+    // We use onConflict: 'npsn' to update if NPSN already exists
+    const { data: upsertedData, error: upsertError } = await adminClient
       .from('sekolah')
-      .select('npsn')
-      .in('npsn', npsnList);
-
-    const existingNPSN = new Set(existing?.map(e => e.npsn) || []);
-    const dataToInsert: SekolahData[] = [];
-    const skippedNPSN: string[] = [];
-
-    uniqueValidData.forEach((data, index) => {
-      if (existingNPSN.has(data.npsn)) {
-        skippedNPSN.push(data.npsn);
-        errors.push(`Baris ${index + 2}: NPSN ${data.npsn} sudah terdaftar di database (dilewati)`);
-      } else {
-        dataToInsert.push(data);
-      }
-    });
-
-    if (dataToInsert.length === 0) {
-      return NextResponse.json(
-        { 
-          error: "Semua NPSN sudah terdaftar di database",
-          errors,
-          skipped: skippedNPSN.length
-        },
-        { status: 400 }
-      );
-    }
-
-    // Insert only non-duplicate data
-    const { data: insertedData, error: insertError } = await adminClient
-      .from('sekolah')
-      .insert(
+      .upsert(
         dataToInsert.map(d => ({
           ...d,
-          created_by: adminUser.id
-        }))
+          created_by: adminUser.id,
+          updated_at: new Date().toISOString()
+        })),
+        { onConflict: 'npsn' }
       )
       .select();
 
-    if (insertError) {
-      console.error("Error importing sekolah:", insertError);
+    if (upsertError) {
+      console.error("Error upserting sekolah:", upsertError);
       return NextResponse.json(
-        { 
-          error: insertError.message || "Gagal mengimport data sekolah",
+        {
+          error: upsertError.message || "Gagal mengimport/update data sekolah",
           errors
         },
         { status: 400 }
@@ -171,27 +145,21 @@ export async function POST(request: Request) {
 
     // Build success message
     const successMessages: string[] = [];
-    successMessages.push(`${dataToInsert.length} sekolah berhasil diimport`);
-    
-    if (skippedNPSN.length > 0) {
-      successMessages.push(`${skippedNPSN.length} NPSN sudah terdaftar (dilewati)`);
-    }
-    
+    successMessages.push(`${dataToInsert.length} data sekolah berhasil diproses (tambah/update)`);
+
     if (duplicateNPSN.length > 0) {
-      successMessages.push(`${duplicateNPSN.length} NPSN duplikat dalam data (dilewati)`);
+      successMessages.push(`${duplicateNPSN.length} NPSN duplikat dalam file Excel (hanya data pertama yang diambil)`);
     }
 
     return NextResponse.json(
-      { 
+      {
         success: true,
         message: successMessages.join('. '),
-        imported: dataToInsert.length,
-        skipped: skippedNPSN.length,
-        duplicate: duplicateNPSN.length,
+        processed: dataToInsert.length,
+        duplicateInFile: duplicateNPSN.length,
         errors: errors.length > 0 ? errors : undefined,
-        skippedNPSN: skippedNPSN.length > 0 ? skippedNPSN : undefined,
-        duplicateNPSN: duplicateNPSN.length > 0 ? Array.from(new Set(duplicateNPSN)) : undefined,
-        sekolah: insertedData
+        duplicateNPSNInFile: duplicateNPSN.length > 0 ? Array.from(new Set(duplicateNPSN)) : undefined,
+        sekolah: upsertedData
       },
       { status: 200 }
     );

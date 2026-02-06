@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import { Providers } from "./providers";
 import { cn } from "@/lib/utils";
 import { siteConfig } from "@/config/site";
+import { VersionChecker } from "@/components/ui/version-checker";
 import "./globals.css";
 
 const inter = Inter({
@@ -58,7 +59,10 @@ export default function RootLayout({
           jetbrainsMono.variable,
         )}
       >
-        <Providers>{children}</Providers>
+        <Providers>
+          <VersionChecker />
+          {children}
+        </Providers>
       </body>
     </html>
   );
