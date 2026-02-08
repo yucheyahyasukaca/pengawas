@@ -4,8 +4,13 @@ import { NextResponse } from "next/server";
 import { getPengawasUser } from "@/lib/auth-utils";
 
 // GET - Get dashboard data for pengawas
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "5");
+    const offset = (page - 1) * limit;
+
     // Check pengawas authentication
     const pengawasUser = await getPengawasUser();
     if (!pengawasUser) {
@@ -17,42 +22,51 @@ export async function GET() {
 
     // Use admin client to bypass RLS if needed
     const adminClient = createSupabaseAdminClient();
-    const supabase = await createSupabaseServerClient();
 
     // Get sekolah binaan from metadata
     const sekolahBinaanNames = Array.isArray(pengawasUser.metadata?.sekolah_binaan)
       ? pengawasUser.metadata.sekolah_binaan
       : [];
 
-    // Fetch sekolah details from sekolah table
     let sekolahBinaanDetails: any[] = [];
+    let totalSekolah = 0;
+    let statsChangeText = "0 Sekolah";
+
+    // Filter sekolah based on names and apply pagination
     if (sekolahBinaanNames.length > 0) {
-      // Try to fetch sekolah by nama_sekolah
-      const { data: sekolahData, error: sekolahError } = await adminClient
+      // 1. Get total count and details for stats
+      const { data: allSekolahData, error: sekolahError } = await adminClient
         .from('sekolah')
         .select('id, npsn, nama_sekolah, status, jenjang, kabupaten_kota, alamat, kcd_wilayah')
         .in('nama_sekolah', sekolahBinaanNames)
         .order('nama_sekolah', { ascending: true });
 
-      if (!sekolahError && sekolahData) {
-        sekolahBinaanDetails = sekolahData.map((sekolah) => ({
+      if (!sekolahError && allSekolahData) {
+        totalSekolah = allSekolahData.length;
+
+        // Apply pagination in memory since we're filtering by an array of names
+        // (In a real DB relation we would use .range() on the query, but here we filter by 'in')
+        const paginatedSekolah = allSekolahData.slice(offset, offset + limit);
+
+        sekolahBinaanDetails = paginatedSekolah.map((sekolah) => ({
           id: sekolah.id,
           nama: sekolah.nama_sekolah,
           npsn: sekolah.npsn,
           jenis: sekolah.status, // Negeri/Swasta
           jenjang: sekolah.jenjang, // SMA/SLB/SMK
           status: 'Aktif', // Default status
-          pelaporan: 'Triwulan 3 selesai', // Placeholder - will be updated when pelaporan table exists
+          pelaporan: 'Menunggu', // Placeholder - will be updated when pelaporan table exists
         }));
+
+        // Calculate stats from all data
+        const jumlahSMA = allSekolahData.filter(s => s.jenjang === 'SMA' || s.nama_sekolah?.includes('SMA')).length;
+        const jumlahSLB = allSekolahData.filter(s => s.jenjang === 'SLB' || s.nama_sekolah?.includes('SLB')).length;
+        const jumlahSMK = allSekolahData.filter(s => s.jenjang === 'SMK' || s.nama_sekolah?.includes('SMK')).length;
+
+        // Return full stats in meta or separate field if needed, but here we just update the specific stat
+        statsChangeText = `${jumlahSMA} SMA, ${jumlahSLB} SLB${jumlahSMK > 0 ? `, ${jumlahSMK} SMK` : ''}`;
       }
     }
-
-    // Calculate statistics
-    const jumlahSekolah = sekolahBinaanDetails.length;
-    // Count by jenjang (SMA, SLB, SMK)
-    const jumlahSMA = sekolahBinaanDetails.filter(s => s.jenjang === 'SMA' || s.nama?.includes('SMA')).length;
-    const jumlahSLB = sekolahBinaanDetails.filter(s => s.jenjang === 'SLB' || s.nama?.includes('SLB')).length;
-    const jumlahSMK = sekolahBinaanDetails.filter(s => s.jenjang === 'SMK' || s.nama?.includes('SMK')).length;
 
     // Calculate pelaporan triwulan stats (placeholder - will be updated when pelaporan table exists)
     // For now, we'll use a simple calculation based on current date
@@ -65,19 +79,14 @@ export async function GET() {
     // Q1 deadline: 31 March, Q2 deadline: 30 June, Q3 deadline: 30 September, Q4 deadline: 30 November
     let completedQuarters = 0;
     if (currentMonth > 11 || (currentMonth === 11 && currentDay >= 30)) {
-      // After Q4 deadline (30 Nov) - all 4 quarters completed
       completedQuarters = 4;
     } else if (currentMonth > 9 || (currentMonth === 9 && currentDay >= 30)) {
-      // After Q3 deadline (30 Sep) - Q1, Q2, Q3 completed
       completedQuarters = 3;
     } else if (currentMonth > 6 || (currentMonth === 6 && currentDay >= 30)) {
-      // After Q2 deadline (30 Jun) - Q1, Q2 completed
       completedQuarters = 2;
     } else if (currentMonth > 3 || (currentMonth === 3 && currentDay >= 31)) {
-      // After Q1 deadline (31 Mar) - Q1 completed
       completedQuarters = 1;
     } else {
-      // Before Q1 deadline - no quarters completed yet
       completedQuarters = 0;
     }
 
@@ -89,12 +98,24 @@ export async function GET() {
 
     // Fetch upcoming activities (rencana_pendampingan)
     let jadwalKegiatan: any[] = [];
+    let totalJadwal = 0;
+
     try {
       // Get today's date in YYYY-MM-DD format for comparison
-      // We want to show activities from today onwards
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+      // Get count of upcoming activities
+      const { count: upcomingCount, error: countError } = await adminClient
+        .from('rencana_pendampingan')
+        .select('*', { count: 'exact', head: true })
+        .eq('pengawas_id', pengawasUser.id)
+        .gte('tanggal', todayStr);
+
+      if (!countError) {
+        totalJadwal = upcomingCount || 0;
+      }
 
       const { data: rencanaData, error: rencanaError } = await adminClient
         .from('rencana_pendampingan')
@@ -145,36 +166,58 @@ export async function GET() {
       }
     } catch (err) {
       console.error("Error fetching jadwal kegiatan:", err);
-      // Continue with empty array if error
     }
 
-    // Placeholder data for notifikasi (will be updated when notifications table exists)
+    // Placeholder data for notifikasi
     const notifikasi: any[] = [];
 
-    // Calculate tenggat waktu (placeholder - will be updated when pelaporan table exists)
-    const tenggatWaktu = 0; // Placeholder
+    // Calculate tenggat waktu based on pelaporan schedule
+    // Logic: If within 7 days of deadline and quarter not complete, show warning
+    let tenggatWaktu = 0;
+    const deadlines = [
+      new Date(currentYear, 2, 31), // Mar 31
+      new Date(currentYear, 5, 30), // Jun 30
+      new Date(currentYear, 8, 30), // Sep 30
+      new Date(currentYear, 10, 30) // Nov 30
+    ];
+
+    // Find next deadline
+    const nextDeadline = deadlines.find(d => d > currentDate);
+    if (nextDeadline) {
+      const diffTime = Math.abs(nextDeadline.getTime() - currentDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      if (diffDays <= 14) { // Warning if within 14 days
+        tenggatWaktu = 1;
+      }
+    }
 
     // Build response
     const dashboardData = {
       stats: {
         sekolahBinaan: {
-          value: jumlahSekolah.toString(),
-          change: `${jumlahSMA} SMA, ${jumlahSLB} SLB${jumlahSMK > 0 ? `, ${jumlahSMK} SMK` : ''}`,
+          value: totalSekolah.toString(),
+          change: statsChangeText,
         },
         pelaporanTriwulan: {
           value: `${pelaporanTriwulan.percentage}%`,
           change: `${pelaporanTriwulan.completed} dari ${pelaporanTriwulan.total} triwulan`,
         },
         supervisiTerjadwal: {
-          value: jadwalKegiatan.length.toString(),
-          change: jadwalKegiatan.length > 0 ? "Akan datang" : "Tidak ada jadwal",
+          value: totalJadwal.toString(),
+          change: totalJadwal > 0 ? "Agenda mendatang" : "Tidak ada jadwal",
         },
         tenggatWaktu: {
           value: tenggatWaktu.toString(),
-          change: tenggatWaktu > 0 ? "Perlu perhatian" : "Semua on time",
+          change: tenggatWaktu > 0 ? "Perlu perhatian" : "Semua aman",
         },
       },
-      sekolahBinaan: sekolahBinaanDetails.slice(0, 3), // Limit to 3 for preview
+      sekolahBinaan: sekolahBinaanDetails,
+      pagination: {
+        page,
+        limit,
+        total: totalSekolah,
+        totalPages: Math.ceil(totalSekolah / limit)
+      },
       jadwalKegiatan: jadwalKegiatan,
       notifikasi: notifikasi.slice(0, 3), // Limit to 3 for preview
       pelaporanTriwulan: {

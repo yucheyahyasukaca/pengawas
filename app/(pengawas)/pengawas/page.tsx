@@ -17,6 +17,8 @@ import {
   Bug,
   Calendar,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   FileCheck,
   Loader2,
@@ -74,6 +76,12 @@ interface DashboardData {
     }>;
     percentage: number;
   };
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
 const statIcons = {
@@ -87,14 +95,15 @@ export default function PengawasDashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     async function fetchDashboardData() {
       try {
         setLoading(true);
         setError(null);
-        
-        const response = await fetch("/api/pengawas/dashboard");
+
+        const response = await fetch(`/api/pengawas/dashboard?page=${page}&limit=5`);
         const result = await response.json();
 
         if (!response.ok) {
@@ -115,7 +124,7 @@ export default function PengawasDashboardPage() {
     }
 
     fetchDashboardData();
-  }, []);
+  }, [page]);
 
   if (loading) {
     return (
@@ -231,49 +240,66 @@ export default function PengawasDashboardPage() {
                 Daftar sekolah binaan dan status pelaporan terbaru.
               </CardDescription>
             </div>
-            <Button
-              size="sm"
-              variant="default"
-              className="w-full rounded-full border-0 bg-indigo-600 px-4 font-semibold text-white shadow-md transition hover:bg-indigo-700 hover:text-white sm:w-auto"
-              asChild
-            >
-              <Link href="/pengawas/manajemen-data/sekolah">
-                Lihat Semua
-              </Link>
-            </Button>
+            <div className="flex items-center gap-1 bg-slate-50 rounded-full p-1 border border-slate-100 shadow-sm">
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7 rounded-full text-slate-500 hover:bg-white hover:text-indigo-600 disabled:opacity-30"
+                disabled={page === 1}
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                <span className="sr-only">Previous</span>
+              </Button>
+              <span className="text-xs font-semibold text-slate-600 px-2 min-w-[3rem] text-center">
+                {page} / {data?.pagination?.totalPages || 1}
+              </span>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7 rounded-full text-slate-500 hover:bg-white hover:text-indigo-600 disabled:opacity-30"
+                disabled={!data?.pagination || page >= data.pagination.totalPages}
+                onClick={() => setPage(p => p + 1)}
+              >
+                <ChevronRight className="h-4 w-4" />
+                <span className="sr-only">Next</span>
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             {data.sekolahBinaan.length > 0 ? (
-              data.sekolahBinaan.map((sekolah) => (
-                <Link
-                  key={sekolah.id}
-                  href={`/pengawas/manajemen-data/sekolah/${sekolah.id}`}
-                  className="block rounded-2xl border border-indigo-100 bg-white p-4 shadow-sm transition hover:-translate-y-[1px] hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-100"
-                >
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex flex-col gap-1 flex-1">
-                      <p className="text-base font-semibold text-slate-900">
-                        {sekolah.nama}
-                      </p>
-                      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                        <span>NPSN: {sekolah.npsn}</span>
-                        <span>•</span>
-                        <span>{sekolah.jenis}</span>
+              <>
+                {data.sekolahBinaan.map((sekolah) => (
+                  <Link
+                    key={sekolah.id}
+                    href={`/pengawas/manajemen-data/sekolah/${sekolah.id}`}
+                    className="block rounded-2xl border border-indigo-100 bg-white p-4 shadow-sm transition hover:-translate-y-[1px] hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-100"
+                  >
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex flex-col gap-1 flex-1">
+                        <p className="text-base font-semibold text-slate-900">
+                          {sekolah.nama}
+                        </p>
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                          <span>NPSN: {sekolah.npsn}</span>
+                          <span>•</span>
+                          <span>{sekolah.jenis}</span>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge className="w-fit rounded-full border-0 bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-600 shadow-sm">
+                          {sekolah.status}
+                        </Badge>
                       </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge className="w-fit rounded-full border-0 bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-600 shadow-sm">
-                        {sekolah.status}
-                      </Badge>
+                    <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-slate-600">
+                      <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-600">
+                        {sekolah.pelaporan}
+                      </span>
                     </div>
-                  </div>
-                  <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-slate-600">
-                    <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-600">
-                      {sekolah.pelaporan}
-                    </span>
-                  </div>
-                </Link>
-              ))
+                  </Link>
+                ))}
+              </>
             ) : (
               <div className="text-center py-8 text-slate-500">
                 <p className="text-sm">Belum ada sekolah binaan</p>

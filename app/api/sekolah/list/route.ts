@@ -48,7 +48,7 @@ export async function GET(request: Request) {
       query = query.ilike('nama_sekolah', `%${search}%`).limit(20);
     } else {
       // Only limit if loading all (no specific IDs requested)
-      query = query.order('nama_sekolah', { ascending: true }).limit(500);
+      query = query.order('nama_sekolah', { ascending: true }).limit(3000);
     }
 
     const { data, error } = await query;
