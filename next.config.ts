@@ -17,6 +17,8 @@ const nextConfig: NextConfig = {
   },
 
   images: {
+    // Disable image optimization because server CPU does not support AVX2 (required by sharp)
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
