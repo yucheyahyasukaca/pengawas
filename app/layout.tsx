@@ -42,6 +42,7 @@ export const metadata: Metadata = {
     description: siteConfig.description,
     type: "website",
   },
+  manifest: "/manifest.json",
   metadataBase: new URL("https://sip-kepengawasanjateng.id"),
 };
 

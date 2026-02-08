@@ -5,7 +5,7 @@ import { getAdminUser } from "@/lib/auth-utils";
 // PUT - Update sekolah
 export async function PUT(
   request: Request,
-  { params }: { params: Promise<{ id: string }> | { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check admin authentication
@@ -84,7 +84,7 @@ export async function PUT(
     }
 
     return NextResponse.json(
-      { 
+      {
         success: true,
         message: "Sekolah berhasil diupdate",
         sekolah: data
@@ -103,7 +103,7 @@ export async function PUT(
 // DELETE - Delete sekolah
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ id: string }> | { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check admin authentication
@@ -137,7 +137,7 @@ export async function DELETE(
     }
 
     return NextResponse.json(
-      { 
+      {
         success: true,
         message: "Sekolah berhasil dihapus"
       },

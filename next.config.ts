@@ -11,7 +11,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // Standalone mode for optimal performance and smaller Docker image
   output: 'standalone',
-  
+
   images: {
     remotePatterns: [
       {
@@ -33,7 +33,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  
+
   // Ensure API routes and dynamic routes are properly included in standalone build
   // In Next.js 16, outputFileTracingIncludes is at root level, not under experimental
   // This ensures all API routes and dynamic routes are included in the standalone output
@@ -44,4 +44,20 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+const withPWA = require("@ducanh2912/next-pwa").default({
+  dest: "public",
+  disable: process.env.NODE_ENV === "development",
+  register: true,
+  skipWaiting: true,
+  workboxOptions: {
+    skipWaiting: true,
+    clientsClaim: true,
+    exclude: [
+      /version\.json$/, // Critical: ensure version check always hits network
+      /_buildManifest\.js$/,
+      /_ssgManifest\.js$/
+    ],
+  }
+});
+
+export default withPWA(nextConfig);

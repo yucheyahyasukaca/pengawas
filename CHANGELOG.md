@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.1] - 2026-02-08
+
+### Added
+- **PWA Support**: Implemented Progressive Web App capabilities using `@ducanh2912/next-pwa`.
+- **Service Worker**: Added service worker for offline support and asset caching.
+- **Enhanced Update Logic**: Updated `VersionChecker` to unregister old service workers and clear caches upon version update.
+
 ## [1.1.0] - 2026-02-06
 
 ### Added

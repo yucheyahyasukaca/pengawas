@@ -39,6 +39,19 @@ export function VersionChecker() {
                 // Update version in storage
                 localStorage.setItem(VERSION_STORAGE_KEY, serverVersion);
 
+                // Unregister potentially stale service workers
+                if ('serviceWorker' in navigator) {
+                    try {
+                        const registrations = await navigator.serviceWorker.getRegistrations();
+                        for (const registration of registrations) {
+                            await registration.unregister();
+                        }
+                        console.log('[VersionChecker] Service workers unregistered.');
+                    } catch (err) {
+                        console.error('[VersionChecker] Failed to unregister SW:', err);
+                    }
+                }
+
                 // Clear caches
                 if ('caches' in window) {
                     try {

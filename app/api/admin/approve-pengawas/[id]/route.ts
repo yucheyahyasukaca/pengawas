@@ -4,7 +4,7 @@ import { getAdminUser } from "@/lib/auth-utils";
 
 export async function POST(
   request: Request,
-  { params }: { params: Promise<{ id: string }> | { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check admin authentication
@@ -19,7 +19,7 @@ export async function POST(
     // Resolve params if it's a Promise (Next.js 15+)
     const resolvedParams = await Promise.resolve(params);
     const { id } = resolvedParams;
-    
+
     // Parse request body safely
     let body;
     try {
@@ -82,18 +82,18 @@ export async function POST(
 
     // Update status approval
     const newStatus = action === 'approve' ? 'approved' : 'rejected';
-    
+
     // Prepare update data - ensure role is 'pengawas' when approving
     const updateData: Record<string, any> = {
       status_approval: newStatus,
       updated_at: new Date().toISOString()
     };
-    
+
     // Ensure role is 'pengawas' when approving (in case it wasn't set correctly)
     if (action === 'approve' && userData.role !== 'pengawas') {
       updateData.role = 'pengawas';
     }
-    
+
     const { data, error } = await adminClient
       .from('users')
       .update(updateData)
@@ -115,7 +115,7 @@ export async function POST(
     }
 
     return NextResponse.json(
-      { 
+      {
         success: true,
         message: `Pengawas ${action === 'approve' ? 'disetujui' : 'ditolak'} berhasil`,
         user: data,

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { siteConfig } from "@/config/site";
 
 export function PengawasFooter() {
   const [currentYear, setCurrentYear] = useState<number | null>(null);
@@ -16,7 +17,7 @@ export function PengawasFooter() {
       {/* Mobile: Just version and hosted */}
       <div className="mx-auto flex w-full max-w-6xl items-center justify-center gap-2 text-[10px] text-slate-500 md:hidden">
         <span className="rounded-full bg-indigo-50 px-1.5 py-0.5 text-[10px] font-medium text-indigo-600">
-          v1.0.0
+          v{siteConfig.version}
         </span>
         <span className="text-indigo-200">•</span>
         <span className="text-slate-500">
@@ -38,7 +39,7 @@ export function PengawasFooter() {
         </p>
         <div className="flex flex-wrap items-center gap-2">
           <span className="rounded-full bg-white px-1.5 py-0.5 text-[10px] font-medium text-indigo-600 ring-1 ring-indigo-100">
-            Versi 1.0.0
+            Versi {siteConfig.version}
           </span>
           <span className="text-indigo-200">•</span>
           <span className="text-slate-600">

@@ -5,7 +5,7 @@ import { getAdminUser } from "@/lib/auth-utils";
 // GET - Get pengawas detail by ID
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ id: string }> | { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check admin authentication
@@ -49,13 +49,13 @@ export async function GET(
     }
 
     // Get sekolah binaan data from metadata or fetch from sekolah table
-    const sekolahBinaanNames = Array.isArray(userData.metadata?.sekolah_binaan) 
-      ? userData.metadata.sekolah_binaan 
+    const sekolahBinaanNames = Array.isArray(userData.metadata?.sekolah_binaan)
+      ? userData.metadata.sekolah_binaan
       : [];
 
     // Fetch sekolah details from sekolah table if we have names or IDs
     let sekolahBinaanDetails: any[] = [];
-    
+
     if (sekolahBinaanNames.length > 0) {
       // Try to fetch sekolah by nama_sekolah
       const { data: sekolahData, error: sekolahError } = await adminClient
@@ -118,7 +118,7 @@ export async function GET(
     };
 
     return NextResponse.json(
-      { 
+      {
         success: true,
         pengawas: pengawas
       },

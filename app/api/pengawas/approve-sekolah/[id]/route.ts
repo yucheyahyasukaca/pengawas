@@ -4,7 +4,7 @@ import { getPengawasUser } from "@/lib/auth-utils";
 
 export async function POST(
   request: Request,
-  { params }: { params: Promise<{ id: string }> | { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check pengawas authentication
@@ -19,7 +19,7 @@ export async function POST(
     // Resolve params if it's a Promise (Next.js 15+)
     const resolvedParams = await Promise.resolve(params);
     const { id } = resolvedParams;
-    
+
     // Parse request body safely
     let body;
     try {
@@ -85,7 +85,7 @@ export async function POST(
     if (sekolahId) {
       const sekolahBinaan = pengawasUser.metadata?.sekolah_binaan || [];
       const sekolahNames = Array.isArray(sekolahBinaan) ? sekolahBinaan : [];
-      
+
       // Get sekolah data to check if it's in pengawas's binaan
       const { data: sekolahData } = await adminClient
         .from('sekolah')
@@ -103,13 +103,13 @@ export async function POST(
 
     // Update status approval
     const newStatus = action === 'approve' ? 'approved' : 'rejected';
-    
+
     // Prepare update data
     const updateData: Record<string, any> = {
       status_approval: newStatus,
       updated_at: new Date().toISOString()
     };
-    
+
     const { data, error } = await adminClient
       .from('users')
       .update(updateData)
@@ -131,7 +131,7 @@ export async function POST(
     }
 
     return NextResponse.json(
-      { 
+      {
         success: true,
         message: `Sekolah ${action === 'approve' ? 'disetujui' : 'ditolak'} berhasil`,
         user: data,
