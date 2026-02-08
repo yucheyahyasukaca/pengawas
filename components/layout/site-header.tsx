@@ -2,13 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { 
-  Menu, 
-  Home, 
-  Building2, 
-  BookOpen, 
-  FileText, 
-  MessageSquare, 
+import {
+  Menu,
+  Home,
+  Building2,
+  BookOpen,
+  FileText,
+  MessageSquare,
   Newspaper,
   LogIn,
   X
@@ -16,7 +16,7 @@ import {
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 
-import jatengLogo from "@/public/jateng.png";
+// import jatengLogo from "@/public/jateng.png";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -66,7 +66,7 @@ export function SiteHeader() {
         <Link href="#beranda" className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/30 bg-white/5 p-1 shadow-lg">
             <Image
-              src={jatengLogo}
+              src="/jateng.png"
               alt="Logo MKPS Jawa Tengah"
               width={36}
               height={36}
@@ -146,7 +146,7 @@ export function SiteHeader() {
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/20 bg-white/10 p-1.5 shadow-lg backdrop-blur-sm">
                     <Image
-                      src={jatengLogo}
+                      src="/jateng.png"
                       alt="Logo MKPS Jawa Tengah"
                       width={32}
                       height={32}
@@ -178,9 +178,9 @@ export function SiteHeader() {
               <div className="px-4 py-6 space-y-2">
                 {siteConfig.navigation.map((item) => {
                   const Icon = navigationIcons[item.href] || Home;
-                  const isActive = pathname === item.href || 
+                  const isActive = pathname === item.href ||
                     (item.href === "/" && pathname === "/");
-                  
+
                   return (
                     <Link
                       key={item.href}

@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import jatengLogo from "@/public/jateng.png";
+// import jatengLogo from "@/public/jateng.png";
 import { siteConfig } from "@/config/site";
 import { Separator } from "@/components/ui/separator";
 
@@ -13,7 +13,7 @@ export function SiteFooter() {
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/30 bg-white/5 p-1.5 shadow-lg shadow-black/30">
               <Image
-                src={jatengLogo}
+                src="/jateng.png"
                 alt="Logo MKPS Jawa Tengah"
                 width={40}
                 height={40}
