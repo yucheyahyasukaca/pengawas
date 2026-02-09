@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.2] - 2026-02-10
+
+### Added
+- **Pelaksanaan Pendampingan**: New feature for supervisors to record and manage their mentoring execution plans (`JadwalPelaksanaanTable`).
+- **Laporan Triwulan**: Added a dedicated page and filter for generating quarterly reports.
+- **Export to Excel**: Implemented a professional Excel export feature for "Pelaksanaan Pendampingan". The export includes a custom header with supervisor identity and a formatted data table, matching the web view.
+- **Edit Feature**: Added the ability to edit mentoring plans, including a new "Jumlah Jam" (JP) field.
+
 ## [1.1.1] - 2026-02-08
 
 ### Added

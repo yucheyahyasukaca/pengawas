@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Hash, Users, Heart, Activity, Upload, FileText, School, Calendar, Eye, Edit, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { JadwalPelaksanaanTable } from "@/components/pengawas/JadwalPelaksanaanTable";
 
 const monitoringItems = [
   {
@@ -87,7 +88,7 @@ export default function PelaksanaanPage() {
     };
 
     window.addEventListener("storage", handleStorageChange);
-    
+
     // Juga listen untuk custom event jika save dilakukan di tab yang sama
     window.addEventListener("monitoring-saved", handleStorageChange);
 
@@ -107,7 +108,7 @@ export default function PelaksanaanPage() {
       if (stored) {
         const data = JSON.parse(stored) as MonitoringData[];
         // Sort by tanggal terbaru
-        const sorted = data.sort((a, b) => 
+        const sorted = data.sort((a, b) =>
           new Date(b.tanggalSupervisi).getTime() - new Date(a.tanggalSupervisi).getTime()
         );
         setMonitoringList(sorted);
@@ -156,6 +157,8 @@ export default function PelaksanaanPage() {
         </p>
       </div>
 
+      <JadwalPelaksanaanTable />
+
       <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-slate-900 font-bold">
@@ -190,6 +193,8 @@ export default function PelaksanaanPage() {
           </div>
         </CardContent>
       </Card>
+
+
 
       {/* List Monitoring yang Sudah Dilakukan */}
       <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">

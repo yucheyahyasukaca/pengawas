@@ -6,7 +6,7 @@ export async function POST(request: Request) {
   try {
     // Parse request body
     const body = await request.json();
-    const { nama, nip, wilayah_tugas, sekolah_binaan } = body;
+    const { nama, nip, wilayah_tugas, sekolah_binaan, pangkat_golongan, jabatan } = body;
 
     // Validasi input
     if (!nama) {
@@ -21,7 +21,7 @@ export async function POST(request: Request) {
 
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
+
     if (authError || !user) {
       return NextResponse.json(
         { error: "Unauthorized: Please login first" },
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     const adminClient = createSupabaseAdminClient();
     const { data: userData, error: userError } = await adminClient
       .from('users')
-      .select('role')
+      .select('role, metadata')
       .eq('id', userId)
       .single();
 
@@ -48,20 +48,22 @@ export async function POST(request: Request) {
     }
 
     // Update profil pengawas
-    const metadata: Record<string, any> = {};
-    
-    if (wilayah_tugas) {
-      metadata.wilayah_tugas = wilayah_tugas;
-    }
-    
-    if (sekolah_binaan && Array.isArray(sekolah_binaan)) {
-      metadata.sekolah_binaan = sekolah_binaan;
-    }
+    // Fetch existing metadata first to avoid overwriting (e.g., foto_profil)
+    const currentMetadata = userData.metadata || {};
+
+    // Merge existing metadata with new updates
+    const updatedMetadata = {
+      ...currentMetadata,
+      ...(wilayah_tugas && { wilayah_tugas }),
+      ...(sekolah_binaan && Array.isArray(sekolah_binaan) && { sekolah_binaan }),
+      ...(pangkat_golongan && { pangkat_golongan }),
+      ...(jabatan && { jabatan }),
+    };
 
     const updateData: Record<string, any> = {
       nama: nama.trim(),
       ...(nip && nip.trim() && { nip: nip.trim() }),
-      ...(Object.keys(metadata).length > 0 && { metadata }),
+      metadata: updatedMetadata,
     };
 
     // Use admin client to update profile to bypass RLS for pending pengawas
@@ -81,7 +83,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(
-      { 
+      {
         success: true,
         message: "Profil berhasil diupdate",
         user: data,

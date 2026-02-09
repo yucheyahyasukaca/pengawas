@@ -232,6 +232,7 @@ export async function GET(request: Request) {
         : [],
       apakah_kegiatan: item.apakah_kegiatan,
       dokumentasi: Array.isArray(item.dokumentasi) ? item.dokumentasi : [],
+      jumlah_jam: item.jumlah_jam || 2, // Default to 2 if not set
       created_at: item.created_at,
       updated_at: item.updated_at,
     }));
@@ -460,7 +461,8 @@ export async function PUT(request: Request) {
       kegiatan_benahi,
       penjelasan_implementasi,
       apakah_kegiatan,
-      dokumentasi, // Add this
+      dokumentasi,
+      jumlah_jam, // Add this
     } = body;
 
     if (!id) {
@@ -546,6 +548,7 @@ export async function PUT(request: Request) {
         penjelasan_implementasi: penjelasan_implementasi.filter((p: string) => p.trim()),
         apakah_kegiatan: apakah_kegiatan ?? true,
         dokumentasi: dokumentasi || [],
+        jumlah_jam: jumlah_jam || 2,
         updated_at: new Date().toISOString(),
       })
       .eq("id", id)
@@ -592,6 +595,7 @@ export async function PUT(request: Request) {
           : [],
         apakah_kegiatan: updatedRencanaPendampingan.apakah_kegiatan,
         dokumentasi: Array.isArray(updatedRencanaPendampingan.dokumentasi) ? updatedRencanaPendampingan.dokumentasi : [],
+        jumlah_jam: updatedRencanaPendampingan.jumlah_jam || 2,
         created_at: updatedRencanaPendampingan.created_at,
         updated_at: updatedRencanaPendampingan.updated_at,
       },
