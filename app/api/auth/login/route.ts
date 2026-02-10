@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
+import { verifyCaptcha } from "@/lib/captcha";
 
 
 // List email admin yang diizinkan untuk login sebagai admin
@@ -11,7 +12,7 @@ const ADMIN_EMAILS = [
 ];
 
 function isAdminEmail(email: string): boolean {
-  return ADMIN_EMAILS.some(adminEmail => 
+  return ADMIN_EMAILS.some(adminEmail =>
     email.toLowerCase() === adminEmail.toLowerCase()
   );
 }
@@ -30,7 +31,23 @@ export async function POST(request: Request) {
       );
     }
 
-    let { email, password } = body;
+    let { email, password, captchaToken, captchaAnswer } = body;
+
+    // Validasi Captcha
+    if (!captchaToken || !captchaAnswer) {
+      return NextResponse.json(
+        { error: "Captcha diperlukan" },
+        { status: 400 }
+      );
+    }
+
+    const captchaValidation = await verifyCaptcha(captchaToken, captchaAnswer);
+    if (!captchaValidation.valid) {
+      return NextResponse.json(
+        { error: `Captcha salah: ${captchaValidation.message}` },
+        { status: 400 }
+      );
+    }
 
     // Validasi input
     if (!email || !password) {
@@ -56,7 +73,7 @@ export async function POST(request: Request) {
     // Validasi env variables
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-    
+
     if (!supabaseUrl || !supabaseKey) {
       console.error("Missing Supabase environment variables:", {
         hasUrl: !!supabaseUrl,
@@ -78,20 +95,20 @@ export async function POST(request: Request) {
         },
       }
     );
-    
+
     // Login dengan email dan password (sudah di-trim)
     console.log("Attempting login for:", email);
     console.log("Email length:", email.length);
     console.log("Password length:", password.length);
-    
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-    
-    console.log("Login result:", { 
-      hasUser: !!data?.user, 
-      hasSession: !!data?.session, 
+
+    console.log("Login result:", {
+      hasUser: !!data?.user,
+      hasSession: !!data?.session,
       hasError: !!error,
       errorCode: error?.code,
       errorMessage: error?.message,
@@ -104,19 +121,19 @@ export async function POST(request: Request) {
         code: error.code,
         status: error.status,
       });
-      
+
       // Pesan error yang lebih informatif
       let errorMessage = error.message;
-      
+
       if (error.code === 'invalid_credentials' || error.message === "Invalid login credentials") {
         errorMessage = `Email atau kata sandi salah. Pastikan:
 - Email: ${email}
 - Akun sudah terdaftar dan di-confirm di Supabase
 - Password benar (case-sensitive)`;
       }
-      
+
       return NextResponse.json(
-        { 
+        {
           error: errorMessage,
           code: error.code,
         },
@@ -135,7 +152,7 @@ export async function POST(request: Request) {
     // Gunakan admin client untuk bypass RLS karena ada masalah dengan policy
     let userData = null;
     let userError = null;
-    
+
     try {
       const adminClient = createSupabaseAdminClient();
       const userId = data.user.id; // Store user ID to avoid conflict
@@ -144,7 +161,7 @@ export async function POST(request: Request) {
         .select('role, nama, nip, status_approval')
         .eq('id', userId)
         .single();
-      
+
       userData = userDataResult;
       userError = userErrorResult;
     } catch (err) {
@@ -152,8 +169,8 @@ export async function POST(request: Request) {
       userError = err as Error;
     }
 
-    console.log("Login route: User data query", { 
-      hasUserData: !!userData, 
+    console.log("Login route: User data query", {
+      hasUserData: !!userData,
       userError: userError?.message,
       role: userData?.role,
       statusApproval: userData?.status_approval,
@@ -173,7 +190,7 @@ export async function POST(request: Request) {
       }
     } else if (userData && userData.role) {
       userRole = userData.role;
-      
+
       // Tentukan redirect path berdasarkan role
       switch (userRole) {
         case 'admin':
@@ -183,7 +200,7 @@ export async function POST(request: Request) {
           // Check status approval
           const statusApproval = userData.status_approval || 'pending';
           console.log("Login route: Pengawas status", { statusApproval, hasNama: !!userData.nama });
-          
+
           if (statusApproval === 'pending' || statusApproval === 'rejected') {
             redirectTo = '/pengawas/pending-approval';
             console.log("Login route: Redirecting to pending-approval");
@@ -203,7 +220,7 @@ export async function POST(request: Request) {
           // Check status approval
           const sekolahStatusApproval = userData.status_approval || 'pending';
           console.log("Login route: Sekolah status", { sekolahStatusApproval });
-          
+
           if (sekolahStatusApproval === 'pending' || sekolahStatusApproval === 'rejected') {
             redirectTo = '/sekolah/pending-approval';
             console.log("Login route: Redirecting sekolah to pending-approval");
@@ -220,13 +237,13 @@ export async function POST(request: Request) {
       userRole = 'admin';
       redirectTo = '/admin';
     }
-    
+
     console.log("Login route: Final redirect", { userRole, redirectTo });
-    
+
     // Return session tokens untuk client-side handling
     return NextResponse.json(
-      { 
-        success: true, 
+      {
+        success: true,
         user: {
           id: data.user.id,
           email: data.user.email,

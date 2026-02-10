@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.3] - 2026-02-11
+
+### Security
+- **Internal Captcha**: Added a math challenge captcha to the login page to prevent automated brute-force attacks.
+- **Custom Captcha Generator**: Implemented a lightweight, dependency-free SVG generator for captcha images to ensure reliability across different deployment environments.
+
 ## [1.1.2] - 2026-02-10
 
 ### Added

@@ -17,7 +17,7 @@ export function SekolahProfileCheck() {
     try {
       setIsChecking(true);
       const response = await fetch('/api/auth/get-current-user');
-      
+
       if (!response.ok) {
         setIsChecking(false);
         return;
@@ -55,8 +55,9 @@ export function SekolahProfileCheck() {
     }
   };
 
-  // Block rendering if not approved and not on pending-approval page
-  if (shouldBlock || (isChecking && pathname !== '/sekolah/pending-approval')) {
+  // Block rendering ONLY if explicitly blocked (not approved and not on pending page)
+  // We remove the (isChecking && ...) condition to allow UI to render while checking in background
+  if (shouldBlock) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
         <div className="text-center">

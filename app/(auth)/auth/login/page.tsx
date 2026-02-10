@@ -2,8 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { RefreshCcw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -25,14 +26,43 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [captchaImage, setCaptchaImage] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [captchaAnswer, setCaptchaAnswer] = useState("");
+  const [isCaptchaLoading, setIsCaptchaLoading] = useState(true);
+
+  const fetchCaptcha = async () => {
+    setIsCaptchaLoading(true);
+    try {
+      const res = await fetch('/api/auth/captcha');
+      if (res.ok) {
+        const data = await res.json();
+        setCaptchaImage(data.svg);
+        setCaptchaToken(data.token);
+      } else {
+        console.error("Captcha fetch failed status:", res.status);
+        setCaptchaImage("");
+      }
+    } catch (error) {
+      console.error("Failed to fetch captcha", error);
+      setCaptchaImage("");
+    } finally {
+      setIsCaptchaLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCaptcha();
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
 
     // Validasi client-side
-    if (!email || !password) {
-      setError("Email dan password harus diisi");
+    if (!email || !password || !captchaAnswer) {
+      setError("Email, password, dan kode keamanan harus diisi");
       setIsLoading(false);
       return;
     }
@@ -43,9 +73,11 @@ export default function LoginPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           email: email.trim(), // Jangan lowercase, Supabase Auth case-sensitive
-          password: password 
+          password: password,
+          captchaToken,
+          captchaAnswer
         }),
       });
 
@@ -53,9 +85,9 @@ export default function LoginPage() {
       let data;
       try {
         data = await response.json();
-        console.log("Login page: Response data", { 
-          success: data.success, 
-          role: data.role, 
+        console.log("Login page: Response data", {
+          success: data.success,
+          role: data.role,
           redirectTo: data.redirectTo,
           hasSession: !!data.session
         });
@@ -69,20 +101,22 @@ export default function LoginPage() {
       if (!response.ok) {
         // Pesan error yang lebih user-friendly
         let errorMessage = data.error || "Gagal masuk";
-        
+
         if (errorMessage.includes("Invalid login credentials") || errorMessage.includes("Email atau kata sandi salah")) {
           errorMessage = "Email atau kata sandi salah. Pastikan akun sudah terdaftar di sistem. Jika belum memiliki akun, hubungi admin MKPS.";
         }
-        
+
         setError(errorMessage);
         setIsLoading(false);
+        fetchCaptcha(); // Refresh captcha on error
+        setCaptchaAnswer("");
         return;
       }
 
       // Set session di client-side menggunakan Supabase browser client
       if (data.session) {
         const supabase = createSupabaseBrowserClient();
-        
+
         // Set session di browser client
         const { error: sessionError } = await supabase.auth.setSession({
           access_token: data.session.access_token,
@@ -95,19 +129,19 @@ export default function LoginPage() {
           setIsLoading(false);
           return;
         }
-        
+
         // Verify session is set by getting user
         const { data: { user }, error: verifyError } = await supabase.auth.getUser();
-        
+
         if (verifyError || !user) {
           console.error("Verify session error:", verifyError);
           setError("Gagal memverifikasi session. Silakan coba lagi.");
           setIsLoading(false);
           return;
         }
-        
+
         console.log("Login page: Session verified, user:", user.email);
-        
+
         // Wait a bit to ensure session is persisted to cookies
         // In production, cookies need more time to be set properly
         const waitTime = process.env.NODE_ENV === 'production' ? 1000 : 500;
@@ -218,7 +252,7 @@ export default function LoginPage() {
                   {error}
                 </div>
               )}
-              
+
               <div className="space-y-2">
                 <label className="text-sm font-medium text-white/80" htmlFor="email">
                   Email
@@ -263,6 +297,45 @@ export default function LoginPage() {
                 />
               </div>
 
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-white/80" htmlFor="captcha">
+                  Kode Keamanan (Hitung Hasilnya)
+                </label>
+                <div className="flex gap-2">
+                  <div
+                    className="flex-1 overflow-hidden rounded-xl bg-white/90 p-2 min-h-[50px] flex items-center justify-center"
+                  >
+                    {isCaptchaLoading ? (
+                      <span className="text-xs text-gray-500 animate-pulse">Memuat...</span>
+                    ) : captchaImage ? (
+                      <div dangerouslySetInnerHTML={{ __html: captchaImage }} className="flex justify-center" />
+                    ) : (
+                      <span className="text-xs text-red-500 font-medium">Gagal memuat image</span>
+                    )}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={fetchCaptcha}
+                    className="h-auto w-12 rounded-xl border-white/20 bg-white/10 text-white hover:bg-white/20"
+                  >
+                    <RefreshCcw className="h-4 w-4" />
+                  </Button>
+                </div>
+                <input
+                  id="captcha"
+                  name="captcha"
+                  type="text"
+                  required
+                  value={captchaAnswer}
+                  onChange={(e) => setCaptchaAnswer(e.target.value)}
+                  disabled={isLoading}
+                  className="block w-full rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-base text-white outline-none transition focus:border-white/50 focus:bg-white/15 focus:ring-2 focus:ring-white/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                  placeholder="Masukkan kode di atas"
+                />
+              </div>
+
               <div className="flex items-center gap-2">
                 <input
                   id="remember"
@@ -278,8 +351,8 @@ export default function LoginPage() {
                 </label>
               </div>
 
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={isLoading}
                 className="w-full rounded-xl bg-[#F7CDD0] py-6 text-base font-semibold text-[#4A1B1C] shadow-lg shadow-black/30 transition hover:bg-[#f4bbc4] disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -322,7 +395,7 @@ export default function LoginPage() {
           </CardFooter>
         </Card>
       </div>
-    </div>
+    </div >
   );
 }
 
