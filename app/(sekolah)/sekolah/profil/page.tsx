@@ -4689,221 +4689,388 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
                   )}
                 </Button>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse min-w-[960px]">
-                  <thead>
-                    <tr className="border-b-2 border-slate-200 bg-slate-50">
-                      <th rowSpan={2} className="px-4 py-3 text-left text-xs font-bold text-slate-900 align-middle border-r border-slate-200">
-                        Tahun
-                      </th>
-                      <th colSpan={3} className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
-                        PTN
-                      </th>
-                      <th className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
-                        UIN
-                      </th>
-                      <th className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
-                        PTS
-                      </th>
-                      <th colSpan={7} className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
-                        Kedinasan
-                      </th>
-                      <th className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
-                        Bekerja
-                      </th>
-                      <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">
-                        Belum Bekerja/Melanjutkan
-                      </th>
-                      <th rowSpan={2} className="px-4 py-3 text-center text-xs font-bold text-slate-900 align-middle">
-                        Aksi
-                      </th>
-                    </tr>
-                    <tr className="border-b border-slate-200 bg-slate-50">
-                      <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">SNBP</th>
-                      <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">SNBT</th>
-                      <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">
-                        UM
-                      </th>
-                      <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">
-                        Jumlah
-                      </th>
-                      <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">
-                        Jumlah
-                      </th>
-                      <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">Akmil</th>
-                      <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">Akpol</th>
-                      <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">STAN</th>
-                      <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">STPDN</th>
-                      <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">STTD</th>
-                      <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">STIS</th>
-                      <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">
-                        Lainnya
-                      </th>
-                      <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">
-                        Jumlah
-                      </th>
-                      <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">
-                        Jumlah
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {profilLulusanRows.map((row) => (
-                      <tr key={row.id} className="bg-white">
-                        <td className="px-4 py-3 text-sm">
-                          <input
-                            type="text"
-                            value={row.tahun}
-                            onChange={(e) => updateProfilLulusanRow(row.id, "tahun", e.target.value)}
-                            placeholder="Contoh: 2024"
-                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
-                          />
-                        </td>
-                        <td className="px-2 py-3 text-sm text-center">
-                          <input
-                            type="number"
-                            min={0}
-                            value={row.ptn_snbp ?? ""}
-                            onChange={(e) => updateProfilLulusanRow(row.id, "ptn_snbp", e.target.value)}
-                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
-                          />
-                        </td>
-                        <td className="px-2 py-3 text-sm text-center">
-                          <input
-                            type="number"
-                            min={0}
-                            value={row.ptn_snbt ?? ""}
-                            onChange={(e) => updateProfilLulusanRow(row.id, "ptn_snbt", e.target.value)}
-                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
-                          />
-                        </td>
-                        <td className="px-2 py-3 text-sm text-center border-r border-slate-200">
-                          <input
-                            type="number"
-                            min={0}
-                            value={row.ptn_um ?? ""}
-                            onChange={(e) => updateProfilLulusanRow(row.id, "ptn_um", e.target.value)}
-                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
-                          />
-                        </td>
-                        <td className="px-2 py-3 text-sm text-center border-r border-slate-200">
-                          <input
-                            type="number"
-                            min={0}
-                            value={row.uin ?? ""}
-                            onChange={(e) => updateProfilLulusanRow(row.id, "uin", e.target.value)}
-                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
-                          />
-                        </td>
-                        <td className="px-2 py-3 text-sm text-center border-r border-slate-200">
-                          <input
-                            type="number"
-                            min={0}
-                            value={row.pts ?? ""}
-                            onChange={(e) => updateProfilLulusanRow(row.id, "pts", e.target.value)}
-                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
-                          />
-                        </td>
-                        <td className="px-2 py-3 text-sm text-center">
-                          <input
-                            type="number"
-                            min={0}
-                            value={row.kedinasan_akmil ?? ""}
-                            onChange={(e) => updateProfilLulusanRow(row.id, "kedinasan_akmil", e.target.value)}
-                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
-                          />
-                        </td>
-                        <td className="px-2 py-3 text-sm text-center">
-                          <input
-                            type="number"
-                            min={0}
-                            value={row.kedinasan_akpol ?? ""}
-                            onChange={(e) => updateProfilLulusanRow(row.id, "kedinasan_akpol", e.target.value)}
-                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
-                          />
-                        </td>
-                        <td className="px-2 py-3 text-sm text-center">
-                          <input
-                            type="number"
-                            min={0}
-                            value={row.kedinasan_stan ?? ""}
-                            onChange={(e) => updateProfilLulusanRow(row.id, "kedinasan_stan", e.target.value)}
-                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
-                          />
-                        </td>
-                        <td className="px-2 py-3 text-sm text-center">
-                          <input
-                            type="number"
-                            min={0}
-                            value={row.kedinasan_stpdn ?? ""}
-                            onChange={(e) => updateProfilLulusanRow(row.id, "kedinasan_stpdn", e.target.value)}
-                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
-                          />
-                        </td>
-                        <td className="px-2 py-3 text-sm text-center">
-                          <input
-                            type="number"
-                            min={0}
-                            value={row.kedinasan_sttd ?? ""}
-                            onChange={(e) => updateProfilLulusanRow(row.id, "kedinasan_sttd", e.target.value)}
-                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
-                          />
-                        </td>
-                        <td className="px-2 py-3 text-sm text-center">
-                          <input
-                            type="number"
-                            min={0}
-                            value={row.kedinasan_stis ?? ""}
-                            onChange={(e) => updateProfilLulusanRow(row.id, "kedinasan_stis", e.target.value)}
-                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
-                          />
-                        </td>
-                        <td className="px-2 py-3 text-sm text-center border-r border-slate-200">
-                          <input
-                            type="number"
-                            min={0}
-                            value={row.kedinasan_lainnya ?? ""}
-                            onChange={(e) => updateProfilLulusanRow(row.id, "kedinasan_lainnya", e.target.value)}
-                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
-                          />
-                        </td>
-                        <td className="px-2 py-3 text-sm text-center border-r border-slate-200">
-                          <input
-                            type="number"
-                            min={0}
-                            value={row.bekerja ?? ""}
-                            onChange={(e) => updateProfilLulusanRow(row.id, "bekerja", e.target.value)}
-                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
-                          />
-                        </td>
-                        <td className="px-2 py-3 text-sm text-center">
-                          <input
-                            type="number"
-                            min={0}
-                            value={row.belum_bekerja ?? ""}
-                            onChange={(e) => updateProfilLulusanRow(row.id, "belum_bekerja", e.target.value)}
-                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
-                          />
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() =>
-                              setProfilLulusanRows((prev) =>
-                                prev.length > 1 ? prev.filter((item) => item.id !== row.id) : prev,
-                              )
-                            }
-                            className="h-9 w-9 rounded-full border border-red-100 bg-red-50 text-red-600 shadow-sm transition hover:bg-red-100 hover:text-red-700"
-                          >
-                            <Trash2 className="size-4" />
-                          </Button>
-                        </td>
+              <div className="space-y-4">
+                {/* Mobile Card View for Form */}
+                <div className="block md:hidden space-y-4">
+                  {profilLulusanRows.map((row) => (
+                    <div key={row.id} className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm relative">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          setProfilLulusanRows((prev) =>
+                            prev.length > 1 ? prev.filter((item) => item.id !== row.id) : prev,
+                          )
+                        }
+                        className="absolute top-2 right-2 h-8 w-8 rounded-full border border-red-100 bg-red-50 text-red-600 shadow-sm transition hover:bg-red-100 hover:text-red-700"
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+
+                      <div className="mb-4 pr-10">
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">Tahun Lulusan</label>
+                        <input
+                          type="text"
+                          value={row.tahun}
+                          onChange={(e) => updateProfilLulusanRow(row.id, "tahun", e.target.value)}
+                          placeholder="Contoh: 2024"
+                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                        />
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
+                          <label className="block text-sm font-bold text-slate-800 mb-2">PTN</label>
+                          <div className="grid grid-cols-3 gap-2">
+                            <div>
+                              <label className="block text-xs text-slate-500 mb-1">SNBP</label>
+                              <input
+                                type="number" min={0} value={row.ptn_snbp ?? ""}
+                                onChange={(e) => updateProfilLulusanRow(row.id, "ptn_snbp", e.target.value)}
+                                className="w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-700 shadow-sm focus:border-green-500 focus:ring-1 focus:ring-green-100"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-slate-500 mb-1">SNBT</label>
+                              <input
+                                type="number" min={0} value={row.ptn_snbt ?? ""}
+                                onChange={(e) => updateProfilLulusanRow(row.id, "ptn_snbt", e.target.value)}
+                                className="w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-700 shadow-sm focus:border-green-500 focus:ring-1 focus:ring-green-100"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-slate-500 mb-1">UM</label>
+                              <input
+                                type="number" min={0} value={row.ptn_um ?? ""}
+                                onChange={(e) => updateProfilLulusanRow(row.id, "ptn_um", e.target.value)}
+                                className="w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-700 shadow-sm focus:border-green-500 focus:ring-1 focus:ring-green-100"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
+                            <label className="block text-sm font-bold text-slate-800 mb-2">UIN</label>
+                            <input
+                              type="number" min={0} value={row.uin ?? ""}
+                              onChange={(e) => updateProfilLulusanRow(row.id, "uin", e.target.value)}
+                              className="w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-700 shadow-sm focus:border-green-500 focus:ring-1 focus:ring-green-100"
+                            />
+                          </div>
+                          <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
+                            <label className="block text-sm font-bold text-slate-800 mb-2">PTS</label>
+                            <input
+                              type="number" min={0} value={row.pts ?? ""}
+                              onChange={(e) => updateProfilLulusanRow(row.id, "pts", e.target.value)}
+                              className="w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-700 shadow-sm focus:border-green-500 focus:ring-1 focus:ring-green-100"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
+                          <label className="block text-sm font-bold text-slate-800 mb-2">Kedinasan</label>
+                          <div className="grid grid-cols-3 gap-2">
+                            <div>
+                              <label className="block text-xs text-slate-500 mb-1">Akmil</label>
+                              <input
+                                type="number" min={0} value={row.kedinasan_akmil ?? ""}
+                                onChange={(e) => updateProfilLulusanRow(row.id, "kedinasan_akmil", e.target.value)}
+                                className="w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-700 shadow-sm focus:border-green-500 focus:ring-1 focus:ring-green-100"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-slate-500 mb-1">Akpol</label>
+                              <input
+                                type="number" min={0} value={row.kedinasan_akpol ?? ""}
+                                onChange={(e) => updateProfilLulusanRow(row.id, "kedinasan_akpol", e.target.value)}
+                                className="w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-700 shadow-sm focus:border-green-500 focus:ring-1 focus:ring-green-100"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-slate-500 mb-1">STAN</label>
+                              <input
+                                type="number" min={0} value={row.kedinasan_stan ?? ""}
+                                onChange={(e) => updateProfilLulusanRow(row.id, "kedinasan_stan", e.target.value)}
+                                className="w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-700 shadow-sm focus:border-green-500 focus:ring-1 focus:ring-green-100"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-slate-500 mb-1">STPDN</label>
+                              <input
+                                type="number" min={0} value={row.kedinasan_stpdn ?? ""}
+                                onChange={(e) => updateProfilLulusanRow(row.id, "kedinasan_stpdn", e.target.value)}
+                                className="w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-700 shadow-sm focus:border-green-500 focus:ring-1 focus:ring-green-100"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-slate-500 mb-1">STTD</label>
+                              <input
+                                type="number" min={0} value={row.kedinasan_sttd ?? ""}
+                                onChange={(e) => updateProfilLulusanRow(row.id, "kedinasan_sttd", e.target.value)}
+                                className="w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-700 shadow-sm focus:border-green-500 focus:ring-1 focus:ring-green-100"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-slate-500 mb-1">STIS</label>
+                              <input
+                                type="number" min={0} value={row.kedinasan_stis ?? ""}
+                                onChange={(e) => updateProfilLulusanRow(row.id, "kedinasan_stis", e.target.value)}
+                                className="w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-700 shadow-sm focus:border-green-500 focus:ring-1 focus:ring-green-100"
+                              />
+                            </div>
+                            <div className="col-span-3">
+                              <label className="block text-xs text-slate-500 mb-1">Lainnya</label>
+                              <input
+                                type="number" min={0} value={row.kedinasan_lainnya ?? ""}
+                                onChange={(e) => updateProfilLulusanRow(row.id, "kedinasan_lainnya", e.target.value)}
+                                className="w-full rounded-md border border-slate-200 bg-white px-2 py-1.5 text-sm text-slate-700 shadow-sm focus:border-green-500 focus:ring-1 focus:ring-green-100"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3 pt-2">
+                          <div>
+                            <label className="block text-sm font-bold text-slate-800 mb-2">Bekerja</label>
+                            <input
+                              type="number" min={0} value={row.bekerja ?? ""}
+                              onChange={(e) => updateProfilLulusanRow(row.id, "bekerja", e.target.value)}
+                              className="w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-sm text-slate-700 shadow-sm focus:border-green-500 focus:ring-1 focus:ring-green-100"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-bold text-slate-800 mb-1">Belum Bekerja / Lanjut</label>
+                            <input
+                              type="number" min={0} value={row.belum_bekerja ?? ""}
+                              onChange={(e) => updateProfilLulusanRow(row.id, "belum_bekerja", e.target.value)}
+                              className="w-full rounded-md border border-slate-200 bg-white px-2 py-2 text-sm text-slate-700 shadow-sm focus:border-green-500 focus:ring-1 focus:ring-green-100"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full border-collapse min-w-[960px]">
+                    <thead>
+                      <tr className="border-b-2 border-slate-200 bg-slate-50">
+                        <th rowSpan={2} className="px-4 py-3 text-left text-xs font-bold text-slate-900 align-middle border-r border-slate-200">
+                          Tahun
+                        </th>
+                        <th colSpan={3} className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
+                          PTN
+                        </th>
+                        <th className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
+                          UIN
+                        </th>
+                        <th className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
+                          PTS
+                        </th>
+                        <th colSpan={7} className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
+                          Kedinasan
+                        </th>
+                        <th className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
+                          Bekerja
+                        </th>
+                        <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">
+                          Belum Bekerja/Melanjutkan
+                        </th>
+                        <th rowSpan={2} className="px-4 py-3 text-center text-xs font-bold text-slate-900 align-middle">
+                          Aksi
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                      <tr className="border-b border-slate-200 bg-slate-50">
+                        <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">SNBP</th>
+                        <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">SNBT</th>
+                        <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">
+                          UM
+                        </th>
+                        <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">
+                          Jumlah
+                        </th>
+                        <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">
+                          Jumlah
+                        </th>
+                        <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">Akmil</th>
+                        <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">Akpol</th>
+                        <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">STAN</th>
+                        <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">STPDN</th>
+                        <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">STTD</th>
+                        <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">STIS</th>
+                        <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">
+                          Lainnya
+                        </th>
+                        <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">
+                          Jumlah
+                        </th>
+                        <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">
+                          Jumlah
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {profilLulusanRows.map((row) => (
+                        <tr key={row.id} className="bg-white">
+                          <td className="px-4 py-3 text-sm">
+                            <input
+                              type="text"
+                              value={row.tahun}
+                              onChange={(e) => updateProfilLulusanRow(row.id, "tahun", e.target.value)}
+                              placeholder="Contoh: 2024"
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                            />
+                          </td>
+                          <td className="px-2 py-3 text-sm text-center">
+                            <input
+                              type="number"
+                              min={0}
+                              value={row.ptn_snbp ?? ""}
+                              onChange={(e) => updateProfilLulusanRow(row.id, "ptn_snbp", e.target.value)}
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                            />
+                          </td>
+                          <td className="px-2 py-3 text-sm text-center">
+                            <input
+                              type="number"
+                              min={0}
+                              value={row.ptn_snbt ?? ""}
+                              onChange={(e) => updateProfilLulusanRow(row.id, "ptn_snbt", e.target.value)}
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                            />
+                          </td>
+                          <td className="px-2 py-3 text-sm text-center border-r border-slate-200">
+                            <input
+                              type="number"
+                              min={0}
+                              value={row.ptn_um ?? ""}
+                              onChange={(e) => updateProfilLulusanRow(row.id, "ptn_um", e.target.value)}
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                            />
+                          </td>
+                          <td className="px-2 py-3 text-sm text-center border-r border-slate-200">
+                            <input
+                              type="number"
+                              min={0}
+                              value={row.uin ?? ""}
+                              onChange={(e) => updateProfilLulusanRow(row.id, "uin", e.target.value)}
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                            />
+                          </td>
+                          <td className="px-2 py-3 text-sm text-center border-r border-slate-200">
+                            <input
+                              type="number"
+                              min={0}
+                              value={row.pts ?? ""}
+                              onChange={(e) => updateProfilLulusanRow(row.id, "pts", e.target.value)}
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                            />
+                          </td>
+                          <td className="px-2 py-3 text-sm text-center">
+                            <input
+                              type="number"
+                              min={0}
+                              value={row.kedinasan_akmil ?? ""}
+                              onChange={(e) => updateProfilLulusanRow(row.id, "kedinasan_akmil", e.target.value)}
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                            />
+                          </td>
+                          <td className="px-2 py-3 text-sm text-center">
+                            <input
+                              type="number"
+                              min={0}
+                              value={row.kedinasan_akpol ?? ""}
+                              onChange={(e) => updateProfilLulusanRow(row.id, "kedinasan_akpol", e.target.value)}
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                            />
+                          </td>
+                          <td className="px-2 py-3 text-sm text-center">
+                            <input
+                              type="number"
+                              min={0}
+                              value={row.kedinasan_stan ?? ""}
+                              onChange={(e) => updateProfilLulusanRow(row.id, "kedinasan_stan", e.target.value)}
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                            />
+                          </td>
+                          <td className="px-2 py-3 text-sm text-center">
+                            <input
+                              type="number"
+                              min={0}
+                              value={row.kedinasan_stpdn ?? ""}
+                              onChange={(e) => updateProfilLulusanRow(row.id, "kedinasan_stpdn", e.target.value)}
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                            />
+                          </td>
+                          <td className="px-2 py-3 text-sm text-center">
+                            <input
+                              type="number"
+                              min={0}
+                              value={row.kedinasan_sttd ?? ""}
+                              onChange={(e) => updateProfilLulusanRow(row.id, "kedinasan_sttd", e.target.value)}
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                            />
+                          </td>
+                          <td className="px-2 py-3 text-sm text-center">
+                            <input
+                              type="number"
+                              min={0}
+                              value={row.kedinasan_stis ?? ""}
+                              onChange={(e) => updateProfilLulusanRow(row.id, "kedinasan_stis", e.target.value)}
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                            />
+                          </td>
+                          <td className="px-2 py-3 text-sm text-center border-r border-slate-200">
+                            <input
+                              type="number"
+                              min={0}
+                              value={row.kedinasan_lainnya ?? ""}
+                              onChange={(e) => updateProfilLulusanRow(row.id, "kedinasan_lainnya", e.target.value)}
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                            />
+                          </td>
+                          <td className="px-2 py-3 text-sm text-center border-r border-slate-200">
+                            <input
+                              type="number"
+                              min={0}
+                              value={row.bekerja ?? ""}
+                              onChange={(e) => updateProfilLulusanRow(row.id, "bekerja", e.target.value)}
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                            />
+                          </td>
+                          <td className="px-2 py-3 text-sm text-center">
+                            <input
+                              type="number"
+                              min={0}
+                              value={row.belum_bekerja ?? ""}
+                              onChange={(e) => updateProfilLulusanRow(row.id, "belum_bekerja", e.target.value)}
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                            />
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                setProfilLulusanRows((prev) =>
+                                  prev.length > 1 ? prev.filter((item) => item.id !== row.id) : prev,
+                                )
+                              }
+                              className="h-9 w-9 rounded-full border border-red-100 bg-red-50 text-red-600 shadow-sm transition hover:bg-red-100 hover:text-red-700"
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           )}
