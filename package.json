@@ -13,6 +13,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@aws-sdk/client-ses": "^3.997.0",
     "@ducanh2912/next-pwa": "^10.2.9",
     "@floating-ui/dom": "^1.7.4",
     "@hookform/resolvers": "^5.2.2",
@@ -35,6 +36,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.23.24",
+    "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.552.0",
     "next": "16.0.1",
     "next-themes": "^0.4.6",
@@ -48,6 +50,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

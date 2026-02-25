@@ -101,6 +101,7 @@ export default function SekolahProfilePage() {
   // Use SWR hook for data fetching
   const { sekolah, isLoading, isError, notFound, mutate } = useSekolahData();
 
+  const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("identitas");
   const [isTabDropdownOpen, setIsTabDropdownOpen] = useState(false);
@@ -161,6 +162,7 @@ export default function SekolahProfilePage() {
       // Mutate the SWR cache with the new data
       await mutate(result.data, false); // Update validation without re-fetching immediately
       setFormData(result.data); // Update local form data
+      setIsEditing(false); // Switch back to view mode on successful save
 
       toast({
         title: "Berhasil",
@@ -240,25 +242,55 @@ export default function SekolahProfilePage() {
           className="rounded-full border-0 bg-gradient-to-r from-green-50 via-emerald-50/80 to-teal-50/60 text-green-700 hover:from-green-100 hover:via-emerald-100/90 hover:to-teal-100/70 hover:text-green-800 shadow-md shadow-green-200/30 hover:shadow-lg hover:shadow-green-300/40 transition-all duration-300 group"
         >
           <ArrowLeft className="size-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-          Kembali
+          <span className="hidden sm:inline">Kembali</span>
         </Button>
-        <Button
-          onClick={handleSave}
-          disabled={isSaving}
-          className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white"
-        >
-          {isSaving ? (
-            <>
-              <Loader2 className="size-4 mr-2 animate-spin" />
-              Menyimpan...
-            </>
+        <div className="flex items-center gap-2">
+          {!isEditing ? (
+            <Button
+              onClick={(e) => {
+                e.preventDefault();
+                setIsEditing(true);
+              }}
+              className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:via-indigo-700 hover:to-blue-800 text-white rounded-full shadow-md hover:shadow-lg transition-all"
+            >
+              <Edit className="size-4 mr-2" />
+              Edit Profil
+            </Button>
           ) : (
             <>
-              <Save className="size-4 mr-2" />
-              Simpan Perubahan
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsEditing(false);
+                  if (sekolah) setFormData(sekolah); // Revert changes
+                }}
+                disabled={isSaving}
+                className="rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-100"
+              >
+                <X className="size-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Batal</span>
+              </Button>
+              <Button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white rounded-full shadow-md hover:shadow-lg transition-all"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="size-4 mr-1 sm:mr-2 animate-spin" />
+                    <span className="hidden sm:inline">Menyimpan...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="size-4 mr-1 sm:mr-2" />
+                    <span className="hidden sm:inline">Simpan Perubahan</span>
+                    <span className="sm:hidden">Simpan</span>
+                  </>
+                )}
+              </Button>
             </>
           )}
-        </Button>
+        </div>
       </div>
 
       {/* School Header Card */}
@@ -375,48 +407,56 @@ export default function SekolahProfilePage() {
             updateFormData={updateFormData}
             onSave={handleSave}
             isSaving={isSaving}
+            isEditing={isEditing}
           />
         )}
         {activeTab === "profil-guru" && (
           <ProfilGuruTab
             formData={formData}
             updateFormData={updateFormData}
+            isEditing={isEditing}
           />
         )}
         {activeTab === "profil-tenaga-kependidikan" && (
           <ProfilTenagaKependidikanTab
             formData={formData}
             updateFormData={updateFormData}
+            isEditing={isEditing}
           />
         )}
         {activeTab === "profil-siswa" && (
           <ProfilSiswaTab
             formData={formData}
             updateFormData={updateFormData}
+            isEditing={isEditing}
           />
         )}
         {activeTab === "branding" && (
           <BrandingSekolahTab
             formData={formData}
             updateFormData={updateFormData}
+            isEditing={isEditing}
           />
         )}
         {activeTab === "kokurikuler" && (
           <KokurikulerTab
             formData={formData}
             updateFormData={updateFormData}
+            isEditing={isEditing}
           />
         )}
         {activeTab === "ekstrakurikuler" && (
           <EkstrakurikulerTab
             formData={formData}
             updateFormData={updateFormData}
+            isEditing={isEditing}
           />
         )}
         {activeTab === "rapor-pendidikan" && (
           <RaporPendidikanTab
             formData={formData}
             updateFormData={updateFormData}
+            isEditing={isEditing}
           />
         )}
       </div>
@@ -431,12 +471,14 @@ function IdentitasSekolahTab({
   updateFormData,
   onSave,
   isSaving,
+  isEditing,
 }: {
   sekolah: SekolahProfile;
   formData: Partial<SekolahProfile>;
   updateFormData: (field: string, value: any) => void;
   onSave?: () => void;
   isSaving?: boolean;
+  isEditing?: boolean;
 }) {
   return (
     <Card className="border border-green-200 bg-white shadow-md shadow-green-100/70">
@@ -448,51 +490,53 @@ function IdentitasSekolahTab({
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <label className="text-sm font-bold text-slate-900">Nama Sekolah</label>
-            <input
-              type="text"
-              value={formData.nama_sekolah || sekolah.nama_sekolah || ''}
-              onChange={(e) => updateFormData('nama_sekolah', e.target.value)}
-              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-              readOnly
-            />
+            <div className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 min-h-[46px]">
+              {formData.nama_sekolah || sekolah.nama_sekolah || '-'}
+            </div>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-bold text-slate-900">NPSN</label>
-            <input
-              type="text"
-              value={formData.npsn || sekolah.npsn || ''}
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
-              readOnly
-            />
+            <div className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 min-h-[46px]">
+              {formData.npsn || sekolah.npsn || '-'}
+            </div>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-bold text-slate-900">Jenjang</label>
-            <input
-              type="text"
-              value={formData.jenjang || sekolah.jenjang || ''}
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700"
-              readOnly
-            />
+            <div className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 min-h-[46px]">
+              {formData.jenjang || sekolah.jenjang || '-'}
+            </div>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-bold text-slate-900">Nama Kepala Sekolah</label>
-            <input
-              type="text"
-              value={formData.kepala_sekolah || sekolah.kepala_sekolah || ''}
-              onChange={(e) => updateFormData('kepala_sekolah', e.target.value)}
-              placeholder="Masukkan nama kepala sekolah"
-              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
+            {isEditing ? (
+              <input
+                type="text"
+                value={formData.kepala_sekolah || sekolah.kepala_sekolah || ''}
+                onChange={(e) => updateFormData('kepala_sekolah', e.target.value)}
+                placeholder="Masukkan nama kepala sekolah"
+                className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            ) : (
+              <div className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 min-h-[46px]">
+                {formData.kepala_sekolah || sekolah.kepala_sekolah || '-'}
+              </div>
+            )}
           </div>
           <div className="space-y-2">
             <label className="text-sm font-bold text-slate-900">Status Akreditasi</label>
-            <input
-              type="text"
-              value={formData.status_akreditasi || sekolah.status_akreditasi || ''}
-              onChange={(e) => updateFormData('status_akreditasi', e.target.value)}
-              placeholder="Masukkan status akreditasi"
-              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
+            {isEditing ? (
+              <input
+                type="text"
+                value={formData.status_akreditasi || sekolah.status_akreditasi || ''}
+                onChange={(e) => updateFormData('status_akreditasi', e.target.value)}
+                placeholder="Masukkan status akreditasi"
+                className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            ) : (
+              <div className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 min-h-[46px]">
+                {formData.status_akreditasi || sekolah.status_akreditasi || '-'}
+              </div>
+            )}
           </div>
         </div>
 
@@ -502,42 +546,57 @@ function IdentitasSekolahTab({
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <label className="text-xs font-semibold text-slate-600">Jalan</label>
-                <input
-                  type="text"
-                  value={formData.jalan || sekolah.jalan || ''}
-                  onChange={(e) => updateFormData('jalan', e.target.value)}
-                  placeholder="Masukkan nama jalan"
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={formData.jalan || sekolah.jalan || ''}
+                    onChange={(e) => updateFormData('jalan', e.target.value)}
+                    placeholder="Masukkan nama jalan"
+                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                ) : (
+                  <div className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 min-h-[38px]">
+                    {formData.jalan || sekolah.jalan || '-'}
+                  </div>
+                )}
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-600">Desa</label>
-                <input
-                  type="text"
-                  value={formData.desa || sekolah.desa || ''}
-                  onChange={(e) => updateFormData('desa', e.target.value)}
-                  placeholder="Masukkan nama desa"
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={formData.desa || sekolah.desa || ''}
+                    onChange={(e) => updateFormData('desa', e.target.value)}
+                    placeholder="Masukkan nama desa"
+                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                ) : (
+                  <div className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 min-h-[38px]">
+                    {formData.desa || sekolah.desa || '-'}
+                  </div>
+                )}
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-600">Kecamatan</label>
-                <input
-                  type="text"
-                  value={formData.kecamatan || sekolah.kecamatan || ''}
-                  onChange={(e) => updateFormData('kecamatan', e.target.value)}
-                  placeholder="Masukkan nama kecamatan"
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={formData.kecamatan || sekolah.kecamatan || ''}
+                    onChange={(e) => updateFormData('kecamatan', e.target.value)}
+                    placeholder="Masukkan nama kecamatan"
+                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                ) : (
+                  <div className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 min-h-[38px]">
+                    {formData.kecamatan || sekolah.kecamatan || '-'}
+                  </div>
+                )}
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-600">Kabupaten/Kota</label>
-                <input
-                  type="text"
-                  value={formData.kabupaten_kota || sekolah.kabupaten_kota || ''}
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700"
-                  readOnly
-                />
+                <div className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 min-h-[38px]">
+                  {formData.kabupaten_kota || sekolah.kabupaten_kota || '-'}
+                </div>
               </div>
             </div>
           </div>
@@ -546,33 +605,51 @@ function IdentitasSekolahTab({
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <label className="text-sm font-bold text-slate-900">Nomor Telepon</label>
-            <input
-              type="text"
-              value={formData.nomor_telepon || sekolah.nomor_telepon || ''}
-              onChange={(e) => updateFormData('nomor_telepon', e.target.value)}
-              placeholder="Masukkan nomor telepon"
-              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
+            {isEditing ? (
+              <input
+                type="text"
+                value={formData.nomor_telepon || sekolah.nomor_telepon || ''}
+                onChange={(e) => updateFormData('nomor_telepon', e.target.value)}
+                placeholder="Masukkan nomor telepon"
+                className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            ) : (
+              <div className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 min-h-[46px]">
+                {formData.nomor_telepon || sekolah.nomor_telepon || '-'}
+              </div>
+            )}
           </div>
           <div className="space-y-2">
             <label className="text-sm font-bold text-slate-900">WhatsApp</label>
-            <input
-              type="text"
-              value={formData.whatsapp || sekolah.whatsapp || ''}
-              onChange={(e) => updateFormData('whatsapp', e.target.value)}
-              placeholder="Masukkan nomor WhatsApp"
-              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
+            {isEditing ? (
+              <input
+                type="text"
+                value={formData.whatsapp || sekolah.whatsapp || ''}
+                onChange={(e) => updateFormData('whatsapp', e.target.value)}
+                placeholder="Masukkan nomor WhatsApp"
+                className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            ) : (
+              <div className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 min-h-[46px]">
+                {formData.whatsapp || sekolah.whatsapp || '-'}
+              </div>
+            )}
           </div>
           <div className="space-y-2">
             <label className="text-sm font-bold text-slate-900">Email</label>
-            <input
-              type="email"
-              value={formData.email_sekolah || sekolah.email_sekolah || ''}
-              onChange={(e) => updateFormData('email_sekolah', e.target.value)}
-              placeholder="Masukkan email sekolah"
-              className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-            />
+            {isEditing ? (
+              <input
+                type="email"
+                value={formData.email_sekolah || sekolah.email_sekolah || ''}
+                onChange={(e) => updateFormData('email_sekolah', e.target.value)}
+                placeholder="Masukkan email sekolah"
+                className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            ) : (
+              <div className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 min-h-[46px]">
+                {formData.email_sekolah || sekolah.email_sekolah || '-'}
+              </div>
+            )}
           </div>
         </div>
 
@@ -582,74 +659,110 @@ function IdentitasSekolahTab({
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <label className="text-xs font-semibold text-slate-600">Website</label>
-                <input
-                  type="url"
-                  value={formData.website || sekolah.website || ''}
-                  onChange={(e) => updateFormData('website', e.target.value)}
-                  placeholder="https://example.com"
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
+                {isEditing ? (
+                  <input
+                    type="url"
+                    value={formData.website || sekolah.website || ''}
+                    onChange={(e) => updateFormData('website', e.target.value)}
+                    placeholder="https://example.com"
+                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                ) : (
+                  <div className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 min-h-[38px]">
+                    {formData.website || sekolah.website ? (
+                      <a href={formData.website || sekolah.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                        {formData.website || sekolah.website}
+                      </a>
+                    ) : '-'}
+                  </div>
+                )}
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-600">Facebook</label>
-                <input
-                  type="text"
-                  value={formData.facebook || sekolah.facebook || ''}
-                  onChange={(e) => updateFormData('facebook', e.target.value)}
-                  placeholder="Username atau URL Facebook"
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={formData.facebook || sekolah.facebook || ''}
+                    onChange={(e) => updateFormData('facebook', e.target.value)}
+                    placeholder="Username atau URL Facebook"
+                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                ) : (
+                  <div className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 min-h-[38px]">
+                    {formData.facebook || sekolah.facebook || '-'}
+                  </div>
+                )}
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-600">Instagram</label>
-                <input
-                  type="text"
-                  value={formData.instagram || sekolah.instagram || ''}
-                  onChange={(e) => updateFormData('instagram', e.target.value)}
-                  placeholder="Username Instagram"
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={formData.instagram || sekolah.instagram || ''}
+                    onChange={(e) => updateFormData('instagram', e.target.value)}
+                    placeholder="Username Instagram"
+                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                ) : (
+                  <div className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 min-h-[38px]">
+                    {formData.instagram || sekolah.instagram || '-'}
+                  </div>
+                )}
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-600">TikTok</label>
-                <input
-                  type="text"
-                  value={formData.tiktok || sekolah.tiktok || ''}
-                  onChange={(e) => updateFormData('tiktok', e.target.value)}
-                  placeholder="Username TikTok"
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={formData.tiktok || sekolah.tiktok || ''}
+                    onChange={(e) => updateFormData('tiktok', e.target.value)}
+                    placeholder="Username TikTok"
+                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                ) : (
+                  <div className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 min-h-[38px]">
+                    {formData.tiktok || sekolah.tiktok || '-'}
+                  </div>
+                )}
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-600">Twitter (X)</label>
-                <input
-                  type="text"
-                  value={formData.twitter || sekolah.twitter || ''}
-                  onChange={(e) => updateFormData('twitter', e.target.value)}
-                  placeholder="Username Twitter"
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={formData.twitter || sekolah.twitter || ''}
+                    onChange={(e) => updateFormData('twitter', e.target.value)}
+                    placeholder="Username Twitter"
+                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  />
+                ) : (
+                  <div className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 min-h-[38px]">
+                    {formData.twitter || sekolah.twitter || '-'}
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </div>
 
-        <div className="sm:hidden pt-2">
-          <Button
-            onClick={onSave}
-            disabled={isSaving}
-            className="w-full rounded-full border-0 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-5 py-2 font-semibold text-white shadow-md transition hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 hover:shadow-lg"
-          >
-            {isSaving ? (
-              <>
-                <Loader2 className="size-4 animate-spin" />
-                <span className="ml-2">Menyimpan...</span>
-              </>
-            ) : (
-              "Simpan Identitas"
-            )}
-          </Button>
-        </div>
+        {isEditing && (
+          <div className="sm:hidden pt-2">
+            <Button
+              onClick={onSave}
+              disabled={isSaving}
+              className="w-full rounded-full border-0 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-5 py-2 font-semibold text-white shadow-md transition hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 hover:shadow-lg"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  <span className="ml-2">Menyimpan...</span>
+                </>
+              ) : (
+                "Simpan Identitas"
+              )}
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -700,7 +813,15 @@ const createEmptyGuru = (): GuruForm => ({
   tanggal_purna_tugas: '',
 });
 
-function ProfilGuruTab({ formData, updateFormData }: { formData: Partial<SekolahProfile>; updateFormData: (field: string, value: any) => void }) {
+function ProfilGuruTab({
+  formData,
+  updateFormData,
+  isEditing
+}: {
+  formData: Partial<SekolahProfile>;
+  updateFormData: (field: string, value: any) => void;
+  isEditing?: boolean;
+}) {
   const { toast } = useToast();
   const [guruList, setGuruList] = useState<any[]>(formData.profil_guru?.detail || []);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -1257,13 +1378,15 @@ function ProfilGuruTab({ formData, updateFormData }: { formData: Partial<Sekolah
                 className="w-full rounded-full border border-slate-200 bg-white py-2 pl-9 pr-4 text-sm text-slate-600 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
               />
             </div>
-            <Button
-              onClick={openAddModal}
-              className="w-full rounded-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white shadow-md hover:shadow-lg transition-all duration-300 sm:w-auto"
-            >
-              <Plus className="size-4 mr-2" />
-              Tambah Guru
-            </Button>
+            {isEditing && (
+              <Button
+                onClick={openAddModal}
+                className="w-full rounded-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white shadow-md hover:shadow-lg transition-all duration-300 sm:w-auto"
+              >
+                <Plus className="size-4 mr-2" />
+                Tambah Guru
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -1314,25 +1437,29 @@ function ProfilGuruTab({ formData, updateFormData }: { formData: Partial<Sekolah
                               >
                                 <Eye className="size-4" />
                               </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setNewGuru({ ...guru });
-                                  openEditModal(overallIndex);
-                                }}
-                                className="h-9 w-9 rounded-full border border-blue-100 bg-blue-50 text-blue-600 shadow-sm transition hover:bg-blue-100 hover:text-blue-700 sm:h-8 sm:w-8 sm:border-0 sm:bg-transparent sm:shadow-none"
-                              >
-                                <Edit className="size-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeleteGuru(overallIndex)}
-                                className="h-9 w-9 rounded-full border border-red-100 bg-red-50 text-red-600 shadow-sm transition hover:bg-red-100 hover:text-red-700 sm:h-8 sm:w-8 sm:border-0 sm:bg-transparent sm:shadow-none"
-                              >
-                                <Trash2 className="size-4" />
-                              </Button>
+                              {isEditing && (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      setNewGuru({ ...guru });
+                                      openEditModal(overallIndex);
+                                    }}
+                                    className="h-9 w-9 rounded-full border border-blue-100 bg-blue-50 text-blue-600 shadow-sm transition hover:bg-blue-100 hover:text-blue-700 sm:h-8 sm:w-8 sm:border-0 sm:bg-transparent sm:shadow-none"
+                                  >
+                                    <Edit className="size-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDeleteGuru(overallIndex)}
+                                    className="h-9 w-9 rounded-full border border-red-100 bg-red-50 text-red-600 shadow-sm transition hover:bg-red-100 hover:text-red-700 sm:h-8 sm:w-8 sm:border-0 sm:bg-transparent sm:shadow-none"
+                                  >
+                                    <Trash2 className="size-4" />
+                                  </Button>
+                                </>
+                              )}
                             </div>
                           </div>
                         </CardContent>
@@ -1723,7 +1850,7 @@ function ProfilGuruTab({ formData, updateFormData }: { formData: Partial<Sekolah
             >
               Tutup
             </Button>
-            {selectedGuruIndex !== null && (
+            {isEditing && selectedGuruIndex !== null && (
               <Button
                 onClick={() => {
                   setNewGuru({ ...guruList[selectedGuruIndex] });
@@ -1740,74 +1867,76 @@ function ProfilGuruTab({ formData, updateFormData }: { formData: Partial<Sekolah
         </DialogContent>
       </Dialog>
 
-      <Card className="border-0 bg-white/90 shadow-xl shadow-green-100/40">
-        <CardHeader className="space-y-2">
-          <CardTitle className="flex flex-wrap items-center gap-2 text-lg font-bold text-slate-900">
-            <FileSpreadsheet className="size-5 text-green-600" />
-            Import Cepat Data Guru
-          </CardTitle>
-          <CardDescription className="text-slate-600">
-            Unduh template Excel resmi, isi data guru sesuai kolom yang disediakan, lalu unggah kembali untuk menambahkan banyak guru sekaligus.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div className="flex flex-wrap items-center gap-3">
-              <Button
-                type="button"
-                onClick={handleDownloadTemplate}
-                className="rounded-full bg-gradient-to-r from-emerald-600 via-teal-600 to-green-600 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:from-emerald-700 hover:via-teal-700 hover:to-green-700 hover:shadow-lg"
-              >
-                <Download className="mr-2 size-4" />
-                Unduh Template Excel
-              </Button>
-              <Button
-                type="button"
-                onClick={handleOpenFileDialog}
-                disabled={isImporting}
-                className="rounded-full border border-emerald-100 bg-emerald-50 px-5 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isImporting ? (
-                  <>
-                    <Loader2 className="mr-2 size-4 animate-spin" />
-                    Mengunggah...
-                  </>
-                ) : (
-                  <>
-                    <UploadCloud className="mr-2 size-4" />
-                    Upload Data Guru
-                  </>
-                )}
-              </Button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".xlsx,.xls"
-                className="hidden"
-                onChange={handleImportGuru}
-              />
+      {isEditing && (
+        <Card className="border-0 bg-white/90 shadow-xl shadow-green-100/40">
+          <CardHeader className="space-y-2">
+            <CardTitle className="flex flex-wrap items-center gap-2 text-lg font-bold text-slate-900">
+              <FileSpreadsheet className="size-5 text-green-600" />
+              Import Cepat Data Guru
+            </CardTitle>
+            <CardDescription className="text-slate-600">
+              Unduh template Excel resmi, isi data guru sesuai kolom yang disediakan, lalu unggah kembali untuk menambahkan banyak guru sekaligus.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div className="flex flex-wrap items-center gap-3">
+                <Button
+                  type="button"
+                  onClick={handleDownloadTemplate}
+                  className="rounded-full bg-gradient-to-r from-emerald-600 via-teal-600 to-green-600 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:from-emerald-700 hover:via-teal-700 hover:to-green-700 hover:shadow-lg"
+                >
+                  <Download className="mr-2 size-4" />
+                  Unduh Template Excel
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleOpenFileDialog}
+                  disabled={isImporting}
+                  className="rounded-full border border-emerald-100 bg-emerald-50 px-5 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isImporting ? (
+                    <>
+                      <Loader2 className="mr-2 size-4 animate-spin" />
+                      Mengunggah...
+                    </>
+                  ) : (
+                    <>
+                      <UploadCloud className="mr-2 size-4" />
+                      Upload Data Guru
+                    </>
+                  )}
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".xlsx,.xls"
+                  className="hidden"
+                  onChange={handleImportGuru}
+                />
+              </div>
+              {importSummary && (
+                <p className="text-sm font-semibold text-emerald-700">
+                  {importSummary}
+                </p>
+              )}
             </div>
-            {importSummary && (
-              <p className="text-sm font-semibold text-emerald-700">
-                {importSummary}
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 text-sm text-slate-600">
+              <p className="mb-2 flex items-center gap-2 font-semibold text-slate-900">
+                <FileSpreadsheet className="size-4 text-emerald-600" />
+                Panduan singkat pengisian
               </p>
-            )}
-          </div>
-          <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 text-sm text-slate-600">
-            <p className="mb-2 flex items-center gap-2 font-semibold text-slate-900">
-              <FileSpreadsheet className="size-4 text-emerald-600" />
-              Panduan singkat pengisian
-            </p>
-            <ol className="list-decimal space-y-1 pl-5">
-              <li>Unduh template, lalu buka menggunakan Microsoft Excel, WPS Office, atau Google Sheets.</li>
-              <li>Isi setiap kolom sesuai contoh. Gunakan pilihan seperti "PNS", "PPPK", "GTT" pada kolom status.</li>
-              <li>Tulis tanggal dengan format <span className="font-semibold text-slate-900">YYYY-MM-DD</span> (contoh: 2024-01-15).</li>
-              <li>Pada kolom tugas tambahan, pisahkan dengan koma. Contoh: <span className="font-semibold text-slate-900">waka, wali_kelas</span>.</li>
-              <li>Simpan file lalu unggah kembali menggunakan tombol "Upload Data Guru".</li>
-            </ol>
-          </div>
-        </CardContent>
-      </Card>
+              <ol className="list-decimal space-y-1 pl-5">
+                <li>Unduh template, lalu buka menggunakan Microsoft Excel, WPS Office, atau Google Sheets.</li>
+                <li>Isi setiap kolom sesuai contoh. Gunakan pilihan seperti "PNS", "PPPK", "GTT" pada kolom status.</li>
+                <li>Tulis tanggal dengan format <span className="font-semibold text-slate-900">YYYY-MM-DD</span> (contoh: 2024-01-15).</li>
+                <li>Pada kolom tugas tambahan, pisahkan dengan koma. Contoh: <span className="font-semibold text-slate-900">waka, wali_kelas</span>.</li>
+                <li>Simpan file lalu unggah kembali menggunakan tombol "Upload Data Guru".</li>
+              </ol>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
@@ -1834,7 +1963,15 @@ const createEmptyTenaga = (): TenagaForm => ({
   tanggal_purna_tugas: '',
 });
 
-function ProfilTenagaKependidikanTab({ formData, updateFormData }: { formData: Partial<SekolahProfile>; updateFormData: (field: string, value: any) => void }) {
+function ProfilTenagaKependidikanTab({
+  formData,
+  updateFormData,
+  isEditing
+}: {
+  formData: Partial<SekolahProfile>;
+  updateFormData: (field: string, value: any) => void;
+  isEditing?: boolean;
+}) {
   const { toast } = useToast();
   const [tenagaList, setTenagaList] = useState<any[]>(formData.profil_tenaga_kependidikan?.detail || []);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -2274,13 +2411,15 @@ function ProfilTenagaKependidikanTab({ formData, updateFormData }: { formData: P
                 className="w-full rounded-full border border-slate-200 bg-white py-2 pl-9 pr-4 text-sm text-slate-600 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
               />
             </div>
-            <Button
-              onClick={openAddModal}
-              className="w-full rounded-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white shadow-md hover:shadow-lg transition-all duration-300 sm:w-auto"
-            >
-              <Plus className="size-4 mr-2" />
-              Tambah Tenaga
-            </Button>
+            {isEditing && (
+              <Button
+                onClick={openAddModal}
+                className="w-full rounded-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white shadow-md hover:shadow-lg transition-all duration-300 sm:w-auto"
+              >
+                <Plus className="size-4 mr-2" />
+                Tambah Tenaga
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -2330,25 +2469,29 @@ function ProfilTenagaKependidikanTab({ formData, updateFormData }: { formData: P
                             >
                               <Eye className="size-4" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setNewTenaga({ ...tenaga });
-                                openEditModal(overallIndex);
-                              }}
-                              className="h-9 w-9 rounded-full border border-blue-100 bg-blue-50 text-blue-600 shadow-sm transition hover:bg-blue-100 hover:text-blue-700 sm:h-8 sm:w-8 sm:border-0 sm:bg-transparent sm:shadow-none"
-                            >
-                              <Edit className="size-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteTenaga(overallIndex)}
-                              className="h-9 w-9 rounded-full border border-red-100 bg-red-50 text-red-600 shadow-sm transition hover:bg-red-100 hover:text-red-700 sm:h-8 sm:w-8 sm:border-0 sm:bg-transparent sm:shadow-none"
-                            >
-                              <Trash2 className="size-4" />
-                            </Button>
+                            {isEditing && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setNewTenaga({ ...tenaga });
+                                    openEditModal(overallIndex);
+                                  }}
+                                  className="h-9 w-9 rounded-full border border-blue-100 bg-blue-50 text-blue-600 shadow-sm transition hover:bg-blue-100 hover:text-blue-700 sm:h-8 sm:w-8 sm:border-0 sm:bg-transparent sm:shadow-none"
+                                >
+                                  <Edit className="size-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeleteTenaga(overallIndex)}
+                                  className="h-9 w-9 rounded-full border border-red-100 bg-red-50 text-red-600 shadow-sm transition hover:bg-red-100 hover:text-red-700 sm:h-8 sm:w-8 sm:border-0 sm:bg-transparent sm:shadow-none"
+                                >
+                                  <Trash2 className="size-4" />
+                                </Button>
+                              </>
+                            )}
                           </div>
                         </div>
                       </CardContent>
@@ -2964,7 +3107,15 @@ const formatNumber = (value: NumericValue, options: Intl.NumberFormatOptions = {
   return new Intl.NumberFormat("id-ID", options).format(value);
 };
 
-function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<SekolahProfile>; updateFormData: (field: string, value: any) => void }) {
+function ProfilSiswaTab({
+  formData,
+  updateFormData,
+  isEditing
+}: {
+  formData: Partial<SekolahProfile>;
+  updateFormData: (field: string, value: any) => void;
+  isEditing?: boolean;
+}) {
   const { toast } = useToast();
   const [siswaList, setSiswaList] = useState<any[]>(formData.profil_siswa?.detail || []);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -3703,7 +3854,7 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
               Isi jumlah siswa dan siswa berkebutuhan khusus per kelas secara berkala
             </CardDescription>
           </div>
-          {!showFormJumlahSiswa && (
+          {!showFormJumlahSiswa && isEditing && (
             <Button
               type="button"
               onClick={() => setShowFormJumlahSiswa(true)}
@@ -4067,7 +4218,7 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
               Catat distribusi tingkat ekonomi orang tua siswa per kelas (P1 paling rendah)
             </CardDescription>
           </div>
-          {!showFormEkonomi && (
+          {!showFormEkonomi && isEditing && (
             <Button
               type="button"
               onClick={() => setShowFormEkonomi(true)}
@@ -4285,7 +4436,7 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
               Data jenis pekerjaan orang tua siswa untuk identifikasi kebutuhan dukungan
             </CardDescription>
           </div>
-          {!showFormPekerjaan && (
+          {!showFormPekerjaan && isEditing && (
             <Button
               type="button"
               onClick={() => setShowFormPekerjaan(true)}
@@ -4455,7 +4606,7 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
               Catat kelanjutan studi dan penempatan lulusan per tahun lulusan
             </CardDescription>
           </div>
-          {!showFormProfilLulusan && (
+          {!showFormProfilLulusan && isEditing && (
             <Button
               type="button"
               onClick={() => setShowFormProfilLulusan(true)}
@@ -5095,13 +5246,15 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
                 className="w-full rounded-full border border-slate-200 bg-white py-2 pl-9 pr-4 text-sm text-slate-600 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
               />
             </div>
-            <Button
-              onClick={openAddModal}
-              className="w-full rounded-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white shadow-md hover:shadow-lg transition-all duration-300 sm:w-auto"
-            >
-              <Plus className="size-4 mr-2" />
-              Tambah Siswa
-            </Button>
+            {isEditing && (
+              <Button
+                onClick={openAddModal}
+                className="w-full rounded-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white shadow-md hover:shadow-lg transition-all duration-300 sm:w-auto"
+              >
+                <Plus className="size-4 mr-2" />
+                Tambah Siswa
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -5151,25 +5304,29 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
                             >
                               <Eye className="size-4" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setNewSiswa({ ...siswa });
-                                openEditModal(overallIndex);
-                              }}
-                              className="h-9 w-9 rounded-full border border-blue-100 bg-blue-50 text-blue-600 shadow-sm transition hover:bg-blue-100 hover:text-blue-700 sm:h-8 sm:w-8 sm:border-0 sm:bg-transparent sm:shadow-none"
-                            >
-                              <Edit className="size-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteSiswa(overallIndex)}
-                              className="h-9 w-9 rounded-full border border-red-100 bg-red-50 text-red-600 shadow-sm transition hover:bg-red-100 hover:text-red-700 sm:h-8 sm:w-8 sm:border-0 sm:bg-transparent sm:shadow-none"
-                            >
-                              <Trash2 className="size-4" />
-                            </Button>
+                            {isEditing && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setNewSiswa({ ...siswa });
+                                    openEditModal(overallIndex);
+                                  }}
+                                  className="h-9 w-9 rounded-full border border-blue-100 bg-blue-50 text-blue-600 shadow-sm transition hover:bg-blue-100 hover:text-blue-700 sm:h-8 sm:w-8 sm:border-0 sm:bg-transparent sm:shadow-none"
+                                >
+                                  <Edit className="size-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeleteSiswa(overallIndex)}
+                                  className="h-9 w-9 rounded-full border border-red-100 bg-red-50 text-red-600 shadow-sm transition hover:bg-red-100 hover:text-red-700 sm:h-8 sm:w-8 sm:border-0 sm:bg-transparent sm:shadow-none"
+                                >
+                                  <Trash2 className="size-4" />
+                                </Button>
+                              </>
+                            )}
                           </div>
                         </div>
                       </CardContent>
@@ -5475,79 +5632,89 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
         </DialogContent>
       </Dialog>
 
-      <Card className="border-0 bg-white/90 shadow-xl shadow-green-100/40">
-        <CardHeader className="space-y-2">
-          <CardTitle className="flex flex-wrap items-center gap-2 text-lg font-bold text-slate-900">
-            <FileSpreadsheet className="size-5 text-green-600" />
-            Import Cepat Data Siswa
-          </CardTitle>
-          <CardDescription className="text-slate-600">
-            Unduh template Excel, isi data siswa secara massal, lalu unggah kembali untuk mempercepat pengisian.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div className="flex flex-wrap items-center gap-3">
-              <Button
-                type="button"
-                onClick={handleDownloadTemplate}
-                className="rounded-full bg-gradient-to-r from-emerald-600 via-teal-600 to-green-600 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:from-emerald-700 hover:via-teal-700 hover:to-green-700 hover:shadow-lg"
-              >
-                <Download className="mr-2 size-4" />
-                Unduh Template Excel
-              </Button>
-              <Button
-                type="button"
-                onClick={handleOpenFileDialog}
-                disabled={isImporting}
-                className="rounded-full border border-emerald-100 bg-emerald-50 px-5 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isImporting ? (
-                  <>
-                    <Loader2 className="mr-2 size-4 animate-spin" />
-                    Mengunggah...
-                  </>
-                ) : (
-                  <>
-                    <UploadCloud className="mr-2 size-4" />
-                    Upload Data Siswa
-                  </>
-                )}
-              </Button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".xlsx,.xls"
-                className="hidden"
-                onChange={handleImportSiswa}
-              />
+      {isEditing && (
+        <Card className="border-0 bg-white/90 shadow-xl shadow-green-100/40">
+          <CardHeader className="space-y-2">
+            <CardTitle className="flex flex-wrap items-center gap-2 text-lg font-bold text-slate-900">
+              <FileSpreadsheet className="size-5 text-green-600" />
+              Import Cepat Data Siswa
+            </CardTitle>
+            <CardDescription className="text-slate-600">
+              Unduh template Excel, isi data siswa secara massal, lalu unggah kembali untuk mempercepat pengisian.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div className="flex flex-wrap items-center gap-3">
+                <Button
+                  type="button"
+                  onClick={handleDownloadTemplate}
+                  className="rounded-full bg-gradient-to-r from-emerald-600 via-teal-600 to-green-600 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:from-emerald-700 hover:via-teal-700 hover:to-green-700 hover:shadow-lg"
+                >
+                  <Download className="mr-2 size-4" />
+                  Unduh Template Excel
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleOpenFileDialog}
+                  disabled={isImporting}
+                  className="rounded-full border border-emerald-100 bg-emerald-50 px-5 py-2 text-sm font-semibold text-emerald-700 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isImporting ? (
+                    <>
+                      <Loader2 className="mr-2 size-4 animate-spin" />
+                      Mengunggah...
+                    </>
+                  ) : (
+                    <>
+                      <UploadCloud className="mr-2 size-4" />
+                      Upload Data Siswa
+                    </>
+                  )}
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".xlsx,.xls"
+                  className="hidden"
+                  onChange={handleImportSiswa}
+                />
+              </div>
+              {importSummary && (
+                <p className="text-sm font-semibold text-emerald-700">
+                  {importSummary}
+                </p>
+              )}
             </div>
-            {importSummary && (
-              <p className="text-sm font-semibold text-emerald-700">
-                {importSummary}
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 text-sm text-slate-600">
+              <p className="mb-2 flex items-center gap-2 font-semibold text-slate-900">
+                <FileSpreadsheet className="size-4 text-emerald-600" />
+                Panduan singkat pengisian
               </p>
-            )}
-          </div>
-          <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 text-sm text-slate-600">
-            <p className="mb-2 flex items-center gap-2 font-semibold text-slate-900">
-              <FileSpreadsheet className="size-4 text-emerald-600" />
-              Panduan singkat pengisian
-            </p>
-            <ol className="list-decimal space-y-1 pl-5">
-              <li>Unduh template dan isi kolom sesuai contoh yang tersedia.</li>
-              <li>Gunakan format tanggal <span className="font-semibold text-slate-900">YYYY-MM-DD</span> agar sistem membaca dengan benar.</li>
-              <li>Pilih status siswa seperti "Aktif", "Lulus", "Pindah", atau "Drop Out".</li>
-              <li>Pastikan kolom NIS dan NISN hanya berisi angka tanpa spasi.</li>
-              <li>Simpan file dan unggah melalui tombol "Upload Data Siswa" di atas.</li>
-            </ol>
-          </div>
-        </CardContent>
-      </Card>
+              <ol className="list-decimal space-y-1 pl-5">
+                <li>Unduh template dan isi kolom sesuai contoh yang tersedia.</li>
+                <li>Gunakan format tanggal <span className="font-semibold text-slate-900">YYYY-MM-DD</span> agar sistem membaca dengan benar.</li>
+                <li>Pilih status siswa seperti "Aktif", "Lulus", "Pindah", atau "Drop Out".</li>
+                <li>Pastikan kolom NIS dan NISN hanya berisi angka tanpa spasi.</li>
+                <li>Simpan file dan unggah melalui tombol "Upload Data Siswa" di atas.</li>
+              </ol>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
 
-function BrandingSekolahTab({ formData, updateFormData }: { formData: Partial<SekolahProfile>; updateFormData: (field: string, value: any) => void }) {
+function BrandingSekolahTab({
+  formData,
+  updateFormData,
+  isEditing
+}: {
+  formData: Partial<SekolahProfile>;
+  updateFormData: (field: string, value: any) => void;
+  isEditing?: boolean;
+}) {
   const { toast } = useToast();
 
   const brandingOptions = [
@@ -5678,12 +5845,14 @@ function BrandingSekolahTab({ formData, updateFormData }: { formData: Partial<Se
                 </div>
                 <button
                   type="button"
-                  onClick={() => toggleBranding(branding.id)}
+                  onClick={() => isEditing && toggleBranding(branding.id)}
+                  disabled={!isEditing}
                   className={cn(
                     "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold transition",
                     branding.status
-                      ? "bg-green-600 text-white shadow-md shadow-green-200/60 hover:bg-green-700"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200",
+                      ? "bg-green-600 text-white shadow-md shadow-green-200/60 hover:bg-green-700 disabled:opacity-70 disabled:hover:bg-green-600"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200 disabled:opacity-70 disabled:hover:bg-slate-100",
+                    !isEditing && "cursor-default"
                   )}
                 >
                   {branding.status ? "Ya" : "Tidak"}
@@ -5692,32 +5861,42 @@ function BrandingSekolahTab({ formData, updateFormData }: { formData: Partial<Se
             ))}
           </div>
 
-          <div className="flex justify-end">
-            <Button
-              onClick={handleSaveBranding}
-              disabled={isSaving}
-              className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white"
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="size-4 mr-2 animate-spin" />
-                  Menyimpan...
-                </>
-              ) : (
-                <>
-                  <Save className="size-4 mr-2" />
-                  Simpan Branding
-                </>
-              )}
-            </Button>
-          </div>
+          {isEditing && (
+            <div className="flex justify-end">
+              <Button
+                onClick={handleSaveBranding}
+                disabled={isSaving}
+                className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="size-4 mr-2 animate-spin" />
+                    Menyimpan...
+                  </>
+                ) : (
+                  <>
+                    <Save className="size-4 mr-2" />
+                    Simpan Branding
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
   );
 }
 
-function KokurikulerTab({ formData, updateFormData }: { formData: Partial<SekolahProfile>; updateFormData: (field: string, value: any) => void }) {
+function KokurikulerTab({
+  formData,
+  updateFormData,
+  isEditing
+}: {
+  formData: Partial<SekolahProfile>;
+  updateFormData: (field: string, value: any) => void;
+  isEditing?: boolean;
+}) {
   const { toast } = useToast();
 
   const kegiatanOptions = [
@@ -5885,8 +6064,9 @@ function KokurikulerTab({ formData, updateFormData }: { formData: Partial<Sekola
                     <button
                       key={kelas}
                       type="button"
-                      onClick={() => toggleKelas(kegiatan.id, kelas)}
-                      className={getToggleClasses(Boolean(kegiatan.kelas?.[kelas]), "w-full")}
+                      onClick={() => isEditing && toggleKelas(kegiatan.id, kelas)}
+                      disabled={!isEditing}
+                      className={cn(getToggleClasses(Boolean(kegiatan.kelas?.[kelas]), "w-full"), !isEditing && "opacity-80 cursor-default hover:bg-slate-100 hover:text-slate-600 border border-slate-200")}
                     >
                       Kelas {kelas} • {kegiatan.kelas?.[kelas] ? "Ya" : "Tidak"}
                     </button>
@@ -5922,8 +6102,9 @@ function KokurikulerTab({ formData, updateFormData }: { formData: Partial<Sekola
                       <td key={kelas} className="px-4 py-3">
                         <button
                           type="button"
-                          onClick={() => toggleKelas(kegiatan.id, kelas)}
-                          className={getToggleClasses(Boolean(kegiatan.kelas?.[kelas]), "mx-auto w-20")}
+                          onClick={() => isEditing && toggleKelas(kegiatan.id, kelas)}
+                          disabled={!isEditing}
+                          className={cn(getToggleClasses(Boolean(kegiatan.kelas?.[kelas]), "mx-auto w-20"), !isEditing && "opacity-80 cursor-default hover:bg-slate-100 hover:text-slate-600 border border-slate-200")}
                         >
                           {kegiatan.kelas?.[kelas] ? "Ya" : "Tidak"}
                         </button>
@@ -5935,32 +6116,42 @@ function KokurikulerTab({ formData, updateFormData }: { formData: Partial<Sekola
             </table>
           </div>
 
-          <div className="flex justify-end">
-            <Button
-              onClick={handleSaveKokurikuler}
-              disabled={isSaving}
-              className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white"
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="size-4 mr-2 animate-spin" />
-                  Menyimpan...
-                </>
-              ) : (
-                <>
-                  <Save className="size-4 mr-2" />
-                  Simpan Kokurikuler
-                </>
-              )}
-            </Button>
-          </div>
+          {isEditing && (
+            <div className="flex justify-end">
+              <Button
+                onClick={handleSaveKokurikuler}
+                disabled={isSaving}
+                className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="size-4 mr-2 animate-spin" />
+                    Menyimpan...
+                  </>
+                ) : (
+                  <>
+                    <Save className="size-4 mr-2" />
+                    Simpan Kokurikuler
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
   );
 }
 
-function EkstrakurikulerTab({ formData, updateFormData }: { formData: Partial<SekolahProfile>; updateFormData: (field: string, value: any) => void }) {
+function EkstrakurikulerTab({
+  formData,
+  updateFormData,
+  isEditing
+}: {
+  formData: Partial<SekolahProfile>;
+  updateFormData: (field: string, value: any) => void;
+  isEditing?: boolean;
+}) {
   const { toast } = useToast();
 
   const ekstrakurikulerOptions = [
@@ -6145,8 +6336,9 @@ function EkstrakurikulerTab({ formData, updateFormData }: { formData: Partial<Se
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={() => updateEkstra(item.id, "ada", !item.ada)}
-                    className={getChipClass(Boolean(item.ada), "col-span-2")}
+                    onClick={() => isEditing && updateEkstra(item.id, "ada", !item.ada)}
+                    disabled={!isEditing}
+                    className={cn(getChipClass(Boolean(item.ada), "col-span-2"), !isEditing && "opacity-80 cursor-default hover:bg-slate-100 hover:text-slate-600 border border-slate-200")}
                   >
                     {item.ada ? "Ada" : "Tidak Ada"}
                   </button>
@@ -6156,7 +6348,8 @@ function EkstrakurikulerTab({ formData, updateFormData }: { formData: Partial<Se
                   <select
                     value={item.sifat || ""}
                     onChange={(e) => updateEkstra(item.id, "sifat", e.target.value)}
-                    className="col-span-2 w-full rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                    disabled={!isEditing}
+                    className="col-span-2 w-full rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100 disabled:opacity-70 disabled:bg-slate-50"
                   >
                     <option value="">Pilih</option>
                     <option value="Wajib">Wajib</option>
@@ -6170,7 +6363,8 @@ function EkstrakurikulerTab({ formData, updateFormData }: { formData: Partial<Se
                     min={0}
                     value={item.jumlah_peserta ?? ""}
                     onChange={(e) => updateEkstra(item.id, "jumlah_peserta", e.target.value)}
-                    className="col-span-2 w-full rounded-full border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                    disabled={!isEditing}
+                    className="col-span-2 w-full rounded-full border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100 disabled:opacity-70 disabled:bg-slate-50"
                     placeholder="0"
                   />
                 </div>
@@ -6209,8 +6403,9 @@ function EkstrakurikulerTab({ formData, updateFormData }: { formData: Partial<Se
                       <div className="flex justify-center">
                         <button
                           type="button"
-                          onClick={() => updateEkstra(item.id, "ada", !item.ada)}
-                          className={getChipClass(Boolean(item.ada))}
+                          onClick={() => isEditing && updateEkstra(item.id, "ada", !item.ada)}
+                          disabled={!isEditing}
+                          className={cn(getChipClass(Boolean(item.ada)), !isEditing && "opacity-80 cursor-default hover:bg-slate-100 hover:text-slate-600 border border-slate-200")}
                         >
                           {item.ada ? "Ada" : "Tidak"}
                         </button>
@@ -6220,7 +6415,8 @@ function EkstrakurikulerTab({ formData, updateFormData }: { formData: Partial<Se
                       <select
                         value={item.sifat || ""}
                         onChange={(e) => updateEkstra(item.id, "sifat", e.target.value)}
-                        className="w-full rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                        disabled={!isEditing}
+                        className="w-full rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100 disabled:opacity-70 disabled:bg-slate-50"
                       >
                         <option value="">Pilih</option>
                         <option value="Wajib">Wajib</option>
@@ -6233,7 +6429,8 @@ function EkstrakurikulerTab({ formData, updateFormData }: { formData: Partial<Se
                         min={0}
                         value={item.jumlah_peserta ?? ""}
                         onChange={(e) => updateEkstra(item.id, "jumlah_peserta", e.target.value)}
-                        className="w-full rounded-full border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                        disabled={!isEditing}
+                        className="w-full rounded-full border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100 disabled:opacity-70 disabled:bg-slate-50"
                         placeholder="0"
                       />
                     </td>
@@ -6243,32 +6440,42 @@ function EkstrakurikulerTab({ formData, updateFormData }: { formData: Partial<Se
             </table>
           </div>
 
-          <div className="flex justify-end">
-            <Button
-              onClick={handleSaveEkstrakurikuler}
-              disabled={isSaving}
-              className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white"
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="size-4 mr-2 animate-spin" />
-                  Menyimpan...
-                </>
-              ) : (
-                <>
-                  <Save className="size-4 mr-2" />
-                  Simpan Ekstrakurikuler
-                </>
-              )}
-            </Button>
-          </div>
+          {isEditing && (
+            <div className="flex justify-end">
+              <Button
+                onClick={handleSaveEkstrakurikuler}
+                disabled={isSaving}
+                className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="size-4 mr-2 animate-spin" />
+                    Menyimpan...
+                  </>
+                ) : (
+                  <>
+                    <Save className="size-4 mr-2" />
+                    Simpan Ekstrakurikuler
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
   );
 }
 
-function RaporPendidikanTab({ formData, updateFormData }: { formData: Partial<SekolahProfile>; updateFormData: (field: string, value: any) => void }) {
+function RaporPendidikanTab({
+  formData,
+  updateFormData,
+  isEditing
+}: {
+  formData: Partial<SekolahProfile>;
+  updateFormData: (field: string, value: any) => void;
+  isEditing?: boolean;
+}) {
   const { toast } = useToast();
 
   const indikatorList = [
@@ -6304,7 +6511,7 @@ function RaporPendidikanTab({ formData, updateFormData }: { formData: Partial<Se
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
   const [availableYears, setAvailableYears] = useState<number[]>([currentYear]);
 
-  // Store all rapor data by year: { [year]: RaporItem[] }
+  // Store all rapor data by year: {[year]: RaporItem[] }
   const [raporDataByYear, setRaporDataByYear] = useState<Record<number, any[]>>({
     [currentYear]: createDefaultRapor()
   });
@@ -6448,7 +6655,7 @@ function RaporPendidikanTab({ formData, updateFormData }: { formData: Partial<Se
       setIsSaving(true);
 
       // Convert map back to array format for storage
-      // structure: [{ tahun: 2024, data: [...] }, { tahun: 2023, data: [...] }]
+      // structure: [{tahun: 2024, data: [...] }, {tahun: 2023, data: [...] }]
       const detailPayload = availableYears.map(year => ({
         tahun: year,
         data: raporDataByYear[year] || createDefaultRapor()
@@ -6556,56 +6763,58 @@ function RaporPendidikanTab({ formData, updateFormData }: { formData: Partial<Se
               </button>
             ))}
 
-            <Dialog open={isAddYearOpen} onOpenChange={setIsAddYearOpen}>
-              <button
-                onClick={() => setIsAddYearOpen(true)}
-                className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors flex items-center gap-1"
-              >
-                <Plus className="size-3.5" />
-                Tambah Tahun
-              </button>
-              <DialogContent className="sm:max-w-md bg-white">
-                <DialogHeader>
-                  <DialogTitle className="text-xl font-bold text-slate-900">Tambah Tahun Rapor</DialogTitle>
-                  <DialogDescription className="text-slate-600">
-                    Masukkan tahun untuk membuat laporan rapor pendidikan baru.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="flex items-center space-x-2 py-4">
-                  <div className="grid flex-1 gap-2">
-                    <label htmlFor="year" className="sr-only">
-                      Tahun
-                    </label>
-                    <input
-                      id="year"
-                      type="number"
-                      placeholder="Contoh: 2023"
-                      value={newYearInput}
-                      onChange={(e) => setNewYearInput(e.target.value)}
-                      className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100 placeholder:text-slate-400"
-                    />
+            {isEditing && (
+              <Dialog open={isAddYearOpen} onOpenChange={setIsAddYearOpen}>
+                <button
+                  onClick={() => setIsAddYearOpen(true)}
+                  className="px-3 py-1.5 rounded-full text-sm font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors flex items-center gap-1"
+                >
+                  <Plus className="size-3.5" />
+                  Tambah Tahun
+                </button>
+                <DialogContent className="sm:max-w-md bg-white">
+                  <DialogHeader>
+                    <DialogTitle className="text-xl font-bold text-slate-900">Tambah Tahun Rapor</DialogTitle>
+                    <DialogDescription className="text-slate-600">
+                      Masukkan tahun untuk membuat laporan rapor pendidikan baru.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="flex items-center space-x-2 py-4">
+                    <div className="grid flex-1 gap-2">
+                      <label htmlFor="year" className="sr-only">
+                        Tahun
+                      </label>
+                      <input
+                        id="year"
+                        type="number"
+                        placeholder="Contoh: 2023"
+                        value={newYearInput}
+                        onChange={(e) => setNewYearInput(e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100 placeholder:text-slate-400"
+                      />
+                    </div>
                   </div>
-                </div>
-                <DialogFooter className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end sm:space-x-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsAddYearOpen(false)}
-                    className="w-full rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-50 sm:w-auto"
-                  >
-                    Batal
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={handleAddYear}
-                    disabled={!newYearInput}
-                    className="w-full rounded-full border-0 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 hover:shadow-lg sm:w-auto"
-                  >
-                    Tambah
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                  <DialogFooter className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end sm:space-x-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsAddYearOpen(false)}
+                      className="w-full rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:bg-slate-50 sm:w-auto"
+                    >
+                      Batal
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={handleAddYear}
+                      disabled={!newYearInput}
+                      className="w-full rounded-full border-0 bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-5 py-2 text-sm font-semibold text-white shadow-md transition hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 hover:shadow-lg sm:w-auto"
+                    >
+                      Tambah
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -6625,8 +6834,9 @@ function RaporPendidikanTab({ formData, updateFormData }: { formData: Partial<Se
                     <button
                       key={status}
                       type="button"
-                      onClick={() => updateRapor(item.id, "capaian", status)}
-                      className={getCapaianClass(status, item.capaian === status)}
+                      onClick={() => isEditing && updateRapor(item.id, "capaian", status)}
+                      disabled={!isEditing}
+                      className={cn(getCapaianClass(status, item.capaian === status), !isEditing && "opacity-80 cursor-default")}
                     >
                       {status}
                     </button>
@@ -6641,7 +6851,8 @@ function RaporPendidikanTab({ formData, updateFormData }: { formData: Partial<Se
                     max={100}
                     value={item.skor ?? ""}
                     onChange={(e) => updateRapor(item.id, "skor", e.target.value)}
-                    className="w-full rounded-full border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                    disabled={!isEditing}
+                    className="w-full rounded-full border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100 disabled:opacity-70 disabled:bg-slate-50"
                     placeholder="0"
                   />
                 </div>
@@ -6651,7 +6862,8 @@ function RaporPendidikanTab({ formData, updateFormData }: { formData: Partial<Se
                   <textarea
                     value={item.catatan || ""}
                     onChange={(e) => updateRapor(item.id, "catatan", e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                    disabled={!isEditing}
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100 disabled:opacity-70 disabled:bg-slate-50"
                     rows={3}
                     placeholder="Tambahkan catatan jika diperlukan"
                   />
@@ -6691,7 +6903,8 @@ function RaporPendidikanTab({ formData, updateFormData }: { formData: Partial<Se
                       <select
                         value={item.capaian || ""}
                         onChange={(e) => updateRapor(item.id, "capaian", e.target.value)}
-                        className="w-full rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                        disabled={!isEditing}
+                        className="w-full rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100 disabled:opacity-70 disabled:bg-slate-50"
                       >
                         <option value="">Pilih capaian</option>
                         {capaianOptions.map((status) => (
@@ -6708,7 +6921,8 @@ function RaporPendidikanTab({ formData, updateFormData }: { formData: Partial<Se
                         max={100}
                         value={item.skor ?? ""}
                         onChange={(e) => updateRapor(item.id, "skor", e.target.value)}
-                        className="w-full rounded-full border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                        disabled={!isEditing}
+                        className="w-full rounded-full border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100 disabled:opacity-70 disabled:bg-slate-50"
                         placeholder="0"
                       />
                     </td>
@@ -6716,7 +6930,8 @@ function RaporPendidikanTab({ formData, updateFormData }: { formData: Partial<Se
                       <textarea
                         value={item.catatan || ""}
                         onChange={(e) => updateRapor(item.id, "catatan", e.target.value)}
-                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                        disabled={!isEditing}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100 disabled:opacity-70 disabled:bg-slate-50"
                         rows={2}
                         placeholder="Tambahkan catatan jika diperlukan"
                       />
@@ -6727,25 +6942,27 @@ function RaporPendidikanTab({ formData, updateFormData }: { formData: Partial<Se
             </table>
           </div>
 
-          <div className="flex justify-end">
-            <Button
-              onClick={handleSaveRapor}
-              disabled={isSaving}
-              className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white"
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="size-4 mr-2 animate-spin" />
-                  Menyimpan...
-                </>
-              ) : (
-                <>
-                  <Save className="size-4 mr-2" />
-                  Simpan Rapor Pendidikan
-                </>
-              )}
-            </Button>
-          </div>
+          {isEditing && (
+            <div className="flex justify-end">
+              <Button
+                onClick={handleSaveRapor}
+                disabled={isSaving}
+                className="bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 text-white"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="size-4 mr-2 animate-spin" />
+                    Menyimpan...
+                  </>
+                ) : (
+                  <>
+                    <Save className="size-4 mr-2" />
+                    Simpan Rapor Pendidikan
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

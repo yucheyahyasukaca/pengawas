@@ -277,7 +277,7 @@ export default function LoginPage() {
                     Kata Sandi
                   </label>
                   <Link
-                    href="#"
+                    href="/forgot-password"
                     className="text-sm font-medium text-[#F7CDD0] transition hover:text-white"
                   >
                     Lupa kata sandi?
