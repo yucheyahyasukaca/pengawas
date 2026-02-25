@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { Suspense } from "react";
 import ResetPasswordForm from "./reset-password-form";
 
 export const metadata: Metadata = {
@@ -18,7 +19,9 @@ export default function ResetPasswordPage() {
                         Pastikan password baru Anda kuat dan belum pernah dipakai sebelumnya.
                     </p>
                 </div>
-                <ResetPasswordForm />
+                <Suspense fallback={<div className="text-center text-sm text-gray-600">Loading form...</div>}>
+                    <ResetPasswordForm />
+                </Suspense>
             </div>
         </div>
     );
