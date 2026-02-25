@@ -8,15 +8,15 @@ export async function GET(request: Request) {
     // Use admin client to bypass RLS
     // This allows unauthenticated users to see sekolah list for registration
     const adminClient = createSupabaseAdminClient();
-    
+
     // Always load all data (no search filter on server)
     // Client-side filtering is much faster than server-side search
     let query = adminClient
       .from('sekolah')
       .select('id, npsn, nama_sekolah, status, jenjang, kabupaten_kota, kcd_wilayah, alamat')
       .order('nama_sekolah', { ascending: true })
-      .limit(1000); // Increased limit to allow more data for client-side filtering
-    
+      .limit(10000); // Increased limit to allow more data for client-side filtering
+
     const { data, error } = await query;
 
     if (error) {
@@ -28,7 +28,7 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json(
-      { 
+      {
         success: true,
         sekolah: data || [],
         count: (data || []).length

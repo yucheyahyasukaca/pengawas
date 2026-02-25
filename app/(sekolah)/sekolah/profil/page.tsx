@@ -4292,17 +4292,17 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
               className="w-full sm:w-auto rounded-full bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 px-4 md:px-5 py-2.5 md:py-2 text-sm font-semibold text-white shadow-md transition hover:from-green-700 hover:via-emerald-700 hover:to-teal-700 hover:shadow-lg"
             >
               <Plus className="mr-2 size-4" />
-              {formData.profil_siswa?.pekerjaan_orang_tua?.length > 0 ? "Edit Data" : "Tambah Data"}
+              {((formData.profil_siswa?.pekerjaan_orang_tua?.detail ?? formData.profil_siswa?.pekerjaan_orang_tua)?.length || 0) > 0 ? "Edit Data" : "Tambah Data"}
             </Button>
           )}
         </CardHeader>
         <CardContent>
           {!showFormPekerjaan ? (
-            formData.profil_siswa?.pekerjaan_orang_tua?.length > 0 ? (
+            ((formData.profil_siswa?.pekerjaan_orang_tua?.detail ?? formData.profil_siswa?.pekerjaan_orang_tua)?.length || 0) > 0 ? (
               <div className="space-y-4">
                 {/* Mobile Card View */}
                 <div className="block md:hidden space-y-3">
-                  {formData.profil_siswa.pekerjaan_orang_tua.map((row: any, index: number) => (
+                  {(formData.profil_siswa.pekerjaan_orang_tua.detail ?? formData.profil_siswa.pekerjaan_orang_tua).map((row: any, index: number) => (
                     <div key={index} className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
                       <div className="flex justify-between items-center">
                         <div className="font-semibold text-base text-slate-900">{row.jenis || "-"}</div>
@@ -4324,7 +4324,7 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {formData.profil_siswa.pekerjaan_orang_tua.map((row: any, index: number) => (
+                      {(formData.profil_siswa.pekerjaan_orang_tua.detail ?? formData.profil_siswa.pekerjaan_orang_tua).map((row: any, index: number) => (
                         <tr key={index} className="bg-white">
                           <td className="px-4 py-3 text-sm font-semibold text-slate-900">{row.jenis || "-"}</td>
                           <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.jumlah)}</td>

@@ -5,17 +5,17 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
+import {
   AlertCircle,
   ArrowRight,
   Bug,
-  Building2, 
+  Building2,
   CheckCircle2,
-  FileText, 
+  FileText,
   Loader2,
   School,
-  Settings, 
-  User, 
+  Settings,
+  User,
 } from "lucide-react";
 import Link from "next/link";
 import { sekolahQuickActions } from "@/config/sekolah";
@@ -34,13 +34,13 @@ export default function SekolahDashboardPage() {
   const loadData = async () => {
     try {
       setIsLoading(true);
-      
+
       // Load user data
       const userResponse = await fetch('/api/auth/get-current-user');
       if (userResponse.ok) {
         const userData = await userResponse.json();
         const currentUser = userData.user;
-        
+
         // Check approval status - redirect if not approved
         if (currentUser && currentUser.role === 'sekolah') {
           if (currentUser.status_approval !== 'approved') {
@@ -48,9 +48,9 @@ export default function SekolahDashboardPage() {
             return;
           }
         }
-        
+
         setUser(currentUser);
-        
+
         // Load sekolah data if user has sekolah_id in metadata
         if (currentUser?.metadata?.sekolah_id) {
           const sekolahResponse = await fetch(`/api/sekolah/profile?sekolah_id=${currentUser.metadata.sekolah_id}`);
@@ -194,9 +194,8 @@ export default function SekolahDashboardPage() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-base font-semibold text-slate-800">Ringkasan Data Sekolah</h2>
             <span
-              className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                isComplete ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
-              }`}
+              className={`rounded-full px-3 py-1 text-xs font-semibold ${isComplete ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+                }`}
             >
               {progressValue}% lengkap
             </span>
@@ -341,19 +340,26 @@ function getCompletionStatus(data: any) {
 
   const kokurikuler = Array.isArray(data?.kokurikuler?.detail)
     ? data.kokurikuler.detail.some(
-        (item: any) =>
-          item?.kelas && Object.values(item.kelas).some((value) => Boolean(value)),
-      )
+      (item: any) =>
+        item?.kelas && Object.values(item.kelas).some((value) => Boolean(value)),
+    )
     : false;
 
   const ekstrakurikuler = Array.isArray(data?.ekstrakurikuler?.detail)
     ? data.ekstrakurikuler.detail.some((item: any) => Boolean(item?.ada))
     : false;
 
-  const rapor = Array.isArray(data?.rapor_pendidikan?.detail)
-    ? data.rapor_pendidikan.detail.length > 0 &&
-      data.rapor_pendidikan.detail.every(
-        (item: any) => Boolean(item?.capaian) && item?.skor !== undefined && item?.skor !== "",
+  const rapor = Array.isArray(data?.rapor_pendidikan?.detail) && data.rapor_pendidikan.detail.length > 0
+    ? data.rapor_pendidikan.detail[0]?.tahun !== undefined
+      ? data.rapor_pendidikan.detail.some((yearItem: any) =>
+        Array.isArray(yearItem?.data) &&
+        yearItem.data.length > 0 &&
+        yearItem.data.every(
+          (ind: any) => Boolean(ind?.capaian) && ind?.skor !== undefined && ind?.skor !== ""
+        )
+      )
+      : data.rapor_pendidikan.detail.every(
+        (item: any) => Boolean(item?.capaian) && item?.skor !== undefined && item?.skor !== ""
       )
     : false;
 
