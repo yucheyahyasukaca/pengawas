@@ -4557,7 +4557,7 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
                   <table className="w-full border-collapse min-w-[960px]">
                     <thead>
                       <tr className="border-b-2 border-slate-200 bg-slate-50">
-                        <th rowSpan={2} className="px-4 py-3 text-left text-xs font-bold text-slate-900 align-middle border-r border-slate-200">
+                        <th rowSpan={2} className="px-4 py-3 text-left text-xs font-bold text-slate-900 align-middle border-r border-slate-200 min-w-[100px]">
                           Tahun
                         </th>
                         <th colSpan={3} className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
@@ -4611,7 +4611,7 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
                     <tbody className="divide-y divide-slate-100">
                       {formData.profil_siswa.profil_lulusan.per_tahun.map((row: any, index: number) => (
                         <tr key={index} className="bg-white">
-                          <td className="px-4 py-3 text-sm font-semibold text-slate-900 border-r border-slate-200">{row.tahun || "-"}</td>
+                          <td className="px-4 py-3 text-sm font-semibold text-slate-900 border-r border-slate-200 min-w-[100px]">{row.tahun || "-"}</td>
                           <td className="px-2 py-3 text-sm text-slate-700 text-center">{formatNumber(row.ptn_snbp)}</td>
                           <td className="px-2 py-3 text-sm text-slate-700 text-center">{formatNumber(row.ptn_snbt)}</td>
                           <td className="px-2 py-3 text-sm text-slate-700 text-center border-r border-slate-200">{formatNumber(row.ptn_um)}</td>
@@ -4859,7 +4859,7 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
                   <table className="w-full border-collapse min-w-[960px]">
                     <thead>
                       <tr className="border-b-2 border-slate-200 bg-slate-50">
-                        <th rowSpan={2} className="px-4 py-3 text-left text-xs font-bold text-slate-900 align-middle border-r border-slate-200">
+                        <th rowSpan={2} className="px-4 py-3 text-left text-xs font-bold text-slate-900 align-middle border-r border-slate-200 min-w-[100px]">
                           Tahun
                         </th>
                         <th colSpan={3} className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
@@ -4922,7 +4922,7 @@ function ProfilSiswaTab({ formData, updateFormData }: { formData: Partial<Sekola
                               value={row.tahun}
                               onChange={(e) => updateProfilLulusanRow(row.id, "tahun", e.target.value)}
                               placeholder="Contoh: 2024"
-                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
+                              className="w-full min-w-[80px] rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-100"
                             />
                           </td>
                           <td className="px-2 py-3 text-sm text-center">
