@@ -78,6 +78,11 @@ const INDIKATOR_UTAMA = [
     { code: "E.5", label: "Program dan kebijakan satuan pendidikan" },
 ];
 
+const getIndikatorLabel = (code: string) => {
+    const item = INDIKATOR_UTAMA.find((i) => i.code === code);
+    return item ? item.label : code;
+};
+
 export function JadwalPelaksanaanTable() {
     const [rencanaList, setRencanaList] = useState<RencanaPendampingan[]>([]);
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -237,7 +242,7 @@ export function JadwalPelaksanaanTable() {
         }
 
         // 1. Title & Identity Section
-        const titleRow = ["RENCANA PROGRAM PENDAMPINGAN"];
+        const titleRow = ["PELAKSANAAN PROGRAM PENDAMPINGAN"];
         const emptyRow = [""];
         const identityRows = [
             ["Nama Pengawas", ":", userProfile?.nama || "-"],
@@ -269,7 +274,7 @@ export function JadwalPelaksanaanTable() {
                 index + 1,
                 formattedDate,
                 rencana.sekolah_nama,
-                rencana.indikator_utama || "-",
+                getIndikatorLabel(rencana.indikator_utama) || "-",
                 rencana.akar_masalah || "-",
                 rencana.kegiatan_benahi || "-",
                 rencana.penjelasan_implementasi?.join("; ") || "-",
@@ -395,7 +400,7 @@ export function JadwalPelaksanaanTable() {
                     <div className="bg-white p-4 sm:p-8 min-w-[800px] print:min-w-0">
                         {/* Header Section mimicking the print layout */}
                         <div className="mb-8 text-center print:mb-4">
-                            <h2 className="text-lg font-bold uppercase text-black">RENCANA PROGRAM PENDAMPINGAN</h2>
+                            <h2 className="text-lg font-bold uppercase text-black">PELAKSANAAN PROGRAM PENDAMPINGAN</h2>
                         </div>
 
                         <div className="grid grid-cols-[160px_10px_1fr] gap-y-1 mb-6 text-sm text-black print:mb-4">
@@ -469,7 +474,7 @@ export function JadwalPelaksanaanTable() {
                                                         {rencana.sekolah_nama}
                                                     </TableCell>
                                                     <TableCell className="border-r border-black align-top p-2 text-black">
-                                                        {rencana.indikator_utama || "-"}
+                                                        {getIndikatorLabel(rencana.indikator_utama) || "-"}
                                                     </TableCell>
                                                     <TableCell className="border-r border-black align-top p-2 text-black">
                                                         {rencana.akar_masalah || "-"}

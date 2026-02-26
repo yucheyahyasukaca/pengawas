@@ -11,8 +11,8 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  School, 
+import {
+  School,
   ArrowLeft,
   Loader2,
   XCircle,
@@ -71,21 +71,21 @@ interface Sekolah {
   profil_siswa?: any;
 }
 
-type TabType = 
-  | "identitas" 
-  | "profil-guru" 
-  | "profil-tenaga-kependidikan" 
-  | "profil-siswa" 
-  | "branding" 
-  | "kokurikuler" 
-  | "ekstrakurikuler" 
+type TabType =
+  | "identitas"
+  | "profil-guru"
+  | "profil-tenaga-kependidikan"
+  | "profil-siswa"
+  | "branding"
+  | "kokurikuler"
+  | "ekstrakurikuler"
   | "rapor-pendidikan";
 
 export default function SekolahProfilePage() {
   const params = useParams();
   const router = useRouter();
   const sekolahId = params.id as string;
-  
+
   const [sekolah, setSekolah] = useState<Sekolah | null>(null);
   const [sekolahProfile, setSekolahProfile] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -122,7 +122,7 @@ export default function SekolahProfilePage() {
       }
 
       const userResponse = await fetch('/api/auth/get-current-user');
-      
+
       if (!userResponse.ok) {
         throw new Error('Gagal memuat data pengawas');
       }
@@ -134,8 +134,8 @@ export default function SekolahProfilePage() {
         throw new Error('Data pengawas tidak ditemukan');
       }
 
-      const sekolahBinaanNames = Array.isArray(pengawas.metadata?.sekolah_binaan) 
-        ? pengawas.metadata.sekolah_binaan 
+      const sekolahBinaanNames = Array.isArray(pengawas.metadata?.sekolah_binaan)
+        ? pengawas.metadata.sekolah_binaan
         : [];
 
       if (sekolahBinaanNames.length === 0) {
@@ -145,7 +145,7 @@ export default function SekolahProfilePage() {
       }
 
       const sekolahResponse = await fetch('/api/sekolah/list');
-      
+
       if (!sekolahResponse.ok) {
         throw new Error('Gagal memuat data sekolah');
       }
@@ -153,15 +153,15 @@ export default function SekolahProfilePage() {
       const sekolahData = await sekolahResponse.json();
       const allSekolah = sekolahData.sekolah || [];
 
-      const foundSekolah = allSekolah.find((s: any) => 
+      const foundSekolah = allSekolah.find((s: any) =>
         s.id === sekolahId || s.id?.toString() === sekolahId
       );
 
       if (!foundSekolah) {
         const filteredSekolah = allSekolah
           .filter((s: any) => sekolahBinaanNames.includes(s.nama_sekolah))
-          .find((s: any) => 
-            s.id === sekolahId || 
+          .find((s: any) =>
+            s.id === sekolahId ||
             s.id?.toString() === sekolahId ||
             s.nama_sekolah?.toLowerCase().includes(sekolahId.toLowerCase())
           );
@@ -182,7 +182,7 @@ export default function SekolahProfilePage() {
           cabangDinas: `KCD Wilayah ${filteredSekolah.kcd_wilayah || '-'}`,
           status: filteredSekolah.status || 'Aktif',
         });
-        
+
         // Only fetch profile if ID is valid
         if (filteredSekolah.id) {
           await fetchSekolahProfile(filteredSekolah.id);
@@ -206,7 +206,7 @@ export default function SekolahProfilePage() {
           cabangDinas: `KCD Wilayah ${foundSekolah.kcd_wilayah || '-'}`,
           status: foundSekolah.status || 'Aktif',
         });
-        
+
         // Only fetch profile if ID is valid
         if (foundSekolah.id) {
           await fetchSekolahProfile(foundSekolah.id);
@@ -247,7 +247,7 @@ export default function SekolahProfilePage() {
       console.log("Profil Guru Type:", typeof result.data?.profil_guru);
       console.log("Profil Guru is null:", result.data?.profil_guru === null);
       console.log("Profil Guru is undefined:", result.data?.profil_guru === undefined);
-      
+
       if (result.data?.profil_guru) {
         console.log("Profil Guru Keys:", Object.keys(result.data.profil_guru));
         console.log("Profil Guru Detail:", result.data.profil_guru.detail);
@@ -260,7 +260,7 @@ export default function SekolahProfilePage() {
         console.warn("⚠️ Frontend: profil_guru is NULL or UNDEFINED!");
       }
       console.log("=== End Frontend API Response ===");
-      
+
       setSekolahProfile(result.data);
     } catch (err) {
       console.error("Error fetching sekolah profile:", err);
@@ -320,7 +320,7 @@ export default function SekolahProfilePage() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 min-w-0">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button
@@ -335,7 +335,7 @@ export default function SekolahProfilePage() {
       </div>
 
       {/* School Header Card */}
-      <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
+      <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70 overflow-hidden w-full min-w-0">
         <CardHeader className="bg-gradient-to-br from-indigo-50 via-indigo-100/30 to-blue-50 px-6 py-8 sm:px-8 sm:py-10">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-4">
@@ -359,7 +359,7 @@ export default function SekolahProfilePage() {
       </Card>
 
       {/* Tabs */}
-      <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
+      <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70 overflow-hidden w-full min-w-0">
         <CardContent className="p-0">
           {/* Mobile Dropdown Tabs */}
           <div className="border-b border-slate-200 bg-white p-4 md:hidden">
@@ -381,8 +381,8 @@ export default function SekolahProfilePage() {
               </button>
               {isTabDropdownOpen && (
                 <>
-                  <div 
-                    className="fixed inset-0 z-10" 
+                  <div
+                    className="fixed inset-0 z-10"
                     onClick={() => setIsTabDropdownOpen(false)}
                   />
                   <div className="absolute left-0 right-0 top-full z-20 mt-2 max-h-96 overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-lg">
@@ -440,7 +440,7 @@ export default function SekolahProfilePage() {
       </Card>
 
       {/* Tab Content */}
-      <div className="min-h-[400px]">
+      <div className="min-h-[400px] min-w-0">
         {activeTab === "identitas" && (
           <IdentitasSekolahTab sekolah={sekolah} sekolahProfile={sekolahProfile} />
         )}
@@ -485,7 +485,7 @@ function IdentitasSekolahTab({ sekolah, sekolahProfile }: { sekolah: Sekolah; se
   }, [sekolahProfile]);
 
   return (
-    <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
+    <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70 overflow-hidden w-full min-w-0">
       <CardHeader>
         <CardTitle className="text-lg font-bold text-slate-900">Identitas Sekolah</CardTitle>
         <CardDescription className="text-slate-600">Informasi lengkap identitas sekolah</CardDescription>
@@ -577,7 +577,7 @@ function IdentitasSekolahTab({ sekolah, sekolahProfile }: { sekolah: Sekolah; se
                 <label className="text-xs font-semibold text-slate-600">Website</label>
                 <div className="mt-1 text-sm text-slate-700">
                   {sekolahProfile?.website ? (
-                    <a 
+                    <a
                       href={sekolahProfile.website.startsWith('http') ? sekolahProfile.website : `https://${sekolahProfile.website}`}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -596,7 +596,7 @@ function IdentitasSekolahTab({ sekolah, sekolahProfile }: { sekolah: Sekolah; se
                 <label className="text-xs font-semibold text-slate-600">Instagram</label>
                 <div className="mt-1 text-sm text-slate-700">
                   {sekolahProfile?.instagram ? (
-                    <a 
+                    <a
                       href={`https://instagram.com/${sekolahProfile.instagram.replace('@', '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -611,7 +611,7 @@ function IdentitasSekolahTab({ sekolah, sekolahProfile }: { sekolah: Sekolah; se
                 <label className="text-xs font-semibold text-slate-600">TikTok</label>
                 <div className="mt-1 text-sm text-slate-700">
                   {sekolahProfile?.tiktok ? (
-                    <a 
+                    <a
                       href={`https://tiktok.com/@${sekolahProfile.tiktok.replace('@', '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -626,7 +626,7 @@ function IdentitasSekolahTab({ sekolah, sekolahProfile }: { sekolah: Sekolah; se
                 <label className="text-xs font-semibold text-slate-600">Twitter (X)</label>
                 <div className="mt-1 text-sm text-slate-700">
                   {sekolahProfile?.twitter ? (
-                    <a 
+                    <a
                       href={`https://twitter.com/${sekolahProfile.twitter.replace('@', '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -653,7 +653,7 @@ function ProfilGuruTab({ profilData }: { profilData?: any }) {
     console.log("Profil Guru Tab - profilData:", profilData);
     console.log("Profil Guru Tab - typeof:", typeof profilData);
     console.log("Profil Guru Tab - isArray:", Array.isArray(profilData));
-    
+
     if (profilData) {
       console.log("Profil Guru Data keys:", Object.keys(profilData));
       console.log("Profil Guru Data detail:", profilData.detail);
@@ -672,7 +672,7 @@ function ProfilGuruTab({ profilData }: { profilData?: any }) {
   // Extract detail guru list - support multiple formats
   // Based on sekolah profil page, structure is: profil_guru.detail = array of guru
   let detailGuru: any[] = [];
-  
+
   if (!profilData) {
     console.warn("Profil Guru Data is null/undefined");
   } else if (Array.isArray(profilData)) {
@@ -707,7 +707,7 @@ function ProfilGuruTab({ profilData }: { profilData?: any }) {
       }
     }
   }
-  
+
   console.log("Final Detail Guru extracted:", detailGuru);
   console.log("Final Detail Guru length:", detailGuru.length);
   console.log("First guru sample:", detailGuru[0]);
@@ -719,7 +719,7 @@ function ProfilGuruTab({ profilData }: { profilData?: any }) {
       laki_laki: detailGuru.filter((g: any) => (g.jenis_kelamin || g.jenisKelamin || '').toLowerCase() === 'laki-laki' || (g.jenis_kelamin || g.jenisKelamin || '').toLowerCase() === 'laki laki').length,
       perempuan: detailGuru.filter((g: any) => (g.jenis_kelamin || g.jenisKelamin || '').toLowerCase() === 'perempuan').length,
     };
-    
+
     statusKepegawaian = {
       pns: detailGuru.filter((g: any) => (g.status_kepegawaian || g.statusKepegawaian || g.status || '').toLowerCase().includes('pns')).length,
       pppk: detailGuru.filter((g: any) => (g.status_kepegawaian || g.statusKepegawaian || g.status || '').toLowerCase().includes('pppk')).length,
@@ -728,7 +728,7 @@ function ProfilGuruTab({ profilData }: { profilData?: any }) {
       gty: detailGuru.filter((g: any) => (g.status_kepegawaian || g.statusKepegawaian || g.status || '').toLowerCase().includes('gty')).length,
       gtt: detailGuru.filter((g: any) => (g.status_kepegawaian || g.statusKepegawaian || g.status || '').toLowerCase().includes('gtt')).length,
     };
-    
+
     pendidikan = {
       sma: detailGuru.filter((g: any) => (g.pendidikan || '').toLowerCase().includes('sma')).length,
       d1: detailGuru.filter((g: any) => (g.pendidikan || '').toLowerCase().includes('d1')).length,
@@ -738,14 +738,14 @@ function ProfilGuruTab({ profilData }: { profilData?: any }) {
       s2: detailGuru.filter((g: any) => (g.pendidikan || '').toLowerCase().includes('s2')).length,
       s3: detailGuru.filter((g: any) => (g.pendidikan || '').toLowerCase().includes('s3')).length,
     };
-    
+
     console.log("Calculated statistics:", { jenisKelamin, statusKepegawaian, pendidikan });
   }
 
   return (
     <div className="space-y-6">
       {/* Statistics */}
-      <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
+      <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70 overflow-hidden w-full min-w-0">
         <CardHeader>
           <CardTitle className="text-lg font-bold text-slate-900 text-center md:text-center">Statistik Profil Guru</CardTitle>
           <CardDescription className="text-slate-600 text-center md:text-center">Ringkasan data guru berdasarkan kategori</CardDescription>
@@ -831,72 +831,74 @@ function ProfilGuruTab({ profilData }: { profilData?: any }) {
       </Card>
 
       {/* Detail Table */}
-      <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
+      <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70 overflow-hidden w-full min-w-0">
         <CardHeader>
           <CardTitle className="text-lg font-bold text-slate-900">Detail Profil Guru</CardTitle>
           <CardDescription className="text-slate-600">Daftar lengkap data guru</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse min-w-[800px]">
-              <thead>
-                <tr className="border-b-2 border-slate-200 bg-slate-50">
-                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-900">No</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-900">Nama</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-900">NIP</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-900">Tanggal Lahir</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-900">Jenis Kelamin</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-900">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-900">Pendidikan</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-900">Jurusan</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-900">Mata Pelajaran</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-900">Jumlah Jam</th>
-                  <th className="px-4 py-3 text-center text-xs font-bold text-slate-900" colSpan={6}>Tugas Tambahan</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-900">Tanggal Purna Tugas</th>
-                </tr>
-                <tr className="border-b border-slate-200 bg-slate-50">
-                  <th colSpan={10}></th>
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">Waka</th>
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">Kepala lab/Perpus/lainnya</th>
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">Wali Kelas</th>
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">Guru Wali</th>
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">Ekstrakurikuler</th>
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">Lainnya</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {detailGuru.length === 0 ? (
-                  <tr>
-                    <td colSpan={15} className="px-4 py-8 text-center text-sm text-slate-500">
-                      Belum ada data guru yang diinput oleh sekolah.
-                    </td>
+        <CardContent className="p-0">
+          <div className="relative w-full overflow-x-auto pb-4">
+            <div className="min-w-[1500px] w-full px-6">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b-2 border-slate-200 bg-slate-50">
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-900 whitespace-nowrap">No</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-900 whitespace-nowrap">Nama</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-900 whitespace-nowrap">NIP</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-900 whitespace-nowrap">Tanggal Lahir</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-900 whitespace-nowrap">Jenis Kelamin</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-900 whitespace-nowrap">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-900 whitespace-nowrap">Pendidikan</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-900 whitespace-nowrap">Jurusan</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-900 whitespace-nowrap">Mata Pelajaran</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-900 whitespace-nowrap">Jumlah Jam</th>
+                    <th className="px-4 py-3 text-center text-xs font-bold text-slate-900 whitespace-nowrap" colSpan={6}>Tugas Tambahan</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-900 whitespace-nowrap">Tanggal Purna Tugas</th>
                   </tr>
-                ) : (
-                  detailGuru.map((guru: any, index: number) => (
-                    <tr key={index}>
-                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{index + 1}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700">{guru.nama || "-"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700">{guru.nip || "-"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700">{guru.tanggal_lahir || guru.tanggalLahir || "-"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700">{guru.jenis_kelamin || guru.jenisKelamin || "-"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700">{guru.status || "-"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700">{guru.pendidikan || "-"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700">{guru.jurusan || "-"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700">{guru.mata_pelajaran || guru.mataPelajaran || "-"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(toNumber(guru.jumlah_jam ?? guru.jumlahJam))}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{guru.waka ? "✓" : "-"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{(guru.kepala_lab ?? guru.kepalaLab) ? "✓" : "-"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{guru.wali_kelas ?? guru.waliKelas ? "✓" : "-"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{guru.guru_wali ?? guru.guruWali ? "✓" : "-"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{guru.ekstrakurikuler ? "✓" : "-"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{guru.lainnya || "-"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700">{(guru.tanggal_purna_tugas ?? guru.tanggalPurnaTugas) || "-"}</td>
+                  <tr className="border-b border-slate-200 bg-slate-50">
+                    <th colSpan={10}></th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 whitespace-nowrap">Waka</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 whitespace-nowrap">Kepala lab/Perpus/lainnya</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 whitespace-nowrap">Wali Kelas</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 whitespace-nowrap">Guru Wali</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 whitespace-nowrap">Ekstrakurikuler</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 whitespace-nowrap">Lainnya</th>
+                    <th className="px-4 py-2"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {detailGuru.length === 0 ? (
+                    <tr>
+                      <td colSpan={15} className="px-4 py-8 text-center text-sm text-slate-500">
+                        Belum ada data guru yang diinput oleh sekolah.
+                      </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (
+                    detailGuru.map((guru: any, index: number) => (
+                      <tr key={index} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-4 py-3 text-sm text-slate-700 text-center whitespace-nowrap">{index + 1}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 font-medium whitespace-nowrap">{guru.nama || "-"}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">{guru.nip || "-"}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">{guru.tanggal_lahir || guru.tanggalLahir || "-"}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">{guru.jenis_kelamin || guru.jenisKelamin || "-"}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">{guru.status || "-"}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">{guru.pendidikan || "-"}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">{guru.jurusan || "-"}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">{guru.mata_pelajaran || guru.mataPelajaran || "-"}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 text-center whitespace-nowrap">{formatNumber(toNumber(guru.jumlah_jam ?? guru.jumlahJam))}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 text-center whitespace-nowrap">{guru.waka ? "✓" : "-"}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 text-center whitespace-nowrap">{(guru.kepala_lab ?? guru.kepalaLab) ? "✓" : "-"}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 text-center whitespace-nowrap">{guru.wali_kelas ?? guru.waliKelas ? "✓" : "-"}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 text-center whitespace-nowrap">{guru.guru_wali ?? guru.guruWali ? "✓" : "-"}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 text-center whitespace-nowrap">{guru.ekstrakurikuler ? "✓" : "-"}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 text-center whitespace-nowrap">{guru.lainnya || "-"}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">{(guru.tanggal_purna_tugas ?? guru.tanggalPurnaTugas) || "-"}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -912,7 +914,7 @@ function ProfilTenagaKependidikanTab({ profilData }: { profilData?: any }) {
     console.log("Profil Tenaga Kependidikan Tab - profilData:", profilData);
     console.log("Profil Tenaga Kependidikan Tab - typeof:", typeof profilData);
     console.log("Profil Tenaga Kependidikan Tab - isArray:", Array.isArray(profilData));
-    
+
     if (profilData) {
       console.log("Profil Tenaga Kependidikan Data keys:", Object.keys(profilData));
       console.log("Profil Tenaga Kependidikan Data detail:", profilData.detail);
@@ -929,7 +931,7 @@ function ProfilTenagaKependidikanTab({ profilData }: { profilData?: any }) {
 
   // Extract detail tenaga list - support multiple formats
   let detailTenaga: any[] = [];
-  
+
   if (!profilData) {
     console.warn("Profil Tenaga Kependidikan Data is null/undefined");
   } else if (Array.isArray(profilData)) {
@@ -964,7 +966,7 @@ function ProfilTenagaKependidikanTab({ profilData }: { profilData?: any }) {
       }
     }
   }
-  
+
   console.log("Final Detail Tenaga extracted:", detailTenaga);
   console.log("Final Detail Tenaga length:", detailTenaga.length);
   console.log("First tenaga sample:", detailTenaga[0]);
@@ -976,7 +978,7 @@ function ProfilTenagaKependidikanTab({ profilData }: { profilData?: any }) {
       laki_laki: detailTenaga.filter((t: any) => (t.jenis_kelamin || t.jenisKelamin || '').toLowerCase() === 'laki-laki' || (t.jenis_kelamin || t.jenisKelamin || '').toLowerCase() === 'laki laki').length,
       perempuan: detailTenaga.filter((t: any) => (t.jenis_kelamin || t.jenisKelamin || '').toLowerCase() === 'perempuan').length,
     };
-    
+
     statusKepegawaian = {
       pns: detailTenaga.filter((t: any) => (t.status_kepegawaian || t.statusKepegawaian || t.status || '').toLowerCase().includes('pns')).length,
       pppk: detailTenaga.filter((t: any) => (t.status_kepegawaian || t.statusKepegawaian || t.status || '').toLowerCase().includes('pppk')).length,
@@ -985,14 +987,14 @@ function ProfilTenagaKependidikanTab({ profilData }: { profilData?: any }) {
       gty: detailTenaga.filter((t: any) => (t.status_kepegawaian || t.statusKepegawaian || t.status || '').toLowerCase().includes('gty')).length,
       gtt: detailTenaga.filter((t: any) => (t.status_kepegawaian || t.statusKepegawaian || t.status || '').toLowerCase().includes('gtt')).length,
     };
-    
+
     console.log("Calculated statistics:", { jenisKelamin, statusKepegawaian });
   }
 
   return (
     <div className="space-y-6">
       {/* Statistics */}
-      <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
+      <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70 overflow-hidden w-full min-w-0">
         <CardHeader>
           <CardTitle className="text-lg font-bold text-slate-900 text-center md:text-center">Statistik Tenaga Kependidikan</CardTitle>
           <CardDescription className="text-slate-600 text-center md:text-center">Ringkasan data tenaga kependidikan berdasarkan kategori</CardDescription>
@@ -1049,51 +1051,53 @@ function ProfilTenagaKependidikanTab({ profilData }: { profilData?: any }) {
       </Card>
 
       {/* Detail Table */}
-      <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
+      <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70 overflow-hidden w-full min-w-0">
         <CardHeader>
           <CardTitle className="text-lg font-bold text-slate-900">Detail Profil Tenaga Kependidikan</CardTitle>
           <CardDescription className="text-slate-600">Daftar lengkap data tenaga kependidikan</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse min-w-[600px]">
-              <thead>
-                <tr className="border-b-2 border-slate-200 bg-slate-50">
-                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-900">No</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-900">Nama</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-900">NIP</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-900">Tanggal Lahir</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-900">Jenis Kelamin</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-900">Status</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-900">Pendidikan</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-900">Tugas</th>
-                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-900">Tanggal Purna Tugas</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {detailTenaga.length === 0 ? (
-                  <tr>
-                    <td colSpan={9} className="px-4 py-8 text-center text-sm text-slate-500">
-                      Belum ada data tenaga kependidikan yang diinput oleh sekolah.
-                    </td>
+        <CardContent className="p-0">
+          <div className="relative w-full overflow-x-auto pb-4">
+            <div className="min-w-[1200px] w-full px-6">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b-2 border-slate-200 bg-slate-50">
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-900 whitespace-nowrap">No</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-900 whitespace-nowrap">Nama</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-900 whitespace-nowrap">NIP</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-900 whitespace-nowrap">Tanggal Lahir</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-900 whitespace-nowrap">Jenis Kelamin</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-900 whitespace-nowrap">Status</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-900 whitespace-nowrap">Pendidikan</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-900 whitespace-nowrap">Tugas</th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-slate-900 whitespace-nowrap">Tanggal Purna Tugas</th>
                   </tr>
-                ) : (
-                  detailTenaga.map((tenaga: any, index: number) => (
-                    <tr key={index}>
-                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{index + 1}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700">{tenaga.nama || "-"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700">{tenaga.nip || "-"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700">{tenaga.tanggal_lahir || tenaga.tanggalLahir || "-"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700">{tenaga.jenis_kelamin || tenaga.jenisKelamin || "-"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700">{tenaga.status || tenaga.status_kepegawaian || tenaga.statusKepegawaian || "-"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700">{tenaga.pendidikan || "-"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700">{tenaga.tugas || "-"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700">{(tenaga.tanggal_purna_tugas ?? tenaga.tanggalPurnaTugas) || "-"}</td>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {detailTenaga.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="px-4 py-8 text-center text-sm text-slate-500">
+                        Belum ada data tenaga kependidikan yang diinput oleh sekolah.
+                      </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (
+                    detailTenaga.map((tenaga: any, index: number) => (
+                      <tr key={index} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-4 py-3 text-sm text-slate-700 text-center whitespace-nowrap">{index + 1}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 font-medium whitespace-nowrap">{tenaga.nama || "-"}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">{tenaga.nip || "-"}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">{tenaga.tanggal_lahir || tenaga.tanggalLahir || "-"}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">{tenaga.jenis_kelamin || tenaga.jenisKelamin || "-"}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">{tenaga.status || tenaga.status_kepegawaian || tenaga.statusKepegawaian || "-"}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">{tenaga.pendidikan || "-"}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">{tenaga.tugas || "-"}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">{(tenaga.tanggal_purna_tugas ?? tenaga.tanggalPurnaTugas) || "-"}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -1147,80 +1151,80 @@ interface ProfilLulusanRow {
 function ProfilSiswaTab({ profilData }: { profilData?: any }) {
   const jumlahSiswaRows: JumlahSiswaRow[] = Array.isArray(profilData?.jumlah_siswa?.per_kelas)
     ? profilData.jumlah_siswa.per_kelas.map((row: any) => {
-        const laki = toNumber(row?.laki_laki ?? row?.jumlah_laki ?? row?.laki);
-        const perempuan = toNumber(row?.perempuan ?? row?.jumlah_perempuan ?? row?.perempuan);
-        const jumlah = toNumber(row?.jumlah) ?? sumNumbers([laki, perempuan]);
-        const abkLaki = toNumber(row?.abk_laki ?? row?.abkLaki ?? row?.abk?.laki_laki);
-        const abkPerempuan = toNumber(row?.abk_perempuan ?? row?.abkPerempuan ?? row?.abk?.perempuan);
-        const abkJumlah = toNumber(row?.abk_jumlah) ?? sumNumbers([abkLaki, abkPerempuan]);
+      const laki = toNumber(row?.laki_laki ?? row?.jumlah_laki ?? row?.laki);
+      const perempuan = toNumber(row?.perempuan ?? row?.jumlah_perempuan ?? row?.perempuan);
+      const jumlah = toNumber(row?.jumlah) ?? sumNumbers([laki, perempuan]);
+      const abkLaki = toNumber(row?.abk_laki ?? row?.abkLaki ?? row?.abk?.laki_laki);
+      const abkPerempuan = toNumber(row?.abk_perempuan ?? row?.abkPerempuan ?? row?.abk?.perempuan);
+      const abkJumlah = toNumber(row?.abk_jumlah) ?? sumNumbers([abkLaki, abkPerempuan]);
 
-        return {
-          kelas: row?.kelas ?? "-",
-          jumlah_rombel: toNumber(row?.jumlah_rombel ?? row?.rombel),
-          laki_laki: laki,
-          perempuan,
-          jumlah,
-          abk_laki: abkLaki,
-          abk_perempuan: abkPerempuan,
-          abk_jumlah: abkJumlah,
-        };
-      })
+      return {
+        kelas: row?.kelas ?? "-",
+        jumlah_rombel: toNumber(row?.jumlah_rombel ?? row?.rombel),
+        laki_laki: laki,
+        perempuan,
+        jumlah,
+        abk_laki: abkLaki,
+        abk_perempuan: abkPerempuan,
+        abk_jumlah: abkJumlah,
+      };
+    })
     : [];
 
   const jumlahSiswaSummary =
     jumlahSiswaRows.length > 0
       ? {
-          jumlah_rombel: sumNumbers(jumlahSiswaRows.map((row) => row.jumlah_rombel)),
-          laki_laki: sumNumbers(jumlahSiswaRows.map((row) => row.laki_laki)),
-          perempuan: sumNumbers(jumlahSiswaRows.map((row) => row.perempuan)),
-          jumlah: sumNumbers(jumlahSiswaRows.map((row) => row.jumlah)),
-          abk_laki: sumNumbers(jumlahSiswaRows.map((row) => row.abk_laki)),
-          abk_perempuan: sumNumbers(jumlahSiswaRows.map((row) => row.abk_perempuan)),
-          abk_jumlah: sumNumbers(jumlahSiswaRows.map((row) => row.abk_jumlah)),
-        }
+        jumlah_rombel: sumNumbers(jumlahSiswaRows.map((row) => row.jumlah_rombel)),
+        laki_laki: sumNumbers(jumlahSiswaRows.map((row) => row.laki_laki)),
+        perempuan: sumNumbers(jumlahSiswaRows.map((row) => row.perempuan)),
+        jumlah: sumNumbers(jumlahSiswaRows.map((row) => row.jumlah)),
+        abk_laki: sumNumbers(jumlahSiswaRows.map((row) => row.abk_laki)),
+        abk_perempuan: sumNumbers(jumlahSiswaRows.map((row) => row.abk_perempuan)),
+        abk_jumlah: sumNumbers(jumlahSiswaRows.map((row) => row.abk_jumlah)),
+      }
       : null;
 
   const ekonomiRows: EkonomiRow[] = Array.isArray(profilData?.ekonomi_orang_tua?.per_kelas)
     ? profilData.ekonomi_orang_tua.per_kelas.map((row: any) => ({
-        kelas: row?.kelas ?? "-",
-        p1: toNumber(row?.p1 ?? row?.P1),
-        p2: toNumber(row?.p2 ?? row?.P2),
-        p3: toNumber(row?.p3 ?? row?.P3),
-        lebih_p3: toNumber(row?.lebih_p3 ?? row?.lebihP3 ?? row?.diatas_p3),
-      }))
+      kelas: row?.kelas ?? "-",
+      p1: toNumber(row?.p1 ?? row?.P1),
+      p2: toNumber(row?.p2 ?? row?.P2),
+      p3: toNumber(row?.p3 ?? row?.P3),
+      lebih_p3: toNumber(row?.lebih_p3 ?? row?.lebihP3 ?? row?.diatas_p3),
+    }))
     : [];
 
   const pekerjaanRows: PekerjaanRow[] = Array.isArray(profilData?.pekerjaan_orang_tua?.detail ?? profilData?.pekerjaan_orang_tua)
     ? (profilData.pekerjaan_orang_tua.detail ?? profilData.pekerjaan_orang_tua).map((row: any) => ({
-        jenis: row?.jenis ?? row?.nama ?? "-",
-        jumlah: toNumber(row?.jumlah ?? row?.total ?? row?.value),
-      }))
+      jenis: row?.jenis ?? row?.nama ?? "-",
+      jumlah: toNumber(row?.jumlah ?? row?.total ?? row?.value),
+    }))
     : [];
 
   const profilLulusanRows: ProfilLulusanRow[] = Array.isArray(profilData?.profil_lulusan?.per_tahun ?? profilData?.profil_lulusan)
     ? (profilData.profil_lulusan?.per_tahun ?? profilData.profil_lulusan).map((row: any) => ({
-        tahun: row?.tahun ?? "-",
-        ptn_snbp: toNumber(row?.ptn_snbp ?? row?.snbp),
-        ptn_snbt: toNumber(row?.ptn_snbt ?? row?.snbt),
-        ptn_um: toNumber(row?.ptn_um ?? row?.um),
-        uin: toNumber(row?.uin),
-        pts: toNumber(row?.pts),
-        kedinasan_akmil: toNumber(row?.kedinasan_akmil ?? row?.akmil),
-        kedinasan_akpol: toNumber(row?.kedinasan_akpol ?? row?.akpol),
-        kedinasan_stan: toNumber(row?.kedinasan_stan ?? row?.stan),
-        kedinasan_stpdn: toNumber(row?.kedinasan_stpdn ?? row?.stpdn),
-        kedinasan_sttd: toNumber(row?.kedinasan_sttd ?? row?.sttd),
-        kedinasan_stis: toNumber(row?.kedinasan_stis ?? row?.stis),
-        kedinasan_lainnya: toNumber(row?.kedinasan_lainnya ?? row?.kedinasanLainnya),
-        bekerja: toNumber(row?.bekerja),
-        belum_bekerja: toNumber(row?.belum_bekerja ?? row?.belum_bekerja_melanjutkan ?? row?.belum),
-      }))
+      tahun: row?.tahun ?? "-",
+      ptn_snbp: toNumber(row?.ptn_snbp ?? row?.snbp),
+      ptn_snbt: toNumber(row?.ptn_snbt ?? row?.snbt),
+      ptn_um: toNumber(row?.ptn_um ?? row?.um),
+      uin: toNumber(row?.uin),
+      pts: toNumber(row?.pts),
+      kedinasan_akmil: toNumber(row?.kedinasan_akmil ?? row?.akmil),
+      kedinasan_akpol: toNumber(row?.kedinasan_akpol ?? row?.akpol),
+      kedinasan_stan: toNumber(row?.kedinasan_stan ?? row?.stan),
+      kedinasan_stpdn: toNumber(row?.kedinasan_stpdn ?? row?.stpdn),
+      kedinasan_sttd: toNumber(row?.kedinasan_sttd ?? row?.sttd),
+      kedinasan_stis: toNumber(row?.kedinasan_stis ?? row?.stis),
+      kedinasan_lainnya: toNumber(row?.kedinasan_lainnya ?? row?.kedinasanLainnya),
+      bekerja: toNumber(row?.bekerja),
+      belum_bekerja: toNumber(row?.belum_bekerja ?? row?.belum_bekerja_melanjutkan ?? row?.belum),
+    }))
     : [];
 
   return (
     <div className="space-y-6">
       {/* Jumlah Siswa */}
-      <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
+      <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70 overflow-hidden w-full min-w-0">
         <CardHeader>
           <CardTitle className="text-lg font-bold text-slate-900">Jumlah Siswa</CardTitle>
           <CardDescription className="text-slate-600">
@@ -1228,32 +1232,32 @@ function ProfilSiswaTab({ profilData }: { profilData?: any }) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse min-w-[600px]">
+          <div className="relative w-full max-w-full overflow-x-auto pb-4">
+            <table className="w-full border-collapse min-w-[1000px]">
               <thead>
                 <tr className="border-b-2 border-slate-200 bg-slate-50">
-                  <th rowSpan={2} className="px-4 py-3 text-left text-xs font-bold text-slate-900 border-r border-slate-200">
+                  <th rowSpan={2} className="px-4 py-3 text-left text-xs font-bold text-slate-900 border-r border-slate-200 whitespace-nowrap">
                     Kelas
                   </th>
-                  <th rowSpan={2} className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
+                  <th rowSpan={2} className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200 whitespace-nowrap">
                     Jumlah Rombel
                   </th>
-                  <th colSpan={3} className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
+                  <th colSpan={3} className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200 whitespace-nowrap">
                     Jumlah Siswa
                   </th>
-                  <th colSpan={3} className="px-4 py-3 text-center text-xs font-bold text-slate-900">
+                  <th colSpan={3} className="px-4 py-3 text-center text-xs font-bold text-slate-900 whitespace-nowrap">
                     Siswa Berkebutuhan Khusus
                   </th>
                 </tr>
                 <tr className="border-b border-slate-200 bg-slate-50">
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">Laki-laki</th>
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">Perempuan</th>
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">
+                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 whitespace-nowrap">Laki-laki</th>
+                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 whitespace-nowrap">Perempuan</th>
+                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200 whitespace-nowrap">
                     Jumlah
                   </th>
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">Laki-laki</th>
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">Perempuan</th>
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">Jumlah</th>
+                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 whitespace-nowrap">Laki-laki</th>
+                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 whitespace-nowrap">Perempuan</th>
+                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 whitespace-nowrap">Jumlah</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -1316,7 +1320,7 @@ function ProfilSiswaTab({ profilData }: { profilData?: any }) {
       </Card>
 
       {/* Ekonomi Orang Tua */}
-      <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
+      <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70 overflow-hidden w-full min-w-0">
         <CardHeader>
           <CardTitle className="text-lg font-bold text-slate-900">Ekonomi Orang Tua</CardTitle>
           <CardDescription className="text-slate-600">
@@ -1360,7 +1364,7 @@ function ProfilSiswaTab({ profilData }: { profilData?: any }) {
       </Card>
 
       {/* Pekerjaan Orang Tua */}
-      <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
+      <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70 overflow-hidden w-full min-w-0">
         <CardHeader>
           <CardTitle className="text-lg font-bold text-slate-900">Pekerjaan Orang Tua</CardTitle>
           <CardDescription className="text-slate-600">Data jenis pekerjaan orang tua siswa</CardDescription>
@@ -1396,117 +1400,119 @@ function ProfilSiswaTab({ profilData }: { profilData?: any }) {
       </Card>
 
       {/* Profil Lulusan */}
-      <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
+      <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70 overflow-hidden w-full min-w-0">
         <CardHeader>
           <CardTitle className="text-lg font-bold text-slate-900">Profil Lulusan</CardTitle>
           <CardDescription className="text-slate-600">
             Data kelulusan dan kelanjutan studi/tujuan siswa per tahun
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse min-w-[800px]">
-              <thead>
-                <tr className="border-b-2 border-slate-200 bg-slate-50">
-                  <th rowSpan={2} className="px-4 py-3 text-left text-xs font-bold text-slate-900 border-r border-slate-200">
-                    Tahun
-                  </th>
-                  <th colSpan={3} className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
-                    PTN
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
-                    UIN
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
-                    PTS
-                  </th>
-                  <th colSpan={7} className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
-                    Kedinasan
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200">
-                    Bekerja
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">
-                    Belum Bekerja/Melanjutkan
-                  </th>
-                </tr>
-                <tr className="border-b border-slate-200 bg-slate-50">
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">SNBP</th>
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">SNBT</th>
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">
-                    UM
-                  </th>
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">
-                    Jumlah
-                  </th>
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">
-                    Jumlah
-                  </th>
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">Akmil</th>
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">Akpol</th>
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">STAN</th>
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">STPDN</th>
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">STTD</th>
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">STIS</th>
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">
-                    Lain-lain
-                  </th>
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200">
-                    Jumlah
-                  </th>
-                  <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700">
-                    Jumlah
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {profilLulusanRows.length === 0 ? (
-                  <tr>
-                    <td colSpan={15} className="px-4 py-8 text-center text-sm text-slate-500">
-                      Belum ada data profil lulusan yang diinput oleh sekolah.
-                    </td>
+        <CardContent className="p-0">
+          <div className="relative w-full overflow-x-auto pb-4">
+            <div className="min-w-[1500px] w-full px-6">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="border-b-2 border-slate-200 bg-slate-50">
+                    <th rowSpan={2} className="px-4 py-3 text-left text-xs font-bold text-slate-900 border-r border-slate-200 whitespace-nowrap">
+                      Tahun
+                    </th>
+                    <th colSpan={3} className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200 whitespace-nowrap">
+                      PTN
+                    </th>
+                    <th className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200 whitespace-nowrap">
+                      UIN
+                    </th>
+                    <th className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200 whitespace-nowrap">
+                      PTS
+                    </th>
+                    <th colSpan={7} className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200 whitespace-nowrap">
+                      Kedinasan
+                    </th>
+                    <th className="px-4 py-3 text-center text-xs font-bold text-slate-900 border-r border-slate-200 whitespace-nowrap">
+                      Bekerja
+                    </th>
+                    <th className="px-4 py-3 text-center text-xs font-bold text-slate-900 whitespace-nowrap">
+                      Belum Bekerja/Melanjutkan
+                    </th>
                   </tr>
-                ) : (
-                  profilLulusanRows.map((row, index) => (
-                    <tr key={`${row.tahun}-${index}`}>
-                      <td className="px-4 py-3 text-sm font-semibold text-slate-900 border-r border-slate-200">
-                        {row.tahun}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.ptn_snbp)}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.ptn_snbt)}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700 text-center border-r border-slate-200">
-                        {formatNumber(row.ptn_um)}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-700 text-center border-r border-slate-200">
-                        {formatNumber(row.uin)}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-700 text-center border-r border-slate-200">
-                        {formatNumber(row.pts)}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.kedinasan_akmil)}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.kedinasan_akpol)}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.kedinasan_stan)}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.kedinasan_stpdn)}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.kedinasan_sttd)}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.kedinasan_stis)}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700 text-center border-r border-slate-200">
-                        {formatNumber(row.kedinasan_lainnya)}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-700 text-center border-r border-slate-200">
-                        {formatNumber(row.bekerja)}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-700 text-center">
-                        {formatNumber(row.belum_bekerja)}
+                  <tr className="border-b border-slate-200 bg-slate-50">
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 whitespace-nowrap">SNBP</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 whitespace-nowrap">SNBT</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200 whitespace-nowrap">
+                      UM
+                    </th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200 whitespace-nowrap">
+                      Jumlah
+                    </th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200 whitespace-nowrap">
+                      Jumlah
+                    </th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 whitespace-nowrap">Akmil</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 whitespace-nowrap">Akpol</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 whitespace-nowrap">STAN</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 whitespace-nowrap">STPDN</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 whitespace-nowrap">STTD</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 whitespace-nowrap">STIS</th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200 whitespace-nowrap">
+                      Lain-lain
+                    </th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 border-r border-slate-200 whitespace-nowrap">
+                      Jumlah
+                    </th>
+                    <th className="px-2 py-2 text-center text-xs font-semibold text-slate-700 whitespace-nowrap">
+                      Jumlah
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {profilLulusanRows.length === 0 ? (
+                    <tr>
+                      <td colSpan={15} className="px-4 py-8 text-center text-sm text-slate-500">
+                        Belum ada data profil lulusan yang diinput oleh sekolah.
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (
+                    profilLulusanRows.map((row, index) => (
+                      <tr key={`${row.tahun}-${index}`}>
+                        <td className="px-4 py-3 text-sm font-semibold text-slate-900 border-r border-slate-200">
+                          {row.tahun}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.ptn_snbp)}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.ptn_snbt)}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 text-center border-r border-slate-200">
+                          {formatNumber(row.ptn_um)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-slate-700 text-center border-r border-slate-200">
+                          {formatNumber(row.uin)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-slate-700 text-center border-r border-slate-200">
+                          {formatNumber(row.pts)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.kedinasan_akmil)}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.kedinasan_akpol)}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.kedinasan_stan)}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.kedinasan_stpdn)}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.kedinasan_sttd)}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 text-center">{formatNumber(row.kedinasan_stis)}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 text-center border-r border-slate-200">
+                          {formatNumber(row.kedinasan_lainnya)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-slate-700 text-center border-r border-slate-200">
+                          {formatNumber(row.bekerja)}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-slate-700 text-center">
+                          {formatNumber(row.belum_bekerja)}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </CardContent>
       </Card>
-    </div>
+    </div >
   );
 }
 
@@ -1528,7 +1534,7 @@ function BrandingSekolahTab({ profilData }: { profilData?: any }) {
 
   // Extract branding data from profilData
   let brandingList: any[] = [];
-  
+
   if (profilData?.detail && Array.isArray(profilData.detail)) {
     // Merge with options to ensure all branding options are shown
     brandingList = brandingOptions.map((option) => {
@@ -1550,48 +1556,33 @@ function BrandingSekolahTab({ profilData }: { profilData?: any }) {
     }));
   }
 
+  const activeBranding = brandingList.filter(item => item.status);
+
   return (
-    <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
+    <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70 overflow-hidden w-full min-w-0">
       <CardHeader>
         <CardTitle className="text-lg font-bold text-slate-900 text-center md:text-center">Branding Sekolah</CardTitle>
         <CardDescription className="text-slate-600 text-center md:text-center">Daftar branding yang diterapkan di sekolah</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
-          <table className="w-full max-w-2xl mx-auto border-collapse">
-            <thead>
-              <tr className="border-b-2 border-slate-200 bg-slate-50">
-                <th className="px-6 py-4 text-left text-sm font-bold text-slate-900 w-[75%]">Nama Branding</th>
-                <th className="px-6 py-4 text-center text-sm font-bold text-slate-900 w-[25%]">Ya/ Tidak</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {brandingList.length === 0 ? (
-                <tr>
-                  <td colSpan={2} className="px-6 py-8 text-center text-sm text-slate-500">
-                    Belum ada data branding sekolah yang diinput.
-                  </td>
-                </tr>
-              ) : (
-                brandingList.map((branding) => (
-                  <tr key={branding.id || branding.nama}>
-                    <td className="px-6 py-3 text-sm text-slate-700">{branding.nama}</td>
-                    <td className="px-6 py-3 text-center">
-                      {branding.status ? (
-                        <span className="inline-flex items-center justify-center rounded-full bg-green-100 px-4 py-1.5 text-sm font-semibold text-green-700 border border-green-200">
-                          Ya
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center justify-center rounded-full bg-slate-100 px-4 py-1.5 text-sm font-semibold text-slate-600 border border-slate-200">
-                          Tidak
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+        <div className="max-w-md mx-auto">
+          {activeBranding.length === 0 ? (
+            <div className="px-6 py-8 text-center text-sm text-slate-500 bg-slate-50 rounded-xl border border-dashed border-slate-300">
+              Belum ada branding sekolah yang ditandai "Ya".
+            </div>
+          ) : (
+            <div className="grid gap-3">
+              {activeBranding.map((branding) => (
+                <div
+                  key={branding.id || branding.nama}
+                  className="flex items-center gap-3 px-5 py-3 rounded-xl bg-green-50 text-green-700 border border-green-100 shadow-sm"
+                >
+                  <div className="size-2 rounded-full bg-green-500 shadow-sm shadow-green-200" />
+                  <span className="text-sm font-semibold">{branding.nama}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -1610,7 +1601,7 @@ function KokurikulerTab({ profilData }: { profilData?: any }) {
 
   // Extract kokurikuler data from profilData
   let kokurikulerData: any[] = [];
-  
+
   if (profilData?.detail && Array.isArray(profilData.detail)) {
     // Merge with options to ensure all kegiatan are shown
     kokurikulerData = kegiatanOptions.map((option) => {
@@ -1632,8 +1623,12 @@ function KokurikulerTab({ profilData }: { profilData?: any }) {
     }));
   }
 
+  const activeKokurikuler = kokurikulerData.filter((item) =>
+    Object.values(item.kelas || {}).some((val) => val === true)
+  );
+
   return (
-    <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
+    <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70 overflow-hidden w-full min-w-0">
       <CardHeader>
         <CardTitle className="text-lg font-bold text-slate-900">Kokurikuler</CardTitle>
         <CardDescription className="text-slate-600">Daftar kegiatan kokurikuler per kelas</CardDescription>
@@ -1660,14 +1655,14 @@ function KokurikulerTab({ profilData }: { profilData?: any }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {kokurikulerData.length === 0 ? (
+              {activeKokurikuler.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-500">
                     Belum ada data kokurikuler yang diinput oleh sekolah.
                   </td>
                 </tr>
               ) : (
-                kokurikulerData.map((kokurikuler) => (
+                activeKokurikuler.map((kokurikuler) => (
                   <tr key={kokurikuler.id || kokurikuler.nama}>
                     <td className="px-4 py-3 text-sm text-slate-700">{kokurikuler.nama}</td>
                     {kelasList.map((kelas) => (
@@ -1699,11 +1694,11 @@ function EkstrakurikulerTab({ profilData }: { profilData?: any }) {
 
   // Extract ekstrakurikuler data from profilData
   let ekstraData: any[] = [];
-  
+
   if (profilData?.detail && Array.isArray(profilData.detail)) {
     // Merge with options to ensure all ekstrakurikuler are shown
     const existingMap = new Map(profilData.detail.map((item: any) => [item.nama, item]));
-    
+
     ekstraData = ekstrakurikulerOptions.map((nama, index) => {
       const found = existingMap.get(nama);
       return found || {
@@ -1714,7 +1709,7 @@ function EkstrakurikulerTab({ profilData }: { profilData?: any }) {
         jumlah_peserta: null,
       };
     });
-    
+
     // Add any custom ekstrakurikuler that aren't in the default list
     profilData.detail.forEach((item: any) => {
       if (!ekstrakurikulerOptions.includes(item.nama)) {
@@ -1732,8 +1727,10 @@ function EkstrakurikulerTab({ profilData }: { profilData?: any }) {
     }));
   }
 
+  const activeEkstra = ekstraData.filter((item) => item.ada);
+
   return (
-    <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
+    <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70 overflow-hidden w-full min-w-0">
       <CardHeader>
         <CardTitle className="text-lg font-bold text-slate-900">Ekstrakurikuler</CardTitle>
         <CardDescription className="text-slate-600">Daftar kegiatan ekstrakurikuler yang tersedia</CardDescription>
@@ -1758,14 +1755,14 @@ function EkstrakurikulerTab({ profilData }: { profilData?: any }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {ekstraData.length === 0 ? (
+              {activeEkstra.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-8 text-center text-sm text-slate-500">
                     Belum ada data ekstrakurikuler yang diinput oleh sekolah.
                   </td>
                 </tr>
               ) : (
-                ekstraData.map((ekstra, index) => (
+                activeEkstra.map((ekstra, index) => (
                   <tr key={ekstra.id || ekstra.nama || index}>
                     <td className="px-4 py-3 text-sm text-slate-700 text-center">{index + 1}</td>
                     <td className="px-4 py-3 text-sm text-slate-700">{ekstra.nama || "-"}</td>
@@ -1809,14 +1806,47 @@ function RaporPendidikanTab({ profilData }: { profilData?: any }) {
     { id: "E.5", indikator: "Program dan kebijakan satuan pendidikan" },
   ];
 
-  // Extract rapor data from profilData
-  let raporData: any[] = [];
-  
-  if (profilData?.detail && Array.isArray(profilData.detail)) {
-    // Merge with indikator list to ensure all indikators are shown
-    const existingMap = new Map(profilData.detail.map((item: any) => [item.id, item]));
-    
-    raporData = indikatorList.map((indikator) => {
+  const currentYear = new Date().getFullYear();
+  const [selectedYear, setSelectedYear] = useState<number>(currentYear);
+  const [availableYears, setAvailableYears] = useState<number[]>([currentYear]);
+  const [raporDataByYear, setRaporDataByYear] = useState<Record<number, any[]>>({});
+
+  useEffect(() => {
+    if (profilData?.detail) {
+      const detail = profilData.detail;
+      const isNewFormat = Array.isArray(detail) && detail.length > 0 && 'tahun' in detail[0];
+
+      if (isNewFormat) {
+        const years: number[] = [];
+        const dataMap: Record<number, any[]> = {};
+
+        detail.forEach((item: any) => {
+          const year = Number(item.tahun);
+          if (!years.includes(year)) {
+            years.push(year);
+          }
+          dataMap[year] = item.data || [];
+        });
+
+        years.sort((a, b) => b - a);
+        setAvailableYears(years);
+        setRaporDataByYear(dataMap);
+        if (years.length > 0) {
+          setSelectedYear(years[0]);
+        }
+      } else {
+        // Legacy format
+        setAvailableYears([currentYear]);
+        setRaporDataByYear({ [currentYear]: Array.isArray(detail) ? detail : [] });
+        setSelectedYear(currentYear);
+      }
+    }
+  }, [profilData]);
+
+  const mergeWithDefault = (existingItems: any[]) => {
+    const existingMap = new Map(existingItems.map((item: any) => [item.id, item]));
+
+    const merged = indikatorList.map((indikator) => {
       const found = existingMap.get(indikator.id);
       return found || {
         id: indikator.id,
@@ -1827,101 +1857,120 @@ function RaporPendidikanTab({ profilData }: { profilData?: any }) {
         catatan: "",
       };
     });
-    
-    // Add any custom indikators that aren't in the default list
-    profilData.detail.forEach((item: any) => {
+
+    // Add custom indicators
+    existingItems.forEach((item: any) => {
       if (!indikatorList.some(ind => ind.id === item.id)) {
-        raporData.push(item);
+        merged.push(item);
       }
     });
-  } else {
-    // Default: all empty
-    raporData = indikatorList.map((indikator) => ({
-      id: indikator.id,
-      indikator: indikator.indikator,
-      capaian: "",
-      skor: null,
-      skor_tahun_lalu: null,
-      catatan: "",
-    }));
-  }
 
-  // Calculate perubahan (difference between current and previous year)
+    return merged;
+  };
+
+  const currentRaporData = mergeWithDefault(raporDataByYear[selectedYear] || []);
+  const activeRaporData = currentRaporData.filter(item =>
+    (item.capaian && item.capaian !== "" && item.capaian !== "-") ||
+    item.skor != null ||
+    item.skor_tahun_ini != null
+  );
+
   const calculatePerubahan = (skor: number | null, skorTahunLalu: number | null) => {
     if (skor == null || skorTahunLalu == null) return null;
     return skor - skorTahunLalu;
   };
 
-  const getKeterangan = (perubahan: number | null) => {
+  const getStatusPerubahan = (perubahan: number | null) => {
     if (perubahan == null) return "-";
-    if (perubahan > 0) return "Naik";
-    if (perubahan < 0) return "Turun";
+    if (perubahan > 0) return `Naik (${formatNumber(perubahan)})`;
+    if (perubahan < 0) return `Turun (${formatNumber(Math.abs(perubahan))})`;
     return "Tetap";
   };
 
   return (
-    <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70">
-      <CardHeader>
-        <CardTitle className="text-lg font-bold text-slate-900">Laporan Rapor Pendidikan</CardTitle>
-        <CardDescription className="text-slate-600">Data indikator capaian rapor pendidikan</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse min-w-[800px]">
-            <thead>
-              <tr className="border-b-2 border-slate-200 bg-slate-50">
-                <th className="px-4 py-3 text-left text-xs font-bold text-slate-900">No</th>
-                <th className="px-4 py-3 text-left text-xs font-bold text-slate-900">Indikator Utama</th>
-                <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">Hasil Capaian<br/>(Baik/Sedang/Kurang)</th>
-                <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">Skor Tahun Ini</th>
-                <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">Skor Tahun Lalu</th>
-                <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">Perubahan</th>
-                <th className="px-4 py-3 text-center text-xs font-bold text-slate-900">Keterangan</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {raporData.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-sm text-slate-500">
-                    Belum ada data rapor pendidikan yang diinput oleh sekolah.
-                  </td>
-                </tr>
-              ) : (
-                raporData.map((item) => {
-                  const skor = toNumber(item.skor ?? item.skor_tahun_ini);
-                  const skorTahunLalu = toNumber(item.skor_tahun_lalu);
-                  const perubahan = calculatePerubahan(skor, skorTahunLalu);
-                  const keterangan = getKeterangan(perubahan);
-                  
-                  return (
-                    <tr key={item.id}>
-                      <td className="px-4 py-3 text-sm font-semibold text-slate-900">{item.id}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700">{item.indikator || "-"}</td>
-                      <td className="px-4 py-3 text-sm text-slate-700 text-center">
-                        {item.capaian || item.hasil_capaian || "-"}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-700 text-center">
-                        {skor != null ? formatNumber(skor) : "-"}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-700 text-center">
-                        {skorTahunLalu != null ? formatNumber(skorTahunLalu) : "-"}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-slate-700 text-center">
-                        {perubahan != null ? (perubahan > 0 ? "+" : "") + formatNumber(perubahan) : "-"}
-                      </td>
-                      <td className={`px-4 py-3 text-sm text-slate-700 text-center ${
-                        keterangan === "Naik" ? "bg-green-50" : 
-                        keterangan === "Turun" ? "bg-red-50" : 
-                        keterangan === "Tetap" ? "bg-yellow-50" : ""
-                      }`}>
-                        {keterangan}
-                      </td>
-                    </tr>
-                  );
-                })
+    <Card className="border border-indigo-200 bg-white shadow-md shadow-indigo-100/70 overflow-hidden w-full min-w-0">
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <CardTitle className="text-lg font-bold text-slate-900">Laporan Rapor Pendidikan</CardTitle>
+          <CardDescription className="text-slate-600">Data indikator capaian rapor pendidikan</CardDescription>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-semibold text-slate-700">Tahun:</span>
+          {availableYears.map(year => (
+            <button
+              key={year}
+              onClick={() => setSelectedYear(year)}
+              className={cn(
+                "px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200",
+                selectedYear === year
+                  ? "bg-indigo-600 text-white shadow-md"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
               )}
-            </tbody>
-          </table>
+            >
+              {year}
+            </button>
+          ))}
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="relative w-full overflow-x-auto pb-4">
+          <div className="min-w-[1000px] w-full px-6">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b-2 border-slate-200 bg-slate-50">
+                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-900 whitespace-nowrap">No</th>
+                  <th className="px-4 py-3 text-left text-xs font-bold text-slate-900 whitespace-nowrap">Indikator Utama</th>
+                  <th className="px-4 py-3 text-center text-xs font-bold text-slate-900 whitespace-nowrap">Hasil Capaian</th>
+                  <th className="px-4 py-3 text-center text-xs font-bold text-slate-900 whitespace-nowrap">Skor Tahun Ini</th>
+                  <th className="px-4 py-3 text-center text-xs font-bold text-slate-900 whitespace-nowrap">Skor Tahun Lalu</th>
+                  <th className="px-4 py-3 text-center text-xs font-bold text-slate-900 whitespace-nowrap">Perubahan</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {activeRaporData.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-8 text-center text-sm text-slate-500">
+                      Belum ada data rapor pendidikan yang diinput oleh sekolah untuk tahun {selectedYear}.
+                    </td>
+                  </tr>
+                ) : (
+                  activeRaporData.map((item) => {
+                    const skor = toNumber(item.skor ?? item.skor_tahun_ini);
+
+                    // Lookup previous year's score from available data
+                    const prevYearData = raporDataByYear[selectedYear - 1] || [];
+                    const prevItem = prevYearData.find((p: any) => p.id === item.id);
+                    const skorTahunLalu = prevItem ? toNumber(prevItem.skor ?? prevItem.skor_tahun_ini) : toNumber(item.skor_tahun_lalu);
+
+                    const perubahanValue = calculatePerubahan(skor, skorTahunLalu);
+                    const statusPerubahan = getStatusPerubahan(perubahanValue);
+
+                    return (
+                      <tr key={item.id}>
+                        <td className="px-4 py-3 text-sm font-semibold text-slate-900">{item.id}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700">{item.indikator || "-"}</td>
+                        <td className="px-4 py-3 text-sm text-slate-700 text-center">
+                          {item.capaian || item.hasil_capaian || "-"}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-slate-700 text-center font-bold">
+                          {skor != null ? formatNumber(skor) : "-"}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-slate-700 text-center">
+                          {skorTahunLalu != null ? formatNumber(skorTahunLalu) : "-"}
+                        </td>
+                        <td className={`px-4 py-3 text-sm font-bold text-center ${statusPerubahan.startsWith("Naik") ? "text-green-600 bg-green-50" :
+                          statusPerubahan.startsWith("Turun") ? "text-red-600 bg-red-50" :
+                            statusPerubahan === "Tetap" ? "text-amber-600 bg-amber-50" : "text-slate-700"
+                          }`}>
+                          {statusPerubahan}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </CardContent>
     </Card>

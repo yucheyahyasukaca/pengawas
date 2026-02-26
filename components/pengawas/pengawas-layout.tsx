@@ -27,11 +27,11 @@ export function PengawasLayout({ children, className }: PengawasLayoutProps) {
           <PengawasSidebar />
         </div>
 
-        <div className="flex min-h-screen flex-1 flex-col border-l border-white/60 bg-white/95 backdrop-blur lg:rounded-l-[2rem] lg:border-l lg:shadow-xl">
+        <div className="flex min-h-screen flex-1 flex-col min-w-0 border-l border-white/60 bg-white/95 backdrop-blur lg:rounded-l-[2rem] lg:border-l lg:shadow-xl">
           <PengawasHeader />
-          <div className="flex-1 overflow-y-auto">
-            <main className="px-4 pb-12 pt-6 sm:px-6 lg:px-0">
-              <div className="mx-auto flex w-full flex-col gap-6 lg:max-w-none lg:px-6">
+          <div className="flex-1 overflow-y-auto min-w-0">
+            <main className="px-4 pb-12 pt-6 sm:px-6 lg:px-0 min-w-0">
+              <div className="mx-auto flex w-full flex-col gap-6 lg:max-w-none lg:px-6 min-w-0">
                 {children}
               </div>
             </main>

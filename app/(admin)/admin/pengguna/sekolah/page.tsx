@@ -18,13 +18,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { 
-  School, 
-  Search, 
-  Filter, 
-  Plus, 
-  Upload, 
-  Download, 
+import {
+  School,
+  Search,
+  Filter,
+  Plus,
+  Upload,
+  Download,
   FileSpreadsheet,
   MapPin,
   Building2,
@@ -65,22 +65,24 @@ export default function DataSekolahPage() {
   const [statusFilter, setStatusFilter] = useState<"all" | "Negeri" | "Swasta">("all");
   const [jenjangFilter, setJenjangFilter] = useState<"all" | "SMK" | "SMA" | "SLB">("all");
   const [kcdFilter, setKcdFilter] = useState<"all" | number>("all");
-  
+
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  
+
   // Mobile dropdown states
   const [isStatusFilterOpen, setIsStatusFilterOpen] = useState(false);
   const [isJenjangFilterOpen, setIsJenjangFilterOpen] = useState(false);
   const [isKcdFilterOpen, setIsKcdFilterOpen] = useState(false);
-  
+
   // Dialog states
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  
+
   // Form states
+  const [editingSekolah, setEditingSekolah] = useState<Sekolah | null>(null);
   const [formData, setFormData] = useState({
     npsn: "",
     nama_sekolah: "",
@@ -91,7 +93,7 @@ export default function DataSekolahPage() {
     kcd_wilayah: "1"
   });
   const [formError, setFormError] = useState<string | null>(null);
-  
+
   // Import states
   const [importFile, setImportFile] = useState<File | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
@@ -106,9 +108,9 @@ export default function DataSekolahPage() {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const response = await fetch('/api/admin/sekolah');
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Gagal memuat data sekolah' }));
         setError(errorData.error || 'Gagal memuat data sekolah');
@@ -117,7 +119,7 @@ export default function DataSekolahPage() {
       }
 
       const data = await response.json();
-      
+
       if (!data.success) {
         setError(data.error || 'Gagal memuat data sekolah');
         setSekolahList([]);
@@ -162,10 +164,10 @@ export default function DataSekolahPage() {
         const kabupaten = s.kabupaten_kota?.toLowerCase() || "";
         const alamat = s.alamat?.toLowerCase() || "";
 
-        return npsn.includes(query) || 
-               nama.includes(query) || 
-               kabupaten.includes(query) ||
-               alamat.includes(query);
+        return npsn.includes(query) ||
+          nama.includes(query) ||
+          kabupaten.includes(query) ||
+          alamat.includes(query);
       });
     }
 
@@ -267,6 +269,97 @@ export default function DataSekolahPage() {
       toast({
         variant: "error",
         title: "Gagal Menambahkan Sekolah",
+        description: errorMessage,
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleEditClick = (sekolah: Sekolah) => {
+    setEditingSekolah(sekolah);
+    setFormData({
+      npsn: sekolah.npsn,
+      nama_sekolah: sekolah.nama_sekolah,
+      status: sekolah.status,
+      jenjang: sekolah.jenjang,
+      kabupaten_kota: sekolah.kabupaten_kota,
+      alamat: sekolah.alamat,
+      kcd_wilayah: sekolah.kcd_wilayah.toString()
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateSekolah = async () => {
+    if (!editingSekolah) return;
+
+    setFormError(null);
+    setIsProcessing(true);
+
+    // Validasi
+    if (!formData.npsn.trim() || !formData.nama_sekolah.trim() || !formData.kabupaten_kota.trim() || !formData.alamat.trim()) {
+      setFormError("Semua field harus diisi");
+      setIsProcessing(false);
+      return;
+    }
+
+    const kcdWilayah = parseInt(formData.kcd_wilayah);
+    if (isNaN(kcdWilayah) || kcdWilayah < 1 || kcdWilayah > 13) {
+      setFormError("KCD Wilayah harus antara 1 sampai 13");
+      setIsProcessing(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/admin/sekolah/${editingSekolah.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...formData,
+          kcd_wilayah: kcdWilayah
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const errorMsg = data.error || "Gagal mengupdate sekolah";
+        setFormError(errorMsg);
+        toast({
+          variant: "error",
+          title: "Gagal Mengupdate Sekolah",
+          description: errorMsg,
+        });
+        setIsProcessing(false);
+        return;
+      }
+
+      // Success
+      toast({
+        variant: "success",
+        title: "Sekolah Berhasil Diupdate",
+        description: `Sekolah ${formData.nama_sekolah} berhasil diperbarui.`,
+      });
+      setIsEditDialogOpen(false);
+      setEditingSekolah(null);
+      setFormData({
+        npsn: "",
+        nama_sekolah: "",
+        status: "Negeri",
+        jenjang: "SMK",
+        kabupaten_kota: "",
+        alamat: "",
+        kcd_wilayah: "1"
+      });
+      await loadSekolah();
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Terjadi kesalahan saat mengupdate sekolah";
+      setFormError(errorMessage);
+      toast({
+        variant: "error",
+        title: "Gagal Mengupdate Sekolah",
         description: errorMessage,
       });
     } finally {
@@ -391,11 +484,11 @@ export default function DataSekolahPage() {
       // Success - show message with skipped/duplicate info
       const successMessage = data.message || `${data.imported || 0} sekolah berhasil diimport`;
       let infoMessage = successMessage;
-      
+
       if (data.skipped > 0) {
         infoMessage += `. ${data.skipped} NPSN sudah terdaftar (dilewati)`;
       }
-      
+
       if (data.duplicate > 0) {
         infoMessage += `. ${data.duplicate} NPSN duplikat dalam data (dilewati)`;
       }
@@ -472,7 +565,7 @@ export default function DataSekolahPage() {
       if (!response.ok) {
         throw new Error('Gagal mengunduh file');
       }
-      
+
       const blob = await response.blob();
       const link = document.createElement('a');
       const downloadUrl = URL.createObjectURL(blob);
@@ -577,7 +670,7 @@ export default function DataSekolahPage() {
             className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm transition-all focus:border-[#B53740] focus:outline-none focus:ring-2 focus:ring-[#B53740]/20"
           />
         </div>
-        
+
         {/* Mobile Dropdown Filters */}
         <div className="flex flex-col gap-3 md:hidden">
           {/* Status Filter Dropdown */}
@@ -1032,6 +1125,7 @@ export default function DataSekolahPage() {
                     <th className="px-5 py-4 font-semibold">Kabupaten/Kota</th>
                     <th className="px-5 py-4 font-semibold">Alamat</th>
                     <th className="px-5 py-4 font-semibold">KCD WILAYAH</th>
+                    <th className="px-5 py-4 font-semibold text-center">AKSI</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-rose-100">
@@ -1059,8 +1153,8 @@ export default function DataSekolahPage() {
                           sekolah.jenjang === 'SMK'
                             ? "bg-amber-100 text-amber-600"
                             : sekolah.jenjang === 'SMA'
-                            ? "bg-green-100 text-green-600"
-                            : "bg-indigo-100 text-indigo-600"
+                              ? "bg-green-100 text-green-600"
+                              : "bg-indigo-100 text-indigo-600"
                         )}>
                           {sekolah.jenjang}
                         </Badge>
@@ -1078,6 +1172,19 @@ export default function DataSekolahPage() {
                         <Badge className="rounded-full border-0 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
                           {sekolah.kcd_wilayah}
                         </Badge>
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex items-center justify-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEditClick(sekolah)}
+                            className="size-8 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50"
+                            title="Edit Data"
+                          >
+                            <Edit className="size-4" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -1117,8 +1224,8 @@ export default function DataSekolahPage() {
                         sekolah.jenjang === 'SMK'
                           ? "bg-amber-100 text-amber-600"
                           : sekolah.jenjang === 'SMA'
-                          ? "bg-green-100 text-green-600"
-                          : "bg-indigo-100 text-indigo-600"
+                            ? "bg-green-100 text-green-600"
+                            : "bg-indigo-100 text-indigo-600"
                       )}>
                         {sekolah.jenjang}
                       </Badge>
@@ -1137,6 +1244,15 @@ export default function DataSekolahPage() {
                     <Badge className="rounded-full border-0 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
                       KCD Wilayah {sekolah.kcd_wilayah}
                     </Badge>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEditClick(sekolah)}
+                      className="ml-auto rounded-xl border-slate-200 text-slate-600 hover:text-blue-600 hover:bg-blue-50"
+                    >
+                      <Edit className="size-3.5 mr-1.5" />
+                      Edit
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -1211,7 +1327,7 @@ export default function DataSekolahPage() {
                     {(() => {
                       const pages: number[] = [];
                       const maxVisible = 5;
-                      
+
                       if (totalPages <= maxVisible) {
                         // Show all pages if total pages <= 5
                         for (let i = 1; i <= totalPages; i++) {
@@ -1466,6 +1582,190 @@ export default function DataSekolahPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Edit Sekolah Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto sm:max-h-[95vh] p-4 sm:p-6">
+          <DialogHeader className="pb-4 sm:pb-6">
+            <DialogTitle className="flex items-center gap-2 text-base sm:text-lg font-bold text-slate-900">
+              <Edit className="size-5 sm:size-6 text-[#B53740] shrink-0" />
+              <span>Edit Data Sekolah</span>
+            </DialogTitle>
+            <DialogDescription className="text-sm sm:text-base text-slate-600 mt-1.5">
+              Perbarui data sekolah binaan dengan informasi yang benar
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 sm:space-y-6 py-2 sm:py-4">
+            {formError && (
+              <div className="flex items-start gap-2 rounded-xl border border-red-200/50 bg-red-50/80 p-4 text-sm text-red-800 backdrop-blur-sm shadow-sm">
+                <AlertCircle className="size-5 shrink-0 mt-0.5 text-red-600" />
+                <span className="flex-1 leading-relaxed">{formError}</span>
+              </div>
+            )}
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <label htmlFor="edit-npsn" className="text-sm sm:text-base font-semibold text-slate-900">
+                  NPSN <span className="text-[#B53740]">*</span>
+                </label>
+                <input
+                  id="edit-npsn"
+                  type="text"
+                  placeholder="Contoh: 20337887"
+                  value={formData.npsn}
+                  onChange={(e) => setFormData({ ...formData, npsn: e.target.value })}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder:text-slate-500 shadow-sm transition-all focus:border-[#B53740] focus:outline-none focus:ring-2 focus:ring-[#B53740]/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  required
+                  disabled={isProcessing}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="edit-kcd_wilayah" className="text-sm sm:text-base font-semibold text-slate-900">
+                  KCD Wilayah <span className="text-[#B53740]">*</span>
+                </label>
+                <select
+                  id="edit-kcd_wilayah"
+                  value={formData.kcd_wilayah}
+                  onChange={(e) => setFormData({ ...formData, kcd_wilayah: e.target.value })}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm transition-all focus:border-[#B53740] focus:outline-none focus:ring-2 focus:ring-[#B53740]/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  required
+                  disabled={isProcessing}
+                >
+                  {Array.from({ length: 13 }, (_, i) => i + 1).map(num => (
+                    <option key={num} value={num}>KCD Wilayah {num}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="edit-nama_sekolah" className="text-sm sm:text-base font-semibold text-slate-900">
+                Nama Sekolah <span className="text-[#B53740]">*</span>
+              </label>
+              <input
+                id="edit-nama_sekolah"
+                type="text"
+                placeholder="Contoh: SMK NEGERI 1 PUNGGELAN"
+                value={formData.nama_sekolah}
+                onChange={(e) => setFormData({ ...formData, nama_sekolah: e.target.value })}
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder:text-slate-500 shadow-sm transition-all focus:border-[#B53740] focus:outline-none focus:ring-2 focus:ring-[#B53740]/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                required
+                disabled={isProcessing}
+              />
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <label htmlFor="edit-status" className="text-sm sm:text-base font-semibold text-slate-900">
+                  Status <span className="text-[#B53740]">*</span>
+                </label>
+                <select
+                  id="edit-status"
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm transition-all focus:border-[#B53740] focus:outline-none focus:ring-2 focus:ring-[#B53740]/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  required
+                  disabled={isProcessing}
+                >
+                  <option value="Negeri">Negeri</option>
+                  <option value="Swasta">Swasta</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="edit-jenjang" className="text-sm sm:text-base font-semibold text-slate-900">
+                  Jenjang <span className="text-[#B53740]">*</span>
+                </label>
+                <select
+                  id="edit-jenjang"
+                  value={formData.jenjang}
+                  onChange={(e) => setFormData({ ...formData, jenjang: e.target.value })}
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm transition-all focus:border-[#B53740] focus:outline-none focus:ring-2 focus:ring-[#B53740]/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  required
+                  disabled={isProcessing}
+                >
+                  <option value="SMK">SMK</option>
+                  <option value="SMA">SMA</option>
+                  <option value="SLB">SLB</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="edit-kabupaten_kota" className="text-sm sm:text-base font-semibold text-slate-900">
+                Kabupaten/Kota <span className="text-[#B53740]">*</span>
+              </label>
+              <input
+                id="edit-kabupaten_kota"
+                type="text"
+                placeholder="Contoh: Kabupaten Banjarnegara"
+                value={formData.kabupaten_kota}
+                onChange={(e) => setFormData({ ...formData, kabupaten_kota: e.target.value })}
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder:text-slate-500 shadow-sm transition-all focus:border-[#B53740] focus:outline-none focus:ring-2 focus:ring-[#B53740]/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                required
+                disabled={isProcessing}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="edit-alamat" className="text-sm sm:text-base font-semibold text-slate-900">
+                Alamat <span className="text-[#B53740]">*</span>
+              </label>
+              <textarea
+                id="edit-alamat"
+                rows={3}
+                placeholder="Contoh: JL. RAYA PASAR MANIS, LOJI, PUNGGELAN, BANJARNEGARA"
+                value={formData.alamat}
+                onChange={(e) => setFormData({ ...formData, alamat: e.target.value })}
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder:text-slate-500 shadow-sm transition-all focus:border-[#B53740] focus:outline-none focus:ring-2 focus:ring-[#B53740]/20 resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+                required
+                disabled={isProcessing}
+              />
+            </div>
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsEditDialogOpen(false);
+                setFormError(null);
+                setEditingSekolah(null);
+                setFormData({
+                  npsn: "",
+                  nama_sekolah: "",
+                  status: "Negeri",
+                  jenjang: "SMK",
+                  kabupaten_kota: "",
+                  alamat: "",
+                  kcd_wilayah: "1"
+                });
+              }}
+              disabled={isProcessing}
+              className="w-full sm:w-auto rounded-xl border-slate-200 bg-white px-6 py-3 text-base font-semibold text-slate-700 shadow-sm transition-all hover:bg-slate-50 hover:border-slate-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Batal
+            </Button>
+            <Button
+              onClick={handleUpdateSekolah}
+              disabled={isProcessing}
+              className="w-full sm:w-auto rounded-xl border-0 bg-gradient-to-r from-[#B53740] to-[#8B2A31] px-6 py-3 text-base font-semibold text-white shadow-lg shadow-[#B53740]/25 transition-all hover:from-[#8B2A31] hover:to-[#6B1F24] hover:shadow-xl hover:shadow-[#B53740]/30 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isProcessing ? (
+                <span className="flex items-center justify-center gap-2">
+                  <div className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                  Memperbarui...
+                </span>
+              ) : (
+                <span className="flex items-center justify-center gap-2">
+                  <CheckCircle2 className="size-5" />
+                  Update Data
+                </span>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Import Excel Dialog */}
       <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
@@ -1584,7 +1884,7 @@ export default function DataSekolahPage() {
                                 <Badge className={cn(
                                   "rounded-full border-0 px-2.5 py-1 text-xs font-semibold whitespace-nowrap inline-flex items-center",
                                   row.jenjang === 'SMK' ? "bg-amber-100 text-amber-600" :
-                                  row.jenjang === 'SMA' ? "bg-green-100 text-green-600" : "bg-indigo-100 text-indigo-600"
+                                    row.jenjang === 'SMA' ? "bg-green-100 text-green-600" : "bg-indigo-100 text-indigo-600"
                                 )}>
                                   {row.jenjang || '-'}
                                 </Badge>
@@ -1620,7 +1920,7 @@ export default function DataSekolahPage() {
                             <Badge className={cn(
                               "rounded-full border-0 px-2 py-1 text-xs font-semibold",
                               row.jenjang === 'SMK' ? "bg-amber-100 text-amber-600" :
-                              row.jenjang === 'SMA' ? "bg-green-100 text-green-600" : "bg-indigo-100 text-indigo-600"
+                                row.jenjang === 'SMA' ? "bg-green-100 text-green-600" : "bg-indigo-100 text-indigo-600"
                             )}>
                               {row.jenjang}
                             </Badge>
