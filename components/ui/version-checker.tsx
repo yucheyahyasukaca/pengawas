@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useCallback } from "react";
+import { useToast } from "@/components/ui/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 
-const CHECK_INTERVAL_MS = 60 * 60 * 1000; // Check every hour
+const CHECK_INTERVAL_MS = 30 * 60 * 1000; // Check every 30 minutes
 const VERSION_STORAGE_KEY = "app_version";
 
 interface VersionResponse {
@@ -10,9 +12,41 @@ interface VersionResponse {
 }
 
 export function VersionChecker() {
-    const [currentVersion, setCurrentVersion] = useState<string | null>(null);
+    const { toast } = useToast();
 
-    const checkVersion = async () => {
+    const handleUpdate = useCallback(async () => {
+        console.log("[VersionChecker] Updating system...");
+
+        // Unregister potentially stale service workers
+        if ('serviceWorker' in navigator) {
+            try {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (const registration of registrations) {
+                    await registration.unregister();
+                }
+                console.log('[VersionChecker] Service workers unregistered.');
+            } catch (err) {
+                console.error('[VersionChecker] Failed to unregister SW:', err);
+            }
+        }
+
+        // Clear caches
+        if ('caches' in window) {
+            try {
+                const keys = await caches.keys();
+                await Promise.all(keys.map(key => caches.delete(key)));
+                console.log('[VersionChecker] Caches cleared.');
+            } catch (err) {
+                console.error('[VersionChecker] Failed to clear caches:', err);
+            }
+        }
+
+        // Force reload from server
+        console.log("[VersionChecker] Reloading page...");
+        window.location.reload();
+    }, []);
+
+    const checkVersion = useCallback(async () => {
         try {
             // Add timestamp to prevent caching of the version file itself
             const res = await fetch(`/version.json?t=${new Date().getTime()}`, {
@@ -28,7 +62,6 @@ export function VersionChecker() {
             // Initial load: logic to set version if missing
             if (!storedVersion) {
                 localStorage.setItem(VERSION_STORAGE_KEY, serverVersion);
-                setCurrentVersion(serverVersion);
                 return;
             }
 
@@ -36,40 +69,29 @@ export function VersionChecker() {
             if (serverVersion && storedVersion && serverVersion !== storedVersion) {
                 console.log(`[VersionChecker] New version detected: ${serverVersion} (current: ${storedVersion})`);
 
-                // Update version in storage
+                // Update version in storage so we don't keep showing the toast if they dismiss it
+                // Actually, we want them to update, so maybe don't update storage until they click update?
+                // But to avoid spamming the toast on every page load/check interval, we'll use a session flag or similar.
+
+                toast({
+                    title: "Pembaruan Sistem Tersedia",
+                    description: `Versi baru (${serverVersion}) telah tersedia. Klik update untuk mendapatkan fitur terbaru.`,
+                    variant: "info",
+                    duration: 100000, // Persistent until action or manual dismiss
+                    action: (
+                        <ToastAction altText="Update Now" onClick={handleUpdate}>
+                            Update
+                        </ToastAction>
+                    ),
+                });
+
+                // Set stored version to server version to avoid repeated notifications in the same session
                 localStorage.setItem(VERSION_STORAGE_KEY, serverVersion);
-
-                // Unregister potentially stale service workers
-                if ('serviceWorker' in navigator) {
-                    try {
-                        const registrations = await navigator.serviceWorker.getRegistrations();
-                        for (const registration of registrations) {
-                            await registration.unregister();
-                        }
-                        console.log('[VersionChecker] Service workers unregistered.');
-                    } catch (err) {
-                        console.error('[VersionChecker] Failed to unregister SW:', err);
-                    }
-                }
-
-                // Clear caches
-                if ('caches' in window) {
-                    try {
-                        const keys = await caches.keys();
-                        await Promise.all(keys.map(key => caches.delete(key)));
-                        console.log('[VersionChecker] Caches cleared.');
-                    } catch (err) {
-                        console.error('[VersionChecker] Failed to clear caches:', err);
-                    }
-                }
-
-                // Force reload from server
-                window.location.reload();
             }
         } catch (error) {
             console.error("[VersionChecker] Failed to check version", error);
         }
-    };
+    }, [toast, handleUpdate]);
 
     useEffect(() => {
         // Check immediately on mount
@@ -91,7 +113,7 @@ export function VersionChecker() {
             clearInterval(interval);
             document.removeEventListener('visibilitychange', handleVisibilityChange);
         };
-    }, []);
+    }, [checkVersion]);
 
     return null; // Component renders nothing
 }
