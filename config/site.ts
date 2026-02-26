@@ -1,6 +1,6 @@
 export const siteConfig = {
   name: "SIP-Kepengawasan Jateng",
-  version: "1.1.2",
+  version: "1.1.3",
   shortName: "SIP Kepengawasan",
   description:
     "Sistem informasi terintegrasi untuk mendukung pengawasan SMA & SLB Provinsi Jawa Tengah yang berbasis data dan kolaboratif.",
