@@ -31,10 +31,16 @@ interface PengawasData {
   status_approval: string | null;
   metadata: {
     wilayah_tugas?: string;
+    wilayah_tugas_kcd?: string[];
     sekolah_binaan?: string[];
     foto_profil?: string;
     pangkat_golongan?: string;
     jabatan?: string;
+    no_handphone?: string;
+    tempat_lahir?: string;
+    tanggal_lahir?: string;
+    alamat_rumah?: string;
+    keahlian?: string[];
   } | null;
 }
 
@@ -55,10 +61,16 @@ export default function DataPengawasPage() {
   const [editNip, setEditNip] = useState("");
   const [editPangkat, setEditPangkat] = useState("");
   const [editJabatan, setEditJabatan] = useState("");
-  const [editWilayahTugas, setEditWilayahTugas] = useState("");
+  const [editWilayahTugas, setEditWilayahTugas] = useState<string[]>([]);
   const [editWilayahInput, setEditWilayahInput] = useState("");
   const [isKcdDropdownOpen, setIsKcdDropdownOpen] = useState(false);
   const [editFotoProfil, setEditFotoProfil] = useState<string | null>(null);
+  const [editNoHandphone, setEditNoHandphone] = useState("");
+  const [editTempatLahir, setEditTempatLahir] = useState("");
+  const [editTanggalLahir, setEditTanggalLahir] = useState("");
+  const [editAlamatRumah, setEditAlamatRumah] = useState("");
+  const [editKeahlian, setEditKeahlian] = useState<string[]>([]);
+  const [keahlianInput, setKeahlianInput] = useState("");
 
   // Sekolah binaan state
   const [sekolahList, setSekolahList] = useState<Array<{ id: string; nama_sekolah: string; npsn: string; status: string; jenjang: string; kabupaten_kota: string }>>([]);
@@ -106,10 +118,22 @@ export default function DataPengawasPage() {
     setEditNip(pengawas.nip || "");
     setEditPangkat(pengawas.metadata?.pangkat_golongan || "");
     setEditJabatan(pengawas.metadata?.jabatan || "");
-    const wilayahTugas = pengawas.metadata?.wilayah_tugas || "";
-    setEditWilayahTugas(wilayahTugas);
-    setEditWilayahInput(wilayahTugas);
+
+    // Support legacy string wilayah_tugas or new array wilayah_tugas_kcd
+    const existingKcd = pengawas.metadata?.wilayah_tugas_kcd || [];
+    const legacyKcd = pengawas.metadata?.wilayah_tugas ? [pengawas.metadata.wilayah_tugas] : [];
+    const initialKcd = existingKcd.length > 0 ? existingKcd : legacyKcd;
+
+    setEditWilayahTugas(initialKcd);
+    setEditWilayahInput("");
     setEditFotoProfil(pengawas.metadata?.foto_profil || null);
+
+    setEditNoHandphone(pengawas.metadata?.no_handphone || "");
+    setEditTempatLahir(pengawas.metadata?.tempat_lahir || "");
+    setEditTanggalLahir(pengawas.metadata?.tanggal_lahir || "");
+    setEditAlamatRumah(pengawas.metadata?.alamat_rumah || "");
+    setEditKeahlian(pengawas.metadata?.keahlian || []);
+    setKeahlianInput("");
 
     // Convert sekolah binaan to object array
     const sekolahBinaan = pengawas.metadata?.sekolah_binaan || [];
@@ -166,11 +190,38 @@ export default function DataPengawasPage() {
     );
   });
 
-  const filteredKcdOptions = editWilayahInput.trim()
-    ? KCD_WILAYAH_OPTIONS.filter(option =>
-      option.toLowerCase().includes(editWilayahInput.toLowerCase())
-    )
-    : KCD_WILAYAH_OPTIONS;
+  const filteredKcdOptions = KCD_WILAYAH_OPTIONS.filter(option => {
+    const isSelected = editWilayahTugas.includes(option);
+    if (isSelected) return false;
+
+    if (!editWilayahInput.trim()) return true;
+    return option.toLowerCase().includes(editWilayahInput.toLowerCase());
+  });
+
+  const handleSelectKcd = (option: string) => {
+    if (editWilayahTugas.includes(option)) return;
+    setEditWilayahTugas([...editWilayahTugas, option]);
+    setEditWilayahInput("");
+    setIsKcdDropdownOpen(false);
+  };
+
+  const handleRemoveKcd = (option: string) => {
+    setEditWilayahTugas(editWilayahTugas.filter(k => k !== option));
+  };
+
+  const handleAddKeahlian = () => {
+    if (!keahlianInput.trim()) return;
+    if (editKeahlian.includes(keahlianInput.trim())) {
+      setKeahlianInput("");
+      return;
+    }
+    setEditKeahlian([...editKeahlian, keahlianInput.trim()]);
+    setKeahlianInput("");
+  };
+
+  const handleRemoveKeahlian = (item: string) => {
+    setEditKeahlian(editKeahlian.filter(k => k !== item));
+  };
 
   const handleSelectSekolah = (sekolah: { id: string; nama_sekolah: string; npsn: string }) => {
     const isSelected = editSekolahBinaan.some(s => s.id === sekolah.id || s.nama === sekolah.nama_sekolah);
@@ -255,8 +306,14 @@ export default function DataPengawasPage() {
           nip: editNip.trim(),
           pangkat_golongan: editPangkat.trim(),
           jabatan: editJabatan.trim(),
-          wilayah_tugas: editWilayahTugas.trim(),
+          wilayah_tugas: editWilayahTugas[0] || "", // For backward compatibility
+          wilayah_tugas_kcd: editWilayahTugas,
           sekolah_binaan: sekolahBinaanNames,
+          no_handphone: editNoHandphone.trim(),
+          tempat_lahir: editTempatLahir.trim(),
+          tanggal_lahir: editTanggalLahir.trim(),
+          alamat_rumah: editAlamatRumah.trim(),
+          keahlian: editKeahlian,
         }),
       });
 
@@ -311,7 +368,7 @@ export default function DataPengawasPage() {
     );
   }
 
-  const wilayahTugas = pengawas.metadata?.wilayah_tugas || 'Belum diisi';
+  const displayWilayahKcd = pengawas.metadata?.wilayah_tugas_kcd || (pengawas.metadata?.wilayah_tugas ? [pengawas.metadata.wilayah_tugas] : []);
   const sekolahBinaan = pengawas.metadata?.sekolah_binaan || [];
   const jumlahSekolah = Array.isArray(sekolahBinaan) ? sekolahBinaan.length : 0;
   const statusApproval = pengawas.status_approval || 'pending';
@@ -426,43 +483,100 @@ export default function DataPengawasPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex items-start gap-3">
-                  <Mail className="size-5 text-indigo-600 mt-0.5 flex-shrink-0" />
+                  <MapPin className="size-5 text-emerald-600 mt-0.5 flex-shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-xs font-medium text-slate-500 uppercase mb-1">Email</p>
-                    <p className="text-sm font-medium text-slate-900 break-all">{pengawas.email}</p>
+                    <p className="text-xs font-medium text-slate-500 uppercase mb-1">Wilayah Tugas</p>
+                    {displayWilayahKcd.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {displayWilayahKcd.map((kcd, i) => (
+                          <Badge key={i} variant="secondary" className="font-medium text-[10px] sm:text-xs">
+                            {kcd}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm font-medium text-slate-400">Belum diisi</p>
+                    )}
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <MapPin className="size-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                  <Mail className="size-5 text-indigo-600 mt-0.5 flex-shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-xs font-medium text-slate-500 uppercase mb-1">Wilayah Tugas</p>
-                    <p className="text-sm font-medium text-slate-900">{wilayahTugas}</p>
+                    <p className="text-xs font-medium text-slate-500 uppercase mb-1">Kontak</p>
+                    <p className="text-sm font-medium text-slate-900 break-all">{pengawas.email}</p>
+                    {pengawas.metadata?.no_handphone && (
+                      <p className="text-sm font-semibold text-indigo-700 mt-1 flex items-center gap-1">
+                        <span className="inline-block size-1.5 rounded-full bg-indigo-500"></span>
+                        {pengawas.metadata.no_handphone}
+                      </p>
+                    )}
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3 sm:col-span-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 w-full gap-4 pt-2 border-t border-slate-100">
+                    <div className="flex items-start gap-3">
+                      <Clock className="size-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-slate-500 uppercase mb-1">TTL & Alamat</p>
+                        <p className="text-sm font-medium text-slate-900">
+                          {pengawas.metadata?.tempat_lahir || '-'}{pengawas.metadata?.tanggal_lahir ? `, ${pengawas.metadata.tanggal_lahir}` : ''}
+                        </p>
+                        {pengawas.metadata?.alamat_rumah && (
+                          <p className="text-xs text-slate-600 mt-1 line-clamp-2 italic">{pengawas.metadata.alamat_rumah}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {pengawas.metadata?.keahlian && pengawas.metadata.keahlian.length > 0 ? (
+                      <div className="flex items-start gap-3">
+                        <CheckCircle2 className="size-5 text-green-600 mt-0.5 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-slate-500 uppercase mb-1">Keahlian</p>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {pengawas.metadata.keahlian.map((item, i) => (
+                              <Badge key={i} variant="outline" className="text-[10px] py-0 px-1.5 border-indigo-200 bg-indigo-50/50 text-indigo-700 font-medium">
+                                {item}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-start gap-3 opacity-50">
+                        <CheckCircle2 className="size-5 text-slate-400 mt-0.5 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-slate-400 uppercase mb-1">Keahlian</p>
+                          <p className="text-xs text-slate-400">Belum ditambahkan</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 sm:col-span-2 pt-2 border-t border-slate-100">
                   <School className="size-5 text-indigo-600 mt-0.5 flex-shrink-0" />
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-medium text-slate-500 uppercase mb-1">Sekolah Binaan</p>
                     <div className="flex items-center gap-2">
-                      <span className="text-2xl font-semibold text-indigo-700">{jumlahSekolah}</span>
-                      <span className="text-sm text-slate-600">sekolah</span>
+                      <span className="text-2xl font-bold text-indigo-700 leading-none">{jumlahSekolah}</span>
+                      <span className="text-sm font-medium text-slate-600">sekolah terdaftar</span>
                     </div>
                     {jumlahSekolah > 0 && (
                       <div className="flex flex-wrap gap-2 mt-2">
-                        {Array.isArray(sekolahBinaan) && sekolahBinaan.slice(0, 3).map((sekolah, index) => (
+                        {Array.isArray(sekolahBinaan) && sekolahBinaan.slice(0, 5).map((sekolah, index) => (
                           <Badge
                             key={index}
                             variant="outline"
-                            className="rounded-full border-indigo-200 bg-indigo-50 text-indigo-700 text-xs px-2.5 py-0.5"
+                            className="rounded-full border-indigo-200 bg-white text-indigo-700 text-[10px] px-2.5 py-0.5 shadow-sm"
                           >
                             {sekolah}
                           </Badge>
                         ))}
-                        {jumlahSekolah > 3 && (
-                          <Badge variant="outline" className="rounded-full border-indigo-200 bg-indigo-50 text-indigo-700 text-xs px-2.5 py-0.5">
-                            +{jumlahSekolah - 3} lainnya
+                        {jumlahSekolah > 5 && (
+                          <Badge variant="outline" className="rounded-full border-indigo-200 bg-indigo-50 text-indigo-700 text-[10px] px-2.5 py-0.5">
+                            +{jumlahSekolah - 5} lainnya
                           </Badge>
                         )}
                       </div>
@@ -613,12 +727,137 @@ export default function DataPengawasPage() {
                 />
               </div>
 
-              {/* Wilayah Tugas */}
+              {/* No Handphone */}
+              <div className="space-y-2">
+                <label className="text-sm sm:text-base font-semibold text-slate-900 flex items-center gap-2">
+                  <Mail className="size-4 sm:size-5 text-indigo-700" />
+                  No Handphone / WhatsApp
+                </label>
+                <input
+                  type="tel"
+                  placeholder="Contoh: 08123456789"
+                  value={editNoHandphone}
+                  onChange={(e) => setEditNoHandphone(e.target.value)}
+                  className="w-full rounded-lg border-2 border-slate-300 bg-white px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-slate-900 placeholder:text-slate-500 focus:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 disabled:opacity-50"
+                  disabled={isSaving}
+                />
+              </div>
+
+              {/* TTL */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm sm:text-base font-semibold text-slate-900 flex items-center gap-2">
+                    <MapPin className="size-4 sm:size-5 text-indigo-700" />
+                    Tempat Lahir
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Contoh: Semarang"
+                    value={editTempatLahir}
+                    onChange={(e) => setEditTempatLahir(e.target.value)}
+                    className="w-full rounded-lg border-2 border-slate-300 bg-white px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-slate-900 placeholder:text-slate-500 focus:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 disabled:opacity-50"
+                    disabled={isSaving}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm sm:text-base font-semibold text-slate-900 flex items-center gap-2">
+                    <Clock className="size-4 sm:size-5 text-indigo-700" />
+                    Tanggal Lahir
+                  </label>
+                  <input
+                    type="date"
+                    value={editTanggalLahir}
+                    onChange={(e) => setEditTanggalLahir(e.target.value)}
+                    className="w-full rounded-lg border-2 border-slate-300 bg-white px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-slate-900 placeholder:text-slate-500 focus:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 disabled:opacity-50"
+                    disabled={isSaving}
+                  />
+                </div>
+              </div>
+
+              {/* Alamat Rumah */}
               <div className="space-y-2">
                 <label className="text-sm sm:text-base font-semibold text-slate-900 flex items-center gap-2">
                   <MapPin className="size-4 sm:size-5 text-indigo-700" />
-                  KCD Wilayah
+                  Alamat Rumah
                 </label>
+                <textarea
+                  placeholder="Tuliskan alamat lengkap..."
+                  value={editAlamatRumah}
+                  onChange={(e) => setEditAlamatRumah(e.target.value)}
+                  rows={3}
+                  className="w-full rounded-lg border-2 border-slate-300 bg-white px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-slate-900 placeholder:text-slate-500 focus:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 disabled:opacity-50"
+                  disabled={isSaving}
+                />
+              </div>
+
+              {/* Keahlian */}
+              <div className="space-y-2">
+                <label className="text-sm sm:text-base font-semibold text-slate-900 flex items-center gap-2">
+                  <CheckCircle2 className="size-4 sm:size-5 text-indigo-700" />
+                  Keahlian
+                </label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {editKeahlian.map((item, i) => (
+                    <Badge key={i} className="bg-indigo-100 text-indigo-700 hover:bg-indigo-200 gap-1 pr-1 border-indigo-200">
+                      {item}
+                      <X
+                        className="size-3 cursor-pointer hover:text-red-500"
+                        onClick={() => handleRemoveKeahlian(item)}
+                      />
+                    </Badge>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Contoh: IT, Coding, Kurikulum"
+                    value={keahlianInput}
+                    onChange={(e) => setKeahlianInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddKeahlian())}
+                    className="flex-1 rounded-lg border-2 border-slate-300 bg-white px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base text-slate-900 placeholder:text-slate-500 focus:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-600/30 disabled:opacity-50"
+                    disabled={isSaving}
+                  />
+                  <Button
+                    type="button"
+                    onClick={handleAddKeahlian}
+                    disabled={isSaving || !keahlianInput.trim()}
+                    variant="outline"
+                    className="border-2 border-indigo-200 text-indigo-700"
+                  >
+                    Tambah
+                  </Button>
+                </div>
+              </div>
+
+              {/* Wilayah Tugas (Multiple) */}
+              <div className="space-y-2">
+                <label className="text-sm sm:text-base font-semibold text-slate-900 flex items-center gap-2">
+                  <MapPin className="size-4 sm:size-5 text-indigo-700" />
+                  KCD Wilayah (Bisa pilih lebih dari 1)
+                </label>
+
+                {editWilayahTugas.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {editWilayahTugas.map((option) => (
+                      <div
+                        key={option}
+                        className="flex items-center gap-2 rounded-lg border-2 border-emerald-300 bg-emerald-100 px-3 py-2 shadow-sm"
+                      >
+                        <span className="text-sm sm:text-base font-medium text-slate-900">{option}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveKcd(option)}
+                          className="text-red-700 hover:text-red-800 hover:bg-red-50 rounded p-1 transition-colors"
+                          disabled={isSaving}
+                          title="Hapus"
+                        >
+                          <X className="size-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 <div className="relative">
                   <input
                     type="text"
@@ -626,7 +865,6 @@ export default function DataPengawasPage() {
                     value={editWilayahInput}
                     onChange={(e) => {
                       setEditWilayahInput(e.target.value);
-                      setEditWilayahTugas(e.target.value);
                       setIsKcdDropdownOpen(true);
                     }}
                     onFocus={() => setIsKcdDropdownOpen(true)}
@@ -638,22 +876,22 @@ export default function DataPengawasPage() {
                   {isKcdDropdownOpen && (
                     <div className="absolute z-50 mt-1 w-full max-h-48 sm:max-h-60 overflow-auto rounded-lg border-2 border-slate-300 bg-white shadow-xl">
                       <div className="py-1">
-                        {filteredKcdOptions.map((option) => (
-                          <button
-                            key={option}
-                            type="button"
-                            onClick={() => {
-                              setEditWilayahTugas(option);
-                              setEditWilayahInput(option);
-                              setIsKcdDropdownOpen(false);
-                            }}
-                            onMouseDown={(e) => e.preventDefault()}
-                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-left text-sm sm:text-base text-slate-900 font-medium transition-colors hover:bg-indigo-100 hover:text-indigo-700 focus:bg-indigo-100 focus:text-indigo-700 focus:outline-none"
-                            disabled={isSaving}
-                          >
-                            {option}
-                          </button>
-                        ))}
+                        {filteredKcdOptions.length > 0 ? (
+                          filteredKcdOptions.map((option) => (
+                            <button
+                              key={option}
+                              type="button"
+                              onClick={() => handleSelectKcd(option)}
+                              onMouseDown={(e) => e.preventDefault()}
+                              className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-left text-sm sm:text-base text-slate-900 font-medium transition-colors hover:bg-indigo-100 hover:text-indigo-700 focus:bg-indigo-100 focus:text-indigo-700 focus:outline-none"
+                              disabled={isSaving}
+                            >
+                              {option}
+                            </button>
+                          ))
+                        ) : (
+                          <div className="px-4 py-3 text-sm text-slate-500 italic">No options found</div>
+                        )}
                       </div>
                     </div>
                   )}

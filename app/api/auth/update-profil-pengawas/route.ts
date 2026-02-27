@@ -6,7 +6,20 @@ export async function POST(request: Request) {
   try {
     // Parse request body
     const body = await request.json();
-    const { nama, nip, wilayah_tugas, sekolah_binaan, pangkat_golongan, jabatan } = body;
+    const {
+      nama,
+      nip,
+      wilayah_tugas,
+      wilayah_tugas_kcd,
+      sekolah_binaan,
+      pangkat_golongan,
+      jabatan,
+      no_handphone,
+      tempat_lahir,
+      tanggal_lahir,
+      alamat_rumah,
+      keahlian
+    } = body;
 
     // Validasi input
     if (!nama) {
@@ -55,9 +68,15 @@ export async function POST(request: Request) {
     const updatedMetadata = {
       ...currentMetadata,
       ...(wilayah_tugas && { wilayah_tugas }),
+      ...(wilayah_tugas_kcd && Array.isArray(wilayah_tugas_kcd) && { wilayah_tugas_kcd }),
       ...(sekolah_binaan && Array.isArray(sekolah_binaan) && { sekolah_binaan }),
       ...(pangkat_golongan && { pangkat_golongan }),
       ...(jabatan && { jabatan }),
+      ...(no_handphone !== undefined && { no_handphone }),
+      ...(tempat_lahir !== undefined && { tempat_lahir }),
+      ...(tanggal_lahir !== undefined && { tanggal_lahir }),
+      ...(alamat_rumah !== undefined && { alamat_rumah }),
+      ...(keahlian !== undefined && Array.isArray(keahlian) && { keahlian }),
     };
 
     const updateData: Record<string, any> = {
