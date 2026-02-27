@@ -151,6 +151,7 @@ export default function RencanaPendampinganPage() {
   const [isDeleteConfirmDialogOpen, setIsDeleteConfirmDialogOpen] = useState(false);
   const [rencanaToDelete, setRencanaToDelete] = useState<RencanaPendampingan | null>(null);
   const [isManualCreate, setIsManualCreate] = useState(false);
+  const [isGuidanceDialogOpen, setIsGuidanceDialogOpen] = useState(false);
 
   // Dropdown states
   const [isSekolahDropdownOpen, setIsSekolahDropdownOpen] = useState(false);
@@ -479,13 +480,6 @@ export default function RencanaPendampinganPage() {
     setFormDokumentasi(prev => prev.filter((_, i) => i !== index));
   };
 
-  // Helper function to format date as YYYY-MM-DD
-  const formatDate = (date: Date): string => {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, "0");
-    const d = String(date.getDate()).padStart(2, "0");
-    return `${y}-${m}-${d}`;
-  };
 
   // Helper function to format date as YYYY-MM-DD using local time
   const formatDateLocal = (date: Date): string => {
@@ -561,67 +555,24 @@ export default function RencanaPendampinganPage() {
     setFormPenjelasanImplementasi(updated);
   };
 
-  const handleCreateNew = () => {
-    const today = new Date();
-    setSelectedDate(today);
-    setIsManualCreate(true);
-    setIsDialogOpen(true);
-
-    // Reset form
-    setFormSekolahId("");
-    setFormIndikatorUtama("");
-    setFormAkarMasalah("");
-    setFormKegiatanBenahi("");
-    setFormPenjelasanImplementasi([""]);
-    setFormApakahKegiatan(true);
-    setFormDokumentasi([]);
-  };
 
   const handleSave = async () => {
     if (!selectedDate) return;
 
-    // Validation
     if (!formSekolahId) {
       toast({
         title: "Error",
         description: "Pilih sekolah binaan terlebih dahulu",
         variant: "error",
       });
-    }
-
-    if (!formIndikatorUtama) {
-
-      toast({
-        title: "Error",
-        description: "Pilih indikator utama terlebih dahulu",
-        variant: "error",
-      });
       return;
     }
 
-    if (!formAkarMasalah.trim()) {
-      toast({
-        title: "Error",
-        description: "Isi akar masalah terlebih dahulu",
-        variant: "error",
-      });
-      return;
-    }
-
+    const penjelasanFiltered = [formKegiatanBenahi.trim()];
     if (!formKegiatanBenahi.trim()) {
       toast({
         title: "Error",
-        description: "Isi kegiatan benahi terlebih dahulu",
-        variant: "error",
-      });
-      return;
-    }
-
-    const penjelasanFiltered = formPenjelasanImplementasi.filter((p) => p.trim() !== "");
-    if (penjelasanFiltered.length === 0) {
-      toast({
-        title: "Error",
-        description: "Isi minimal satu penjelasan implementasi kegiatan",
+        description: "Isi rencana kepengawasan terlebih dahulu",
         variant: "error",
       });
       return;
@@ -641,11 +592,11 @@ export default function RencanaPendampinganPage() {
         body: JSON.stringify({
           tanggal: dateStr,
           sekolah_id: formSekolahId,
-          indikator_utama: formIndikatorUtama,
-          akar_masalah: formAkarMasalah,
+          indikator_utama: "E.5", // Default value
+          akar_masalah: "-", // Default value
           kegiatan_benahi: formKegiatanBenahi,
           penjelasan_implementasi: penjelasanFiltered,
-          apakah_kegiatan: formApakahKegiatan,
+          apakah_kegiatan: true,
           dokumentasi: formDokumentasi,
         }),
       });
@@ -973,11 +924,11 @@ export default function RencanaPendampinganPage() {
           </p>
         </div>
         <Button
-          onClick={() => router.push("/pengawas/perencanaan/rencana-pendampingan/buat")}
+          onClick={() => setIsGuidanceDialogOpen(true)}
           className="rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm h-9 text-xs sm:text-sm px-4"
         >
           <Plus className="size-4 mr-1.5" />
-          Buat Rencana
+          Petunjuk Pengisian
         </Button>
       </div>
 
@@ -1512,242 +1463,19 @@ export default function RencanaPendampinganPage() {
               </div>
             </div>
 
-            {/* Program Info Display */}
-            {(() => {
-              console.log('[Program Info Render]', {
-                formSekolahId,
-                isLoadingProgramInfo,
-                activeProgramInfo,
-                found: activeProgramInfo?.found
-              });
-              return formSekolahId && (
-                <div className="space-y-2">
-                  {isLoadingProgramInfo ? (
-                    <div className="flex items-center justify-center p-4 rounded-xl bg-slate-50 border border-slate-200">
-                      <Loader2 className="size-5 text-slate-400 animate-spin mr-2" />
-                      <span className="text-sm text-slate-500">Memuat informasi program...</span>
-                    </div>
-                  ) : activeProgramInfo?.found ? (
-                    <div className="p-4 rounded-xl bg-gradient-to-br from-pink-50 to-rose-50 border border-pink-200">
-                      <div className="flex items-start gap-3 mb-3">
-                        <div className="p-2 rounded-lg bg-pink-500 text-white">
-                          <FileText className="size-4" />
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="text-sm font-bold text-slate-900 mb-1">Rencana Program Kepengawasan</h4>
-                          <p className="text-xs text-slate-600">Informasi dari rencana program yang sudah dibuat</p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 p-2 rounded-lg bg-white/60">
-                          <span className="text-xs font-semibold text-slate-500 uppercase">Prioritas:</span>
-                          <span className="text-sm font-bold text-pink-700">{activeProgramInfo.priority}</span>
-                        </div>
-
-                        <div className="flex items-center gap-2 p-2 rounded-lg bg-white/60">
-                          <span className="text-xs font-semibold text-slate-500 uppercase">Strategi:</span>
-                          <span className="text-sm font-bold text-slate-800">{activeProgramInfo.strategyName}</span>
-                        </div>
-
-                        {activeProgramInfo.methods && activeProgramInfo.methods.length > 0 && (
-                          <div className="p-2 rounded-lg bg-white/60">
-                            <span className="text-xs font-semibold text-slate-500 uppercase block mb-1">Metode:</span>
-                            <div className="flex flex-wrap gap-1.5">
-                              {activeProgramInfo.methods.map((method: string, idx: number) => (
-                                <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-700 text-xs font-semibold">
-                                  {method}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="p-4 rounded-xl bg-amber-50 border border-amber-200">
-                      <div className="flex items-start gap-3">
-                        <AlertCircle className="size-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                        <div className="flex-1">
-                          <h4 className="text-sm font-bold text-amber-900 mb-1">Belum Ada Rencana Program</h4>
-                          <p className="text-xs text-amber-700 mb-2">
-                            Sekolah ini belum memiliki Rencana Program Kepengawasan. Silakan buat terlebih dahulu.
-                          </p>
-                          <Link
-                            href="/pengawas/perencanaan/rencana-program/pilih-sekolah"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold transition-colors"
-                          >
-                            <Plus className="size-3.5" />
-                            Buat Rencana Program
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
-
-            {/* Identifikasi - Indikator Utama */}
+            {/* Rencana Kepengawasan */}
             <div className="space-y-2">
-              <label className="text-sm sm:text-base font-bold text-slate-900">
-                Identifikasi (Indikator Utama) <span className="text-red-500">*</span>
+              <label className="text-sm font-bold text-slate-900">
+                Langkah Rencana Kepengawasan <span className="text-red-500">*</span>
               </label>
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsIndikatorDropdownOpen(!isIndikatorDropdownOpen);
-                    setIsSekolahDropdownOpen(false);
-                  }}
-                  className="flex w-full items-center justify-between gap-4 rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-base text-slate-900 font-bold shadow-sm transition-all focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 hover:border-indigo-300"
-                >
-                  <span className={formIndikatorUtama ? "" : "text-slate-400"}>
-                    {formIndikatorUtama
-                      ? `${INDIKATOR_UTAMA.find((i) => i.code === formIndikatorUtama)?.code} - ${INDIKATOR_UTAMA.find((i) => i.code === formIndikatorUtama)?.label}`
-                      : "Pilih Indikator Utama"}
-                  </span>
-                  <ChevronDown
-                    className={cn(
-                      "size-5 text-slate-400 transition-transform",
-                      isIndikatorDropdownOpen && "rotate-180 text-indigo-600"
-                    )}
-                  />
-                </button>
-                {isIndikatorDropdownOpen && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-10"
-                      onClick={() => setIsIndikatorDropdownOpen(false)}
-                    />
-                    <div className="absolute z-20 mt-2 w-full rounded-2xl border border-slate-200 bg-white p-2 shadow-lg shadow-slate-200/50 max-h-60 overflow-y-auto">
-                      {INDIKATOR_UTAMA.map((indikator) => (
-                        <button
-                          key={indikator.code}
-                          type="button"
-                          onClick={() => {
-                            setFormIndikatorUtama(indikator.code);
-                            setIsIndikatorDropdownOpen(false);
-                          }}
-                          className="flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition hover:bg-slate-50 text-left"
-                        >
-                          <span className={formIndikatorUtama === indikator.code ? "text-indigo-700" : "text-slate-700"}>
-                            {indikator.code} - {indikator.label}
-                          </span>
-                          {formIndikatorUtama === indikator.code && (
-                            <Check className="size-4 text-indigo-600 flex-shrink-0" />
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Akar Masalah */}
-            <div className="space-y-2">
-              <label className="text-sm sm:text-base font-bold text-slate-900">
-                Akar Masalah <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={formAkarMasalah}
-                onChange={(e) => setFormAkarMasalah(e.target.value)}
-                placeholder="Contoh: kompetensi membaca teks sastra"
-                className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-sm sm:text-base text-slate-900 font-medium placeholder:text-slate-400 shadow-sm transition-all focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 hover:border-indigo-300"
-              />
-            </div>
-
-            {/* Kegiatan Benahi */}
-            <div className="space-y-2">
-              <label className="text-sm sm:text-base font-bold text-slate-900">
-                Kegiatan Benahi <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
+              <textarea
                 value={formKegiatanBenahi}
                 onChange={(e) => setFormKegiatanBenahi(e.target.value)}
-                placeholder="Contoh: Peningkatan kompetensi guru dalam hal literasi melalui PMM"
-                className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-sm sm:text-base text-slate-900 font-medium placeholder:text-slate-400 shadow-sm transition-all focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 hover:border-indigo-300"
+                placeholder="Masukkan rencana kepengawasan..."
+                rows={4}
+                className="w-full rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-sm sm:text-base text-slate-900 font-medium placeholder:text-slate-400 shadow-sm transition-all focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 hover:border-indigo-300 resize-none"
               />
             </div>
-
-            {/* Penjelasan Implementasi Kegiatan */}
-            <div className="space-y-2">
-              <label className="text-sm sm:text-base font-bold text-slate-900">
-                Penjelasan Implementasi Kegiatan <span className="text-red-500">*</span>
-              </label>
-              {formPenjelasanImplementasi.map((penjelasan, index) => (
-                <div key={index} className="flex gap-3">
-                  <textarea
-                    value={penjelasan}
-                    onChange={(e) =>
-                      handlePenjelasanImplementasiChange(index, e.target.value)
-                    }
-                    placeholder="Contoh: Diskusi mingguan guru terkait modul literasi di PMM"
-                    rows={4}
-                    className="flex-1 rounded-xl border-2 border-slate-200 bg-white px-4 py-3 text-sm sm:text-base text-slate-900 font-medium placeholder:text-slate-400 shadow-sm transition-all focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/20 hover:border-indigo-300 resize-none"
-                  />
-                  {formPenjelasanImplementasi.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handleRemovePenjelasanImplementasi(index)}
-                      className="rounded-lg border border-red-200 bg-white text-red-600 hover:bg-red-50 hover:border-red-300 h-10 w-10 flex-shrink-0 transition-colors"
-                    >
-                      <X className="size-4" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={handleAddPenjelasanImplementasi}
-                className="rounded-lg border-0 bg-transparent text-slate-900 hover:bg-slate-100 font-medium text-sm py-2 px-4 transition-colors"
-              >
-                <Plus className="size-4 mr-2" />
-                Tambah Penjelasan Implementasi
-              </Button>
-            </div>
-
-            {/* Apakah Kegiatan */}
-            <div className="space-y-2">
-              <label className="text-sm sm:text-base font-semibold text-slate-900 block">
-                Apakah Kegiatan <span className="text-red-500">*</span>
-              </label>
-              <div className="inline-flex items-center gap-2 p-1 bg-slate-100 rounded-lg">
-                <button
-                  type="button"
-                  onClick={() => setFormApakahKegiatan(true)}
-                  className={`
-                    px-5 py-2 rounded-md text-sm font-medium transition-all
-                    ${formApakahKegiatan === true
-                      ? "bg-white text-indigo-600 shadow-sm"
-                      : "text-slate-600 hover:text-slate-900"
-                    }
-                  `}
-                >
-                  Ya
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFormApakahKegiatan(false)}
-                  className={`
-                    px-5 py-2 rounded-md text-sm font-medium transition-all
-                    ${formApakahKegiatan === false
-                      ? "bg-white text-indigo-600 shadow-sm"
-                      : "text-slate-600 hover:text-slate-900"
-                    }
-                  `}
-                >
-                  Tidak
-                </button>
-              </div>
-            </div>
-
           </div>
 
           <DialogFooter className="flex-col sm:flex-row gap-3 pt-4 border-t border-slate-200">
@@ -1766,7 +1494,7 @@ export default function RencanaPendampinganPage() {
             >
               {isSaving ? (
                 <>
-                  <span className="animate-spin mr-2">⏳</span>
+                  <Loader2 className="size-4 mr-2 animate-spin" />
                   Menyimpan...
                 </>
               ) : (
@@ -1780,8 +1508,50 @@ export default function RencanaPendampinganPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Guidance Dialog */}
+      <Dialog open={isGuidanceDialogOpen} onOpenChange={setIsGuidanceDialogOpen}>
+        <DialogContent className="max-w-md bg-white">
+          <DialogHeader className="border-b border-slate-200 pb-4 mb-4">
+            <DialogTitle className="text-xl font-bold text-slate-900 flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-indigo-100 text-indigo-600">
+                <AlertCircle className="size-5" />
+              </div>
+              Petunjuk Pengisian
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="flex gap-4">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">1</div>
+              <p className="text-slate-600 text-sm leading-relaxed">
+                Pilih tanggal pada <span className="font-bold text-indigo-600">Kalender Rencana Pendampingan</span> untuk mulai membuat rencana baru.
+              </p>
+            </div>
+            <div className="flex gap-4">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">2</div>
+              <p className="text-slate-600 text-sm leading-relaxed">
+                Isi form dengan memilih <span className="font-bold">Sekolah Binaan</span> dan masukkan <span className="font-bold">Langkah Rencana Kepengawasan</span>.
+              </p>
+            </div>
+            <div className="flex gap-4">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">3</div>
+              <p className="text-slate-600 text-sm leading-relaxed">
+                Klik tombol <span className="font-bold text-indigo-600">Simpan Rencana</span> untuk menyimpan data Anda.
+              </p>
+            </div>
+          </div>
+          <DialogFooter className="pt-4 border-t border-slate-200">
+            <Button
+              onClick={() => setIsGuidanceDialogOpen(false)}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+            >
+              Mengerti
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Holiday Info Dialog */}
-      <Dialog open={isHolidayDialogOpen} onOpenChange={setIsHolidayDialogOpen}>
+      < Dialog open={isHolidayDialogOpen} onOpenChange={setIsHolidayDialogOpen} >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="text-lg sm:text-xl flex items-center gap-2 text-slate-900 font-bold">
@@ -1825,10 +1595,10 @@ export default function RencanaPendampinganPage() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </Dialog >
 
       {/* Detail Rencana Dialog */}
-      <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
+      < Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen} >
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-lg sm:text-xl flex items-center gap-2 text-slate-900 font-bold">
@@ -2424,7 +2194,7 @@ export default function RencanaPendampinganPage() {
       </Dialog >
 
       {/* Upload Dokumentasi Dialog */}
-      <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+      < Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen} >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
@@ -2492,10 +2262,10 @@ export default function RencanaPendampinganPage() {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>
+      </Dialog >
 
       {/* Image Preview Dialog (Lightbox) */}
-      <Dialog open={!!viewImage} onOpenChange={(open) => !open && setViewImage(null)}>
+      < Dialog open={!!viewImage} onOpenChange={(open) => !open && setViewImage(null)}>
         <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black/95 border-none text-white">
           <DialogTitle className="sr-only">Preview Dokumentasi</DialogTitle>
           <div className="relative w-full h-full flex flex-col">
@@ -2521,7 +2291,7 @@ export default function RencanaPendampinganPage() {
             </div>
           </div>
         </DialogContent>
-      </Dialog>
+      </Dialog >
     </div >
   );
 }
